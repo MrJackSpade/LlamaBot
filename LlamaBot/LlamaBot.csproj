@@ -1,16 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Configurations>Debug-Cuda;Release;Debug-Cpu</Configurations>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\LlamaNative.Chat\LlamaNative.Chat.csproj" />
-    <ProjectReference Include="..\LlamaNative\LlamaNative.csproj" />
-  </ItemGroup>
-
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Configurations>Debug-Cuda;Release;Debug-Cpu</Configurations>
+	</PropertyGroup>
+	<ItemGroup>
+		<Content Include="Characters\**\*">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Discord.Net" Version="3.15.2" />
+		<PackageReference Include="Loxifi.StaticConfiguration" Version="0.8.0" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\LlamaNative.Chat\LlamaNative.Chat.csproj" />
+		<ProjectReference Include="..\LlamaNative.Utils\LlamaNative.Utils.csproj" />
+		<ProjectReference Include="..\LlamaNative\LlamaNative.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<Folder Include="Characters\Llama3\LlamaBot\" />
+	</ItemGroup>
 </Project>

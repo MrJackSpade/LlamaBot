@@ -1,45 +1,74 @@
-﻿using LlamaNative;
+﻿using Discord.WebSocket;
 using LlamaNative.Chat;
 using LlamaNative.Chat.Interfaces;
 using LlamaNative.Chat.Models;
-using LlamaNative.Extensions;
-using LlamaNative.Interfaces;
-using LlamaNative.Interop.Settings;
-using LlamaNative.Tokens.Models;
+using LlamaNative.Utils;
+using Loxifi;
 
 namespace LlamaBot
 {
     internal class Program
     {
-        private static void Main(string[] args)
+        private static readonly Configuration configuration = StaticConfiguration.Load<Configuration>();
+
+        private static IChatContext chatContext;
+
+        private static RecursiveConfigurationReader<CharacterConfiguration> recursiveConfigurationReader = new("Characters");
+
+        public static async Task MessageReceived(SocketMessage message)
         {
-            string modelPath = @"C:\Users\Service Account\Downloads\L3-8B-Stheno-v3.2-Q8_0-imat.gguf";
-
-            IChatContext context = LlamaChatClient.LoadChatContext(new ChatSettings
+            if (message.Author.IsBot)
             {
-                BotName = "LlamaBot",
-                BeginText = "<|begin_of_text|>",
-                ModelSettings = new ModelSettings
-                {
-                    ModelPath = modelPath
-                },
-                ChatTemplate = new ChatTemplate
-                {
-                    EndHeader = "<|end_header_id|>\n",
-                    EndMessage = "<|eot_id|>",
-                    StartHeader = "<|start_header_id|>",
-                }
-            });
+                return;
+            }
 
-            context.SendMessage("User", "Hello, LlamaBot!");
+            if (message.Channel is not SocketTextChannel socketTextChannel)
+            {
+                return;
+            }
 
-            ChatMessage response = context.ReadResponse();
+            if (!configuration.ChannelIds.Contains(socketTextChannel.Id))
+            {
+                return;
+            }
 
-            context.SendMessage(response);
+            ChatMessage chatMessage = new(message.Author.Username, message.Content);
 
-            context.SendMessage("User", "Goodbye, LlamaBot!");
+            chatContext.SendMessage(chatMessage);
 
-            response = context.ReadResponse();
+            using IDisposable typingState = message.Channel.EnterTypingState();
+
+            ChatMessage response = chatContext.ReadResponse();
+
+            chatContext.SendMessage(response);      
+
+            await message.Channel.SendMessageAsync(response.Content);
+        }
+
+        private static async Task Main(string[] args)
+        {
+            RecursiveConfiguration<CharacterConfiguration> recursiveConfiguration = recursiveConfigurationReader.Read("LlamaBot");
+
+            CharacterConfiguration characterConfiguration = recursiveConfiguration.Configuration;
+
+            chatContext = LlamaChatClient.LoadChatContext(characterConfiguration.ChatSettings);
+
+            if (recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText))
+            {
+                chatContext.SendMessage("System", systemText);
+            }
+
+            DiscordClient discordClient = new(configuration.DiscordToken);
+
+            Console.WriteLine("Connecting to Discord...");
+
+            await discordClient.Connect();
+
+            Console.WriteLine("Connected.");
+
+            discordClient.MessageReceived += MessageReceived;
+
+            await Task.Delay(-1);
         }
     }
 }

@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LlamaBot", "LlamaBot\LlamaB
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LlamaNative", "LlamaNative\LlamaNative.csproj", "{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlamaNative.Chat", "LlamaNative.Chat\LlamaNative.Chat.csproj", "{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LlamaNative.Chat", "LlamaNative.Chat\LlamaNative.Chat.csproj", "{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlamaNative.Utils", "LlamaNative.Utils\LlamaNative.Utils.csproj", "{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,14 @@ Global
 		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Debug-Cuda|Any CPU.Build.0 = Debug|Any CPU
 		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}.Debug-Cpu|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}.Debug-Cpu|Any CPU.Build.0 = Debug|Any CPU
+		{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}.Debug-Cuda|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}.Debug-Cuda|Any CPU.Build.0 = Debug|Any CPU
+		{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EA477BE-D913-4B62-8968-CD2F0E4FDD3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

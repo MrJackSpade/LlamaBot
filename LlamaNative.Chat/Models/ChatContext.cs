@@ -1,13 +1,9 @@
 ﻿using LlamaNative.Chat.Interfaces;
-using LlamaNative.Interfaces;
 using LlamaNative.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using LlamaNative.Interfaces;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Models;
+using System.Text;
 
 namespace LlamaNative.Chat.Models
 {
@@ -15,17 +11,23 @@ namespace LlamaNative.Chat.Models
     {
         private readonly List<ChatMessage> _messages = [];
 
+        private readonly object _lock = new();
+
         public ChatContext(ChatSettings settings, INativeContext nativeContext)
         {
             Settings = settings;
             NativeContext = nativeContext;
         }
 
+        public int Count => _messages.Count;
+
         public INativeContext NativeContext { get; private set; }
 
         public ChatSettings Settings { get; private set; }
 
-        public ChatMessage ReadResponse()
+        public ChatMessage this[int index] => _messages[index];
+
+        private void RefreshContext()
         {
             NativeContext.SetBufferPointer(0);
 
@@ -34,7 +36,14 @@ namespace LlamaNative.Chat.Models
                 NativeContext.Write(Settings.BeginText);
             }
 
-            foreach (ChatMessage message in _messages)
+            List<ChatMessage>? messages = null;
+
+            lock (_lock)
+            {
+                messages = [.. _messages];
+            }
+
+            foreach (ChatMessage message in messages)
             {
                 string messageContent = ToString(message);
 
@@ -43,10 +52,13 @@ namespace LlamaNative.Chat.Models
                 NativeContext.Write("\n");
             }
 
-            ChatMessage responseMessage = new()
-            {
-                User = Settings.BotName
-            };
+        }
+
+        public ChatMessage ReadResponse()
+        {
+            RefreshContext();
+           
+            ChatMessage responseMessage = new(Settings.BotName);
 
             NativeContext.Write(ToHeader(responseMessage));
 
@@ -58,18 +70,16 @@ namespace LlamaNative.Chat.Models
             {
                 Token token = NativeContext.SampleNext();
 
+                if (token.Value.Contains(Settings.ChatTemplate.EndMessage))
+                {
+                    break;
+                }
+
                 Console.Write(token);
                 response.Append(token);
 
                 NativeContext.Write(token);
                 NativeContext.Evaluate();
-
-                string responseContent = response.ToString();
-
-                if (responseContent.Contains(Settings.ChatTemplate.EndMessage))
-                {
-                    break;
-                }
             } while (true);
 
             responseMessage.Content = response.ToString();
@@ -77,9 +87,14 @@ namespace LlamaNative.Chat.Models
             return responseMessage;
         }
 
+        public void RemoveAt(int index) => _messages.RemoveAt(index);
+
         public void SendMessage(ChatMessage message)
         {
-            _messages.Add(message);
+            lock (_lock)
+            {
+                _messages.Add(message);
+            }
         }
 
         private string ToHeader(ChatMessage message)

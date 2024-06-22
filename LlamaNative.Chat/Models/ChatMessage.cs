@@ -1,15 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LlamaNative.Chat.Models
+﻿namespace LlamaNative.Chat.Models
 {
     public class ChatMessage
     {
-        public string? ExternalId { get; set; }  
+        public ChatMessage(string user, string? content, string? externalId = null)
+        {
+            ExternalId = externalId;
+            Content = content;
+            User = user ?? throw new ArgumentNullException(nameof(user));
+        }
+
+        public ChatMessage(string user)
+        {
+            User = user ?? throw new ArgumentNullException(nameof(user));
+        }
+
         public string? Content { get; set; }
-        public required string User { get; set; }
+
+        public string? ExternalId { get; set; }
+
+        public string User { get; set; }
     }
 }

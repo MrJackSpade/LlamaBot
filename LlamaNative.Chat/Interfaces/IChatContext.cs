@@ -9,7 +9,14 @@ namespace LlamaNative.Chat.Interfaces
 {
     public interface IChatContext
     {
+        int Count { get; }
+
+        ChatMessage this[int index] { get; }
+
         ChatMessage ReadResponse();
+
+        void RemoveAt(int index);
+
         void SendMessage(ChatMessage message);
     }
 }

@@ -7,12 +7,7 @@ namespace LlamaNative.Chat
     {
         public static void SendMessage(this IChatContext context, string username, string message, string? externalId = null)
         {
-            ChatMessage chatMessage = new()
-            {
-                User = username,
-                Content = message,
-                ExternalId = externalId
-            };
+            ChatMessage chatMessage = new(username, message, externalId);
 
             context.SendMessage(chatMessage);
         }
