@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.34928.147
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LlamaBot", "LlamaBot\LlamaBot.csproj", "{552D3377-70CB-4364-AC3C-C9F1576FDD90}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LlamaNative", "LlamaNative\LlamaNative.csproj", "{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlamaNative.Chat", "LlamaNative.Chat\LlamaNative.Chat.csproj", "{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug-Cpu|Any CPU = Debug-Cpu|Any CPU
+		Debug-Cuda|Any CPU = Debug-Cuda|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{552D3377-70CB-4364-AC3C-C9F1576FDD90}.Debug|Any CPU.ActiveCfg = Debug-Cpu|Any CPU
+		{552D3377-70CB-4364-AC3C-C9F1576FDD90}.Debug|Any CPU.Build.0 = Debug-Cpu|Any CPU
+		{552D3377-70CB-4364-AC3C-C9F1576FDD90}.Debug-Cpu|Any CPU.ActiveCfg = Debug-Cpu|Any CPU
+		{552D3377-70CB-4364-AC3C-C9F1576FDD90}.Debug-Cpu|Any CPU.Build.0 = Debug-Cpu|Any CPU
+		{552D3377-70CB-4364-AC3C-C9F1576FDD90}.Debug-Cuda|Any CPU.ActiveCfg = Debug-Cuda|Any CPU
+		{552D3377-70CB-4364-AC3C-C9F1576FDD90}.Debug-Cuda|Any CPU.Build.0 = Debug-Cuda|Any CPU
+		{552D3377-70CB-4364-AC3C-C9F1576FDD90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{552D3377-70CB-4364-AC3C-C9F1576FDD90}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}.Debug|Any CPU.ActiveCfg = Debug-Cpu|Any CPU
+		{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}.Debug|Any CPU.Build.0 = Debug-Cpu|Any CPU
+		{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}.Debug-Cpu|Any CPU.ActiveCfg = Debug-Cpu|Any CPU
+		{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}.Debug-Cpu|Any CPU.Build.0 = Debug-Cpu|Any CPU
+		{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}.Debug-Cuda|Any CPU.ActiveCfg = Debug-Cuda|Any CPU
+		{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}.Debug-Cuda|Any CPU.Build.0 = Debug-Cuda|Any CPU
+		{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8EAB41C-FC5F-4369-9606-27FFD7FA0CE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Debug-Cpu|Any CPU.ActiveCfg = Debug|Any CPU
+		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Debug-Cpu|Any CPU.Build.0 = Debug|Any CPU
+		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Debug-Cuda|Any CPU.ActiveCfg = Debug|Any CPU
+		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Debug-Cuda|Any CPU.Build.0 = Debug|Any CPU
+		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40D448C4-16C4-4805-A1DA-0EA0F7353BA5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {98F7E351-43C3-495B-86BA-907D1C1E1BED}
+	EndGlobalSection
+EndGlobal

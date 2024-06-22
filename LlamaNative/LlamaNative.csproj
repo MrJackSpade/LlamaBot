@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Configurations>Debug-Cuda;Release;Debug-Cpu</Configurations>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+		<DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Cuda|AnyCPU'">
+		<CopyCUDAFiles>true</CopyCUDAFiles>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Cpu|AnyCPU'">
+		<CopyCpuFiles>true</CopyCpuFiles>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(CopyCUDAFiles)' == 'true'">
+		<Content Include="Binaries\CUDA\llama.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>llama.dll</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\llama.ilk">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>llama.ilk</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\llama.pdb">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>llama.pdb</TargetPath>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(CopyCpuFiles)' == 'true'">
+		<Content Include="Binaries\Cpu\llama.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>llama.dll</TargetPath>
+		</Content>
+		<Content Include="Binaries\Cpu\llama.ilk">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>llama.ilk</TargetPath>
+		</Content>
+		<Content Include="Binaries\Cpu\llama.pdb">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>llama.pdb</TargetPath>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Binaries\Cpu\" />
+		<Folder Include="Exceptions\" />
+		<Folder Include="Tokens\Collections\" />
+	</ItemGroup>
+
+</Project>
