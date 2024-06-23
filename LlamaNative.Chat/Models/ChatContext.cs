@@ -19,11 +19,11 @@ namespace LlamaNative.Chat.Models
             NativeContext = nativeContext;
         }
 
-        public uint AvailableBuffer 
+        public uint AvailableBuffer
         {
             get
             {
-                TokenCollection contextTokens = NativeContext.Tokenize(ContextToString());
+                TokenCollection contextTokens = NativeContext.Tokenize(this.ContextToString());
 
                 return Settings.ContextSettings.ContextSize - contextTokens.Count;
             }
@@ -39,7 +39,7 @@ namespace LlamaNative.Chat.Models
 
         public string PredictNextUser()
         {
-            RefreshContext();
+            this.RefreshContext();
 
             NativeContext.Write(Settings.ChatTemplate.StartHeader);
 
@@ -66,7 +66,7 @@ namespace LlamaNative.Chat.Models
 
         public uint CalculateLength(ChatMessage message)
         {
-            TokenCollection tokenized = NativeContext.Tokenize(ToString(message));
+            TokenCollection tokenized = NativeContext.Tokenize(this.ToString(message));
 
             return tokenized.Count;
         }
@@ -89,11 +89,11 @@ namespace LlamaNative.Chat.Models
 
         public ChatMessage ReadResponse()
         {
-            RefreshContext();
+            this.RefreshContext();
 
             ChatMessage responseMessage = new(Settings.BotName);
 
-            NativeContext.Write(ToHeader(responseMessage));
+            NativeContext.Write(this.ToHeader(responseMessage));
 
             NativeContext.Evaluate();
 
@@ -148,7 +148,7 @@ namespace LlamaNative.Chat.Models
 
             foreach (ChatMessage message in messages)
             {
-                string messageContent = ToString(message);
+                string messageContent = this.ToString(message);
 
                 sb.Append(messageContent);
             }
@@ -160,7 +160,7 @@ namespace LlamaNative.Chat.Models
         {
             NativeContext.Clear();
 
-            NativeContext.Write(ContextToString());
+            NativeContext.Write(this.ContextToString());
         }
 
         private string ToHeader(ChatMessage message)
@@ -171,7 +171,7 @@ namespace LlamaNative.Chat.Models
             sb.Append(message.User);
             sb.Append(template.EndHeader);
 
-            if(template.HeaderNewline)
+            if (template.HeaderNewline)
             {
                 sb.Append('\n');
             }
@@ -183,7 +183,7 @@ namespace LlamaNative.Chat.Models
         {
             ChatTemplate template = Settings.ChatTemplate;
             StringBuilder sb = new();
-            sb.Append(ToHeader(message));
+            sb.Append(this.ToHeader(message));
             sb.Append(message.Content);
             sb.Append(template.EndMessage);
 

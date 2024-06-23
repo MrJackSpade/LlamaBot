@@ -67,7 +67,7 @@ namespace LlamaNative.Decode.Utils
 
         public void RemoveCacheToken(uint index)
         {
-            RemoveCacheTokens(index, index + 1);
+            this.RemoveCacheTokens(index, index + 1);
         }
 
         public void RemoveCacheTokens(uint startPos, uint endPos)

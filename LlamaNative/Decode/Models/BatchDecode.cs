@@ -31,7 +31,7 @@
                 IncludeLogits = includeLogits
             };
 
-            AddItem(item);
+            this.AddItem(item);
         }
 
         public void AddItem(BatchItem<T> item)

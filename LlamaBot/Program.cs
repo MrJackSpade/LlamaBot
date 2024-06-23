@@ -21,9 +21,9 @@ namespace LlamaBot
 
         private static RecursiveConfiguration<CharacterConfiguration> _recursiveConfiguration;
 
-        private static RecursiveConfigurationReader<CharacterConfiguration> _recursiveConfigurationReader = new("Characters");
+        private static readonly RecursiveConfigurationReader<CharacterConfiguration> _recursiveConfigurationReader = new("Characters");
 
-        private static DateTime _startTime = DateTime.Now;
+        private static readonly DateTime _startTime = DateTime.Now;
 
         private static CharacterConfiguration _characterConfiguration => _recursiveConfiguration?.Configuration;
 
