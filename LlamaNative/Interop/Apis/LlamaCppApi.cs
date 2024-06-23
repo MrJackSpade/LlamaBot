@@ -281,11 +281,28 @@ namespace LlamaNative.Interop
         /// <returns></returns>
         public static int Tokenize(SafeLlamaModelHandle ctx, string text, int[] tokens, int n_max_tokens, bool add_bos, bool special = false)
         {
-            return TokenizeNative(ctx, text, text.Length, tokens, n_max_tokens, add_bos, special);
+            byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(text);
+            int result;
+
+            unsafe
+            {
+                fixed (byte* pUtf8Bytes = utf8Bytes)
+                {
+                    result = TokenizeNative(ctx, (IntPtr)pUtf8Bytes, utf8Bytes.Length, tokens, n_max_tokens, add_bos, special);
+                }
+            }
+
+            return result;
         }
 
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_tokenize")]
-        public static extern int TokenizeNative(SafeLlamaModelHandle model, [MarshalAs(UnmanagedType.LPStr)] string text, int textLen, [Out] int[] tokens, int maxTokens, bool addBos, bool special);
+        public static extern int TokenizeNative(SafeLlamaModelHandle model,
+            IntPtr text,
+            int textLen,
+            [Out] int[] tokens,
+            int maxTokens,
+            bool addBos,
+            bool special);
 
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_token_nl")]
         public static extern int TokenNl();

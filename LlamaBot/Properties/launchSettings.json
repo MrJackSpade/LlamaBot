@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LlamaBot": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

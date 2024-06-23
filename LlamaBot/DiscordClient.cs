@@ -5,9 +5,12 @@ namespace LlamaBot
 {
     internal class DiscordClient
     {
-        private readonly DiscordSocketClient _discordSocketClient;
-        private readonly string _discordToken;
         public Func<SocketMessage, Task> MessageReceived;
+
+        private readonly DiscordSocketClient _discordSocketClient;
+
+        private readonly string _discordToken;
+
         public DiscordClient(string discordToken)
         {
             _discordToken = discordToken;
@@ -24,6 +27,8 @@ namespace LlamaBot
                 }
             };
         }
+
+        public IUser CurrentUser => _discordSocketClient.CurrentUser;
 
         public async Task Connect()
         {
