@@ -95,7 +95,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             //Softmax for backup
-            ApplyOriginalMinP(sampleContext);
+            this.ApplyOriginalMinP(sampleContext);
             SamplingApi.SoftMax(sampleContext.Candidates);
 
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
@@ -109,7 +109,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 string value = sampleContext.ModelHandle.TokenToPiece(token.Id);
             }
 
-            if (TryGetQueueAverage(out float average))
+            if (this.TryGetQueueAverage(out float average))
             {
                 float totalDiff = 0;
 
@@ -165,23 +165,23 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             SamplingApi.TailFree(sampleContext.Candidates, _settings.Tfs, 1);
 
-            int selectedToken = SelectToken(sampleContext, _settings.PreserveWordMinP, _settings.PreserveWordMaxP, out bool topOnly);
+            int selectedToken = this.SelectToken(sampleContext, _settings.PreserveWordMinP, _settings.PreserveWordMaxP, out bool topOnly);
 
             // Compute error as the difference between observed surprise and target surprise value
 
             StringBuilder candidateBuilder = new();
 
-            WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
+            this.WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
 
             if (!topOnly || _settings.FactorPreservedWords)
             {
-                if (TryGetQueueAverage(out average))
+                if (this.TryGetQueueAverage(out average))
                 {
-                    _target = CalculateNextTarget();
+                    _target = this.CalculateNextTarget();
                     _target = Math.Clamp(_target, _settings.MinTarget, _settings.MaxTarget);
                 }
 
-                Push(sampleContext.GetOriginalData(selectedToken));
+                this.Push(sampleContext.GetOriginalData(selectedToken));
             }
 
             Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {_target:0.00}; Avg: {average:0.00}; {candidateBuilder}");

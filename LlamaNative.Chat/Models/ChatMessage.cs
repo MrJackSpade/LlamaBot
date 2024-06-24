@@ -1,7 +1,12 @@
-﻿namespace LlamaNative.Chat.Models
+﻿using System.Text.Json.Serialization;
+
+namespace LlamaNative.Chat.Models
 {
     public class ChatMessage
     {
+        [JsonConstructor]
+        private ChatMessage() { }
+
         public ChatMessage(string user, string? content, string? externalId = null)
         {
             ExternalId = externalId;

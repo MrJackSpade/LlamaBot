@@ -4,8 +4,11 @@ namespace LlamaNative.Chat.Interfaces
 {
     public interface IChatContext
     {
-        int Count { get; }
         uint AvailableBuffer { get; }
+
+        int Count { get; }
+
+        int MessageCount { get; }
 
         ChatMessage this[int index] { get; }
 
@@ -15,11 +18,12 @@ namespace LlamaNative.Chat.Interfaces
 
         void Insert(int index, ChatMessage message);
 
+        string PredictNextUser();
+
         ChatMessage ReadResponse();
 
         void RemoveAt(int index);
 
         void SendMessage(ChatMessage message);
-        string PredictNextUser();
     }
 }

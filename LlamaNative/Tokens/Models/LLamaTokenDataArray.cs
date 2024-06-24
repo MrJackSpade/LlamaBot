@@ -50,7 +50,7 @@ namespace LlamaNative.Tokens.Models
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            return this.GetEnumerator();
         }
     }
 }

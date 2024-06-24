@@ -14,14 +14,14 @@ namespace LlamaNative.Logit.Collections
 
         private LogitRuleCollection(IEnumerable<LogitRule> toClone)
         {
-            Add(toClone);
+            this.Add(toClone);
         }
 
         public void Add(IEnumerable<LogitRule> rules)
         {
             foreach (LogitRule rule in rules)
             {
-                Add(rule);
+                this.Add(rule);
             }
         }
 
@@ -31,7 +31,7 @@ namespace LlamaNative.Logit.Collections
         {
             foreach (LogitRule rule in rules)
             {
-                AddOrUpdate(rule);
+                this.AddOrUpdate(rule);
             }
         }
 

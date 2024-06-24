@@ -45,9 +45,9 @@ namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
 
             int num_threads = Environment.ProcessorCount;
 
-            Range[] ranges = GetRanges(num_threads, candidates.Data.Length).ToArray();
+            Range[] ranges = this.GetRanges(num_threads, candidates.Data.Length).ToArray();
 
-            Parallel.ForEach(ranges, range => ProcessCandidates(candidates, test_array, minGroupLength, candidate_ids, range.Start.Value, range.End.Value, scalePerGroup, scalePerLength));
+            Parallel.ForEach(ranges, range => this.ProcessCandidates(candidates, test_array, minGroupLength, candidate_ids, range.Start.Value, range.End.Value, scalePerGroup, scalePerLength));
 
             candidates.Sorted = false;
         }

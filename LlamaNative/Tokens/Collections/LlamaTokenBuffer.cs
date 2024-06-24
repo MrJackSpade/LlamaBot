@@ -1,5 +1,4 @@
-﻿using Llama.Data.Models;
-using LlamaNative.Tokens.Models;
+﻿using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Tokens.Collections
 {
@@ -8,13 +7,13 @@ namespace LlamaNative.Tokens.Collections
         public TokenBuffer(uint fixedSize)
         {
             FixedSize = fixedSize;
-            Resize();
+            this.Resize();
         }
 
         public TokenBuffer(IEnumerable<Token> tokens, uint fixedSize) : base(tokens)
         {
             FixedSize = fixedSize;
-            Resize();
+            this.Resize();
         }
 
         public uint FixedSize { get; private set; } = 0;
@@ -32,7 +31,7 @@ namespace LlamaNative.Tokens.Collections
         public override void Clear()
         {
             base.Clear();
-            Resize();
+            this.Resize();
         }
 
         public void Resize()

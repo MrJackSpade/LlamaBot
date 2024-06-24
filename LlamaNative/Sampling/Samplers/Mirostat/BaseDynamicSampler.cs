@@ -65,7 +65,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 {
                     topOnly = true;
                 }
-                else if (IsWordCompletion(sampleContext.ModelHandle, topToken.id))
+                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.id))
                 {
                     if (topToken.p > preserveWordsMaxP)
                     {

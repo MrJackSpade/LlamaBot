@@ -19,13 +19,13 @@ namespace LlamaBot
 
         private static DiscordClient _discordClient;
 
-        private static RecursiveConfiguration<CharacterConfiguration> _recursiveConfiguration;
+        private static RecursiveConfiguration<Character> _recursiveConfiguration;
 
-        private static readonly RecursiveConfigurationReader<CharacterConfiguration> _recursiveConfigurationReader = new("Characters");
+        private static readonly RecursiveConfigurationReader<Character> _recursiveConfigurationReader = new("Characters");
 
         private static readonly DateTime _startTime = DateTime.Now;
 
-        private static CharacterConfiguration _characterConfiguration => _recursiveConfiguration?.Configuration;
+        private static Character _characterConfiguration => _recursiveConfiguration?.Configuration;
 
         public static async Task MessageReceived(SocketMessage message)
         {
@@ -56,7 +56,11 @@ namespace LlamaBot
         {
             _chatContext.Clear();
 
-            _chatContext.Insert(0, message.Author.Username, message.Content, message.Id);
+            InsertContextHeaders();
+
+            int messageStart = _chatContext.MessageCount;
+
+            _chatContext.Insert(messageStart, message.Author.Username, message.Content, message.Id);
 
             foreach (IMessage? historicalMessage in await message.Channel.GetMessagesAsync(message, Direction.Before, 100).FlattenAsync())
             {
@@ -67,15 +71,13 @@ namespace LlamaBot
                     displayName = _configuration.Character;
                 }
 
-                _chatContext.Insert(0, displayName, historicalMessage.Content, historicalMessage.Id);
+                _chatContext.Insert(messageStart, displayName, historicalMessage.Content, historicalMessage.Id);
 
                 if (_chatContext.AvailableBuffer < 1000)
                 {
                     break;
                 }
             }
-
-            InsertContextHeaders();
 
             string userPrediction = _chatContext.PredictNextUser();
 
