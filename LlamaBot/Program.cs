@@ -77,23 +77,23 @@ namespace LlamaBot
 
             InsertContextHeaders();
 
-            string userPrediction = _chatContext.PredictNextUser();
+            //string userPrediction = _chatContext.PredictNextUser();
 
-            Debug.WriteLine($"Next Predicted Character: {userPrediction}");
+            //Debug.WriteLine($"Next Predicted Character: {userPrediction}");
 
-            if (userPrediction == _configuration.Character)
-            {
-                using IDisposable typingState = message.Channel.EnterTypingState();
+            //if (userPrediction == _configuration.Character)
+            //{
+            using IDisposable typingState = message.Channel.EnterTypingState();
 
-                ChatMessage response = _chatContext.ReadResponse();
+            ChatMessage response = _chatContext.ReadResponse();
 
-                await message.Channel.SendMessageAsync(response.Content);
-            }
+            await message.Channel.SendMessageAsync(response.Content);
+            //}
         }
 
         private static void InsertContextHeaders()
         {
-            _chatContext.Insert(0, _characterConfiguration.ChatSettings.BotName, $"I am {_characterConfiguration.ChatSettings.BotName}. Here to assist you with your chat needs.");
+            //_chatContext.Insert(0, _characterConfiguration.ChatSettings.BotName, $"I am {_characterConfiguration.ChatSettings.BotName}. Here to assist you with your chat needs.");
 
             if (_recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText))
             {
@@ -103,7 +103,7 @@ namespace LlamaBot
 
         private static async Task Main(string[] args)
         {
-            _recursiveConfiguration = _recursiveConfigurationReader.Read("LlamaBot");
+            _recursiveConfiguration = _recursiveConfigurationReader.Read("Miyako");
 
             _chatContext = LlamaChatClient.LoadChatContext(_characterConfiguration.ChatSettings);
 
