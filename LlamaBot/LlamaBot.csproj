@@ -21,6 +21,6 @@
 		<ProjectReference Include="..\LlamaNative\LlamaNative.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Characters\Llama3\LlamaBot\" />
+		<Folder Include="Characters\Llama3\Miyako\" />
 	</ItemGroup>
 </Project>
