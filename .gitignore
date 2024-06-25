@@ -8,3 +8,6 @@ LlamaNative.Chat/bin/
 LlamaNative.Utils/obj/
 LlamaNative.Utils/bin/
 LlamaBot/Characters/
+LlamaNative/Binaries/CUDA/llama.dll
+LlamaNative/Binaries/CUDA/llama.ilk
+LlamaNative/Binaries/CUDA/llama.pdb
