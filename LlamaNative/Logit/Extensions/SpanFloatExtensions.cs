@@ -16,7 +16,7 @@ namespace LlamaNative.Logit.Extensions
 
         public static Dictionary<Token, float> Extract(this Span<float> source, IEnumerable<Token> list)
         {
-            Dictionary<Token, float> toReturn = new();
+            Dictionary<Token, float> toReturn = [];
 
             foreach (Token Token in list)
             {

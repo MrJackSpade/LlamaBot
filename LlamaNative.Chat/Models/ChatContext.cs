@@ -1,23 +1,19 @@
 ﻿using LlamaNative.Chat.Interfaces;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
+using LlamaNative.Models;
 using LlamaNative.Tokens.Collections;
+using LlamaNative.Tokens.Extensions;
 using LlamaNative.Tokens.Models;
 using System.Text;
 
 namespace LlamaNative.Chat.Models
 {
-    internal class ChatContext : IChatContext
+    internal class ChatContext(ChatSettings settings, INativeContext nativeContext) : IChatContext
     {
         private readonly object _lock = new();
 
         private readonly List<ChatMessage> _messages = [];
-
-        public ChatContext(ChatSettings settings, INativeContext nativeContext)
-        {
-            Settings = settings;
-            NativeContext = nativeContext;
-        }
 
         public uint AvailableBuffer
         {
@@ -25,48 +21,23 @@ namespace LlamaNative.Chat.Models
             {
                 TokenCollection contextTokens = NativeContext.Tokenize(this.ContextToString());
 
-                return Settings.ContextSettings.ContextSize - contextTokens.Count;
+                return NativeContext.Size - contextTokens.Count;
             }
         }
 
         public int Count => _messages.Count;
 
-        public INativeContext NativeContext { get; private set; }
+        public int MessageCount => _messages.Count;
 
-        public ChatSettings Settings { get; private set; }
+        public INativeContext NativeContext { get; private set; } = nativeContext;
+
+        public ChatSettings Settings { get; private set; } = settings;
 
         public ChatMessage this[int index] => _messages[index];
 
-        public string PredictNextUser()
-        {
-            this.RefreshContext();
-
-            NativeContext.Write(Settings.ChatTemplate.StartHeader);
-
-            NativeContext.Evaluate();
-
-            TokenCollection response = new();
-
-            do
-            {
-                Token token = NativeContext.SampleNext();
-
-                if (token.Value.Contains(Settings.ChatTemplate.EndHeader))
-                {
-                    break;
-                }
-
-                response.Append(token);
-                NativeContext.Write(token);
-                NativeContext.Evaluate();
-            } while (true);
-
-            return response.ToString();
-        }
-
         public uint CalculateLength(ChatMessage message)
         {
-            TokenCollection tokenized = NativeContext.Tokenize(this.ToString(message));
+            TokenCollection tokenized = NativeContext.Tokenize(Settings.ChatTemplate.ToString(message));
 
             return tokenized.Count;
         }
@@ -76,57 +47,6 @@ namespace LlamaNative.Chat.Models
             lock (_lock)
             {
                 _messages.Clear();
-            }
-        }
-
-        public void Insert(int index, ChatMessage message)
-        {
-            lock (_lock)
-            {
-                _messages.Insert(index, message);
-            }
-        }
-
-        public ChatMessage ReadResponse()
-        {
-            this.RefreshContext();
-
-            ChatMessage responseMessage = new(Settings.BotName);
-
-            NativeContext.Write(this.ToHeader(responseMessage));
-
-            NativeContext.Evaluate();
-
-            TokenCollection response = new();
-
-            do
-            {
-                Token token = NativeContext.SampleNext();
-
-                if (token.Value.Contains(Settings.ChatTemplate.EndMessage))
-                {
-                    break;
-                }
-
-                Console.Write(token);
-                response.Append(token);
-
-                NativeContext.Write(token);
-                NativeContext.Evaluate();
-            } while (true);
-
-            responseMessage.Content = response.ToString();
-
-            return responseMessage;
-        }
-
-        public void RemoveAt(int index) => _messages.RemoveAt(index);
-
-        public void SendMessage(ChatMessage message)
-        {
-            lock (_lock)
-            {
-                _messages.Add(message);
             }
         }
 
@@ -148,7 +68,7 @@ namespace LlamaNative.Chat.Models
 
             foreach (ChatMessage message in messages)
             {
-                string messageContent = this.ToString(message);
+                string messageContent = Settings.ChatTemplate.ToString(message);
 
                 sb.Append(messageContent);
             }
@@ -156,43 +76,146 @@ namespace LlamaNative.Chat.Models
             return sb.ToString();
         }
 
+        public void Insert(int index, ChatMessage message)
+        {
+            lock (_lock)
+            {
+                _messages.Insert(index, message);
+            }
+        }
+
+        public string PredictNextUser()
+        {
+            this.RefreshContext();
+
+            NativeContext.Write(Settings.ChatTemplate.StartHeader);
+
+            NativeContext.Evaluate();
+
+            TokenCollection response = new();
+
+            do
+            {
+                Token token = NativeContext.SelectToken();
+
+                if (token.Value.Contains(Settings.ChatTemplate.EndHeader))
+                {
+                    break;
+                }
+
+                response.Append(token);
+                NativeContext.Write(token);
+                NativeContext.Evaluate();
+            } while (true);
+
+            return response.ToString();
+        }
+
+        public IEnumerable<ChatMessage> ReadResponse()
+        {
+            this.RefreshContext();
+
+            NativeContext.Write(Settings.ChatTemplate.ToHeader(Settings.BotName));
+
+            NativeContext.Evaluate();
+
+            List<TokenSelection> response = new();
+
+            do
+            {
+                Token token = NativeContext.SelectToken(out SampleContext sampleContext);
+
+                if (token.Value.Contains(Settings.ChatTemplate.EndMessage))
+                {
+                    break;
+                }
+
+                TokenSelection selection = new(token);
+
+                if (Settings.SplitSettings != null)
+                { 
+                    selection.TokenData.Add(Settings.SplitSettings.MessageSplitId, sampleContext.OriginalCandidates.GetTokenData(Settings.SplitSettings.MessageSplitId));
+                }
+
+                Console.Write(token);
+                response.Add(selection);
+
+                NativeContext.Write(token);
+                NativeContext.Evaluate();
+            } while (true);
+
+            foreach (ChatMessage message in this.RecursiveSplit(response))
+            {
+                yield return message;
+            }
+        }
+
+        /// <summary>
+        /// Splits the response into messages based on the ChatSettings requirements
+        /// </summary>
+        /// <param name="tokenSelections"></param>
+        /// <returns></returns>
+        private IEnumerable<ChatMessage> RecursiveSplit(List<TokenSelection> tokenSelections)
+        {
+            int splitId = Settings.SplitSettings?.MessageSplitId ?? -1;
+            int messageMin = Settings.SplitSettings?.MessageMin ?? -1;
+
+            if (Settings.SplitSettings is null || splitId < 0 || messageMin < 0)
+            {
+                yield return new ChatMessage(Settings.BotName, String.Join("", tokenSelections.Select(s => s.SelectedToken)));
+                yield break;
+            }
+
+            if (tokenSelections.Count < Settings.SplitSettings.MessageMax)
+            {
+                yield return new ChatMessage(Settings.BotName, string.Join("", tokenSelections.Select(s => s.SelectedToken)));
+                yield break;
+            }
+
+            //Trim min off both sides to ensure we're not cutting too short
+            int skip = messageMin;
+            int take = tokenSelections.Count - (messageMin * 2);
+            List<TokenSelection> checkTokens = tokenSelections.Skip(skip).Take(take).ToList();  
+
+            TokenSelection maxSplitDetected = tokenSelections.OrderByDescending(t => t.TokenData[splitId].P).First();
+            if (maxSplitDetected.TokenData[splitId].P < splitId)
+            {
+                yield return new ChatMessage(Settings.BotName, string.Join("", tokenSelections.Select(s => s.SelectedToken)));
+                yield break;
+            }
+
+            int splitIndex = tokenSelections.IndexOf(maxSplitDetected);
+
+            List<TokenSelection> splitA = tokenSelections.Take(splitIndex).ToList();
+
+            List<TokenSelection> splitB = tokenSelections.Skip(splitIndex).ToList();
+
+            foreach (ChatMessage cma in this.RecursiveSplit(splitA))
+            {
+                yield return cma;
+            }
+
+            foreach (ChatMessage cmb in this.RecursiveSplit(splitB))
+            {
+                yield return cmb;
+            }
+        }
+
+        public void RemoveAt(int index) => _messages.RemoveAt(index);
+
+        public void SendMessage(ChatMessage message)
+        {
+            lock (_lock)
+            {
+                _messages.Add(message);
+            }
+        }
+
         private void RefreshContext()
         {
             NativeContext.Clear();
 
             NativeContext.Write(this.ContextToString());
-        }
-
-        private string ToHeader(ChatMessage message)
-        {
-            ChatTemplate template = Settings.ChatTemplate;
-            StringBuilder sb = new();
-            sb.Append(template.StartHeader);
-            sb.Append(message.User);
-            sb.Append(template.EndHeader);
-
-            if (template.HeaderNewline)
-            {
-                sb.Append('\n');
-            }
-
-            return sb.ToString();
-        }
-
-        private string ToString(ChatMessage message)
-        {
-            ChatTemplate template = Settings.ChatTemplate;
-            StringBuilder sb = new();
-            sb.Append(this.ToHeader(message));
-            sb.Append(message.Content);
-            sb.Append(template.EndMessage);
-
-            if (template.MessageNewline)
-            {
-                sb.Append('\n');
-            }
-
-            return sb.ToString();
         }
     }
 }

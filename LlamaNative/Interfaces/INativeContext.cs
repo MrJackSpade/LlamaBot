@@ -1,5 +1,6 @@
 ﻿using LlamaNative.Interop.Structs;
 using LlamaNative.Logit.Collections;
+using LlamaNative.Models;
 using LlamaNative.Tokens.Interfaces;
 using LlamaNative.Tokens.Models;
 
@@ -13,9 +14,9 @@ namespace LlamaNative.Interfaces
 
         IReadOnlyTokenCollection Evaluated { get; }
 
-        SafeLlamaContextHandle Handle { get; }
+        SafeContextHandle Handle { get; }
 
-        SafeLlamaModelHandle ModelHandle { get; }
+        SafeModelHandle ModelHandle { get; }
 
         uint Size { get; }
 
@@ -25,7 +26,7 @@ namespace LlamaNative.Interfaces
 
         void Evaluate(int count = -1);
 
-        Token SampleNext(LogitRuleCollection logitBias = null);
+        Token SelectToken(LogitRuleCollection? logitBias, out SampleContext context);
 
         void SetBufferPointer(uint startIndex);
 

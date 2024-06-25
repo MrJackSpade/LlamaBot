@@ -8,14 +8,9 @@ using System.ComponentModel.Design;
 
 namespace LlamaNative.Sampling.Samplers.Repetition
 {
-    public class RepetitionBlockingSampler : ISimpleSampler
+    public class RepetitionBlockingSampler(RepetitionBlockingSamplerSettings settings) : ISimpleSampler
     {
-        private readonly RepetitionBlockingSamplerSettings _settings;
-
-        public RepetitionBlockingSampler(RepetitionBlockingSamplerSettings settings)
-        {
-            _settings = settings;
-        }
+        private readonly RepetitionBlockingSamplerSettings _settings = settings;
 
         public void SampleNext(SampleContext sampleContext)
         {
@@ -33,8 +28,6 @@ namespace LlamaNative.Sampling.Samplers.Repetition
 
                     //Has to be blocked for real real
                     sampleContext.OriginalCandidates.SetLogit(distinctTokens[0], float.NegativeInfinity);
-
-
                 }
             }
         }

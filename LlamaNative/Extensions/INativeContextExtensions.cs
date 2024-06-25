@@ -2,6 +2,7 @@
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
 using LlamaNative.Logit.Collections;
+using LlamaNative.Models;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Models;
 
@@ -15,6 +16,21 @@ namespace LlamaNative.Extensions
             //{
             //    throw new Exception("First buffer token is not BOS");
             //}
+        }
+
+        public static Token SelectToken(this INativeContext handler)
+        {
+            return handler.SelectToken(null, out _);
+        }
+
+        public static Token SelectToken(this INativeContext handler, LogitRuleCollection logitBias)
+        {
+            return handler.SelectToken(logitBias, out _);
+        }
+
+        public static Token SelectToken(this INativeContext handler, out SampleContext context)
+        {
+            return handler.SelectToken(null, out context);
         }
 
         public static float[] GetEmbeddings(this INativeContext handler) => handler.Handle.GetEmbeddings();
@@ -34,7 +50,7 @@ namespace LlamaNative.Extensions
         {
             handler.Evaluate();
 
-            return handler.SampleNext(logitRules);
+            return handler.SelectToken(logitRules);
         }
 
         public static void SetBuffer(this INativeContext context, TokenCollection Tokens)
@@ -50,7 +66,7 @@ namespace LlamaNative.Extensions
 
             if (toSet.Length > context.Size)
             {
-                throw new ArgumentOutOfRangeException("Generated context state is larger than context size");
+                throw new InvalidOperationException("Generated context state is larger than context size");
             }
 
             context.Clear();

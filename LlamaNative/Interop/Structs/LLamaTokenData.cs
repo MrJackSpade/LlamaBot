@@ -3,28 +3,21 @@
 namespace LlamaNative.Interop.Structs
 {
     [StructLayout(LayoutKind.Sequential)]
-    public struct TokenData
+    public struct TokenData(int id, float logit, float p)
     {
         /// <summary>
         /// token id
         /// </summary>
-        public int id;
+        public int Id = id;
 
         /// <summary>
         /// log-odds of the token
         /// </summary>
-        public float logit;
+        public float Logit = logit;
 
         /// <summary>
         /// probability of the token
         /// </summary>
-        public float p;
-
-        public TokenData(int id, float logit, float p)
-        {
-            this.id = id;
-            this.logit = logit;
-            this.p = p;
-        }
+        public float P = p;
     }
 }

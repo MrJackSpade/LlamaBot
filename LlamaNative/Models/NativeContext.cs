@@ -5,7 +5,6 @@ using LlamaNative.Exceptions;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
 using LlamaNative.Interop.Apis;
-using LlamaNative.Interop.Settings;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Logit.Collections;
 using LlamaNative.Logit.Extensions;
@@ -28,7 +27,7 @@ namespace Llama.Core
 
         private readonly KvCacheState<Token> _kvCache;
 
-        private readonly LlamaContextSettings _settings;
+        private readonly ContextParams _settings;
 
         private readonly IList<ISimpleSampler> _simpleSamplers;
 
@@ -36,7 +35,7 @@ namespace Llama.Core
 
         private readonly ITokenSelector _tokenSelector;
 
-        public NativeContext(SafeLlamaContextHandle handle, SafeLlamaModelHandle modelHandle, LlamaContextSettings settings, ITokenSelector tokenSelector, IEnumerable<ISimpleSampler>? simpleSamplers = null)
+        public NativeContext(SafeContextHandle handle, SafeModelHandle modelHandle, ContextParams settings, ITokenSelector tokenSelector, IEnumerable<ISimpleSampler>? simpleSamplers = null)
         {
             ArgumentNullException.ThrowIfNull(handle);
             ArgumentNullException.ThrowIfNull(modelHandle);
@@ -45,9 +44,9 @@ namespace Llama.Core
 
             simpleSamplers ??= [];
 
-            this._embeddingStack = new float[settings.ContextSize, 8192];
+            this._embeddingStack = new float[settings.NCtx, 8192];
 
-            for (int x = 0; x < settings.ContextSize; x++)
+            for (int x = 0; x < settings.NCtx; x++)
             {
                 for (int y = 0; y < 8192; y++)
                 {
@@ -56,7 +55,7 @@ namespace Llama.Core
             }
 
             _synchronizer = new PointerArraySynchronizer<Token>(
-                new KvCacheShifter(settings.EvalThreadCount, settings.BatchSize, handle, modelHandle),
+                new KvCacheShifter(settings.NThreads, settings.NBatch, handle, modelHandle),
                 new Token(-1, null)
                 );
 
@@ -64,7 +63,7 @@ namespace Llama.Core
             this._simpleSamplers = simpleSamplers.ToList();
             this._tokenSelector = tokenSelector;
             this._settings = settings;
-            this.Size = this._settings.ContextSize;
+            this.Size = this._settings.NCtx;
 
             this._buffer = new PointerArray<Token>(this.Size);
             this._buffer.Fill(new Token(-1, null));
@@ -87,11 +86,11 @@ namespace Llama.Core
 
         public IReadOnlyTokenCollection Buffer => new TokenCollection(this._buffer);
 
-        public IReadOnlyTokenCollection Evaluated => new TokenCollection(this._kvCache);
+        public IReadOnlyTokenCollection Evaluated => new TokenCollection(this._kvCache).Trim();
 
-        public SafeLlamaContextHandle Handle { get; private set; }
+        public SafeContextHandle Handle { get; private set; }
 
-        public SafeLlamaModelHandle ModelHandle { get; }
+        public SafeModelHandle ModelHandle { get; }
 
         public uint Size { get; private set; }
 
@@ -114,9 +113,7 @@ namespace Llama.Core
             _synchronizer.Sync(_kvCache, _buffer);
         }
 
-        public Token SampleNext(LogitRuleCollection? logitRules = null) => this.SampleTokenRaw(logitRules);
-
-        public Token SampleTokenRaw(LogitRuleCollection? logitRules = null)
+        public virtual Token SelectToken(LogitRuleCollection? logitRules, out SampleContext sampleContext)
         {
             logitRules ??= [];
 
@@ -133,14 +130,14 @@ namespace Llama.Core
             SamplingApi.SoftMax(candidates);
             SamplingApi.SoftMax(originalCandidates);
 
-            if (candidates.Data.Span[0].logit == 0)
+            if (candidates.Data.Span[0].Logit == 0)
             {
                 Debugger.Break();
             }
 
-            Dictionary<Token, float> no_penalize = logits.Extract(this.NoPenalize());
+            Dictionary<Token, float> no_penalize = logits.Extract(NoPenalize());
 
-            SampleContext sampleContext = new()
+            sampleContext = new()
             {
                 Candidates = candidates,
                 ContextHandle = Handle,
@@ -187,7 +184,7 @@ namespace Llama.Core
             this._buffer[this._buffer.Pointer++] = token;
         }
 
-        private TokenCollection NoPenalize()
+        private static TokenCollection NoPenalize()
         {
             TokenCollection collection = new();
             return collection;

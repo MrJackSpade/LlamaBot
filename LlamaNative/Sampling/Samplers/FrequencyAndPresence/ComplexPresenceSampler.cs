@@ -8,14 +8,9 @@ using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
 {
-    public class ComplexPresenceSampler : ISimpleSampler
+    public class ComplexPresenceSampler(ComplexPresencePenaltySettings settings) : ISimpleSampler
     {
-        private readonly ComplexPresencePenaltySettings _settings;
-
-        public ComplexPresenceSampler(ComplexPresencePenaltySettings settings)
-        {
-            _settings = settings;
-        }
+        private readonly ComplexPresencePenaltySettings _settings = settings;
 
         public void SampleNext(SampleContext sampleContext)
         {
@@ -45,14 +40,14 @@ namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
 
             int num_threads = Environment.ProcessorCount;
 
-            Range[] ranges = this.GetRanges(num_threads, candidates.Data.Length).ToArray();
+            Range[] ranges = GetRanges(num_threads, candidates.Data.Length).ToArray();
 
-            Parallel.ForEach(ranges, range => this.ProcessCandidates(candidates, test_array, minGroupLength, candidate_ids, range.Start.Value, range.End.Value, scalePerGroup, scalePerLength));
+            Parallel.ForEach(ranges, range => ProcessCandidates(candidates, test_array, minGroupLength, candidate_ids, range.Start.Value, range.End.Value, scalePerGroup, scalePerLength));
 
             candidates.Sorted = false;
         }
 
-        private IEnumerable<Range> GetRanges(int chunks, int total)
+        private static IEnumerable<Range> GetRanges(int chunks, int total)
         {
             int l = total / chunks;
             int r = total % chunks;
@@ -73,7 +68,7 @@ namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
             }
         }
 
-        private void ProcessCandidates(TokenDataArray candidates, int[] test_array, int minGroupLength, HashSet<int> candidate_ids, int start, int end, float scalePerGroup, float scalePerLength)
+        private static void ProcessCandidates(TokenDataArray candidates, int[] test_array, int minGroupLength, HashSet<int> candidate_ids, int start, int end, float scalePerGroup, float scalePerLength)
         {
             Span<TokenData> candidateSpan = candidates.Data.Span;
 
@@ -81,7 +76,7 @@ namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
 
             for (int i = start; i < end; i++)
             {
-                int llama_token = candidateSpan[i].id;
+                int llama_token = candidateSpan[i].Id;
 
                 if (!candidate_ids.Contains(llama_token))
                 {
@@ -114,15 +109,15 @@ namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
                     float g_penalty = (float)Math.Pow(scalePerGroup, n_group);
                     float l_penalty = (float)Math.Pow(scalePerLength, n_len);
 
-                    if (candidateSpan[i].logit <= 0)
+                    if (candidateSpan[i].Logit <= 0)
                     {
-                        candidateSpan[i].logit *= g_penalty;
-                        candidateSpan[i].logit *= l_penalty;
+                        candidateSpan[i].Logit *= g_penalty;
+                        candidateSpan[i].Logit *= l_penalty;
                     }
                     else
                     {
-                        candidateSpan[i].logit /= g_penalty;
-                        candidateSpan[i].logit /= l_penalty;
+                        candidateSpan[i].Logit /= g_penalty;
+                        candidateSpan[i].Logit /= l_penalty;
                     }
                 }
             }

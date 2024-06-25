@@ -5,9 +5,11 @@ using LlamaNative.Chat;
 using LlamaNative.Chat.Extensions;
 using LlamaNative.Chat.Interfaces;
 using LlamaNative.Chat.Models;
+using LlamaNative.Sampling.Models;
+using LlamaNative.Sampling.Samplers.Repetition;
+using LlamaNative.Sampling.Settings;
 using LlamaNative.Utils;
 using Loxifi;
-using System.Diagnostics;
 
 namespace LlamaBot
 {
@@ -15,17 +17,39 @@ namespace LlamaBot
     {
         private static readonly Configuration _configuration = StaticConfiguration.Load<Configuration>();
 
-        private static IChatContext _chatContext;
-
-        private static DiscordClient _discordClient;
-
-        private static RecursiveConfiguration<Character> _recursiveConfiguration;
-
         private static readonly RecursiveConfigurationReader<Character> _recursiveConfigurationReader = new("Characters");
 
         private static readonly DateTime _startTime = DateTime.Now;
 
-        private static Character _characterConfiguration => _recursiveConfiguration?.Configuration;
+        private static IChatContext? _chatContext;
+
+        private static DiscordClient? _discordClient;
+
+        private static RecursiveConfiguration<Character>? _recursiveConfiguration;
+
+        private static Character? Character => _recursiveConfiguration?.Configuration;
+
+        private static ChatSettings ChatSettings => Character.ChatSettings;
+
+        public static string GetDisplayName(IUser user)
+        {
+            if (user.Id == _discordClient.CurrentUser.Id)
+            {
+                return ChatSettings.BotName;
+            }
+
+            if (Character.NameOverride.TryGetValue(user.Username, out var name))
+            {
+                return name;
+            }
+
+            if (user is IGuildUser guildUser)
+            {
+                return guildUser.DisplayName;
+            }
+
+            return user.Username;
+        }
 
         public static async Task MessageReceived(SocketMessage message)
         {
@@ -34,12 +58,21 @@ namespace LlamaBot
                 return;
             }
 
-            if (message.Channel is not SocketTextChannel socketTextChannel)
+            if (message.Channel is SocketTextChannel socketTextChannel)
             {
-                return;
+                if (!_configuration.ChannelIds.Contains(socketTextChannel.Id))
+                {
+                    return;
+                }
             }
-
-            if (!_configuration.ChannelIds.Contains(socketTextChannel.Id))
+            else if (message.Channel is SocketDMChannel socketDMChannel)
+            {
+                if (!_configuration.ChannelIds.Contains(socketDMChannel.Users.ToArray()[1].Id))
+                {
+                    return;
+                }
+            }
+            else
             {
                 return;
             }
@@ -54,24 +87,19 @@ namespace LlamaBot
 
         public static async Task ProcessMessage(SocketMessage message)
         {
+            Console.Clear();
+
             _chatContext.Clear();
 
             InsertContextHeaders();
 
             int messageStart = _chatContext.MessageCount;
 
-            _chatContext.Insert(messageStart, message.Author.Username, message.Content, message.Id);
+            _chatContext.Insert(messageStart, GetDisplayName(message.Author), message.Content, message.Id);
 
             foreach (IMessage? historicalMessage in await message.Channel.GetMessagesAsync(message, Direction.Before, 100).FlattenAsync())
             {
-                string displayName = historicalMessage.Author.Username;
-
-                if (historicalMessage.Author.Id == _discordClient.CurrentUser.Id)
-                {
-                    displayName = _configuration.Character;
-                }
-
-                _chatContext.Insert(messageStart, displayName, historicalMessage.Content, historicalMessage.Id);
+                _chatContext.Insert(messageStart, GetDisplayName(historicalMessage.Author), historicalMessage.Content, historicalMessage.Id);
 
                 if (_chatContext.AvailableBuffer < 1000)
                 {
@@ -79,45 +107,67 @@ namespace LlamaBot
                 }
             }
 
-            string userPrediction = _chatContext.PredictNextUser();
+            using IDisposable typingState = message.Channel.EnterTypingState();
 
-            Debug.WriteLine($"Next Predicted Character: {userPrediction}");
-
-            if (userPrediction == _configuration.Character)
+            foreach (ChatMessage cm in _chatContext.ReadResponse())
             {
-                using IDisposable typingState = message.Channel.EnterTypingState();
-
-                ChatMessage response = _chatContext.ReadResponse();
-
-                await message.Channel.SendMessageAsync(response.Content);
+                await message.Channel.SendMessageAsync(cm.Content);
             }
         }
 
-        private static void InsertContextHeaders()
+        private static void InitializeContext()
         {
-            _chatContext.Insert(0, _characterConfiguration.ChatSettings.BotName, $"I am {_characterConfiguration.ChatSettings.BotName}. Here to assist you with your chat needs.");
-
-            if (_recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText))
+            if (ChatSettings.ResponseStartBlock > 0)
             {
-                _chatContext.Insert(0, "System", systemText);
+                ChatSettings.SimpleSamplers.Add(
+                    new SamplerSetting(
+                        nameof(SubsequenceBlockingSampler),
+                        new SubsequenceBlockingSamplerSettings()
+                        {
+                            ResponseStartBlock = ChatSettings.ResponseStartBlock,
+                            SubSequence = ChatSettings.ChatTemplate.ToHeader(ChatSettings.BotName)
+                        }
+                    ));
             }
+
+            _chatContext = LlamaChatClient.LoadChatContext(Character.ChatSettings);
         }
 
-        private static async Task Main(string[] args)
+        private static async Task InitializeDiscordClient()
         {
-            _recursiveConfiguration = _recursiveConfigurationReader.Read("LlamaBot");
-
-            _chatContext = LlamaChatClient.LoadChatContext(_characterConfiguration.ChatSettings);
-
             _discordClient = new(_configuration.DiscordToken);
 
             Console.WriteLine("Connecting to Discord...");
 
             await _discordClient.Connect();
 
+            await _discordClient.SetUserName(_recursiveConfiguration.Configuration.ChatSettings.BotName);
+
             Console.WriteLine("Connected.");
 
             _discordClient.MessageReceived += MessageReceived;
+        }
+
+        private static void InsertContextHeaders()
+        {
+            if (_recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText))
+            {
+                _chatContext.SendMessage("System", systemText);
+            }
+
+            foreach (ChatMessage cm in Character.ChatMessages)
+            {
+                _chatContext.SendMessage(cm);
+            }
+        }
+
+        private static async Task Main(string[] args)
+        {
+            _recursiveConfiguration = _recursiveConfigurationReader.Read("Chie");
+
+            InitializeContext();
+
+            await InitializeDiscordClient();
 
             await Task.Delay(-1);
         }

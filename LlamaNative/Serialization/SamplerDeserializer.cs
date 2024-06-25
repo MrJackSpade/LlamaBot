@@ -1,12 +1,12 @@
 ﻿using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Models;
+using LlamaNative.Sampling.Samplers;
 using LlamaNative.Sampling.Samplers.FrequencyAndPresence;
 using LlamaNative.Sampling.Samplers.Mirostat;
 using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Samplers.Temperature;
-using LlamaNative.Sampling.Samplers;
 using System.Reflection;
 using System.Text.Json;
-using LlamaNative.Sampling.Models;
 
 namespace LlamaNative.Serialization
 {
@@ -26,11 +26,12 @@ namespace LlamaNative.Serialization
             RegisterSimple<MinPSampler>();
             RegisterSimple<TfsSampler>();
             RegisterSimple<RepetitionBlockingSampler>();
+            RegisterSimple<SubsequenceBlockingSampler>();
         }
 
-        public static T Construct<T>(this SamplerSetting samplerSetting)
+        public static object Construct(this SamplerSetting samplerSetting, Type t)
         {
-            foreach (ConstructorInfo ci in typeof(T).GetConstructors())
+            foreach (ConstructorInfo ci in t.GetConstructors())
             {
                 ParameterInfo[] parameters = ci.GetParameters();
 
@@ -41,9 +42,10 @@ namespace LlamaNative.Serialization
 
                 Type settingsType = parameters[0].ParameterType;
 
-                object settings = JsonSerializer.Deserialize(samplerSetting.Settings, settingsType)!;
+                object settings = JsonSerializer.Deserialize(samplerSetting.Settings, settingsType)
+                                  ?? Activator.CreateInstance(settingsType)!;
 
-                T sampler = (T)Activator.CreateInstance(typeof(T), [settings])!;
+                object sampler = Activator.CreateInstance(t, [settings])!;
 
                 return sampler;
             }
@@ -55,7 +57,7 @@ namespace LlamaNative.Serialization
         {
             if (_tokenSelectors.TryGetValue(samplerSetting.Type, out Type? selectorType))
             {
-                return (ITokenSelector)Activator.CreateInstance(selectorType)!;
+                return (ITokenSelector)samplerSetting.Construct(selectorType);
             }
 
             throw new NotImplementedException();
@@ -70,7 +72,7 @@ namespace LlamaNative.Serialization
         {
             if (_simpleSamplers.TryGetValue(samplerSetting.Type, out Type? samplerType))
             {
-                return (ISimpleSampler)Activator.CreateInstance(samplerType)!;
+                return (ISimpleSampler)samplerSetting.Construct(samplerType)!;
             }
 
             throw new NotImplementedException();

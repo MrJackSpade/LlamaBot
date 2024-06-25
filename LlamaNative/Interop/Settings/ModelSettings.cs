@@ -8,8 +8,8 @@ namespace LlamaNative.Interop.Settings
 
         public required string ModelPath { get; set; }
 
-        public bool UseMemoryLock { get; set; } = false;
+        public bool UseMemoryLock { get; set; } = true;
 
-        public bool UseMemoryMap { get; set; } = true;
+        public bool UseMemoryMap { get; set; } = false;
     }
 }

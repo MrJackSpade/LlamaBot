@@ -1,12 +1,13 @@
 ﻿using LlamaNative.Interop.Structs;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace LlamaNative.Interop
 {
     internal unsafe partial class LlamaCppApi
     {
-
 #if WINDOWS
+
         private const string LIBRARY_NAME = "llama";
 #else
         private const string LIBRARY_NAME = "libllama.so";
@@ -29,11 +30,12 @@ namespace LlamaNative.Interop
         /// <param name="path_base_model"></param>
         /// <param name="n_threads"></param>
         /// <returns>Returns 0 on success</returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_apply_lora_from_file")]
-        public static extern int ApplyLoraFromFile(SafeLlamaContextHandle ctx, string path_lora, string path_base_model, int n_threads);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_apply_lora_from_file", StringMarshalling = StringMarshalling.Utf8)]
+        public static partial int ApplyLoraFromFile(SafeContextHandle ctx, string path_lora, string path_base_model, int n_threads);
 
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_context_default_params")]
-        public static extern LlamaContextParams ContextDefaultParams();
+        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
+        public static extern ContextParams ContextDefaultParams();
 
         /// <summary>
         /// Copy all tokens that belong to the specified source sequence to another destination sequence.
@@ -41,8 +43,8 @@ namespace LlamaNative.Interop
         /// startPos < 0 : [0,  endPos]
         /// endPos < 0 : [startPos, inf)
         /// </summary>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_cp")]
-        public static extern void CopyCacheTokens(SafeLlamaContextHandle handle, int sourceSequenceId, int destinationSequenceId, int startPos, int endPos);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_cp")]
+        public static partial void CopyCacheTokens(SafeContextHandle handle, int sourceSequenceId, int destinationSequenceId, int startPos, int endPos);
 
         /// <summary>
         /// Copies the state to the specified destination address.
@@ -52,11 +54,11 @@ namespace LlamaNative.Interop
         /// <param name="ctx"></param>
         /// <param name="dest"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_copy_state_data")]
-        public static extern ulong CopyStateData(SafeLlamaContextHandle ctx, byte[] dest);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_copy_state_data")]
+        public static partial ulong CopyStateData(SafeContextHandle ctx, [Out] byte[] dest);
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_decode")]
-        public static extern int Decode(SafeLlamaContextHandle ctx, LlamaBatchNative batch);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_decode")]
+        public static partial int Decode(SafeContextHandle ctx, LlamaBatchNative batch);
 
         /// <summary>
         /// Run the llama inference to obtain the logits and probabilities for the next token.
@@ -67,30 +69,30 @@ namespace LlamaNative.Interop
         /// <param name="n_past">The number of tokens to use from previous eval calls</param>
         /// <param name="n_threads"></param>
         /// <returns>Returns 0 on success</returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_eval")]
-        public static extern int Eval(SafeLlamaContextHandle ctx, int[] tokens, int n_tokens, int n_past, int n_threads);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_eval")]
+        public static partial int Eval(SafeContextHandle ctx, [In] int[] tokens, int n_tokens, int n_past, int n_threads);
 
         /// <summary>
         /// Frees all allocated memory
         /// </summary>
         /// <param name="ctx"></param>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_free")]
-        public static extern void FreeContext(IntPtr ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_free")]
+        public static partial void FreeContext(IntPtr ctx);
 
         /// <summary>
         /// Frees all allocated memory
         /// </summary>
         /// <param name="ctx"></param>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_free_model")]
-        public static extern void FreeModel(IntPtr ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_free_model")]
+        public static partial void FreeModel(IntPtr ctx);
 
         /// <summary>
         /// Returns the number of tokens in the KV cache
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cache_token_count")]
-        public static extern int GetCacheTokenCount(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cache_token_count")]
+        public static partial int GetCacheTokenCount(SafeContextHandle ctx);
 
         /// <summary>
         /// Get the embeddings for the input
@@ -98,11 +100,11 @@ namespace LlamaNative.Interop
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_get_embeddings")]
-        public static extern float* GetEmbeddings(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_embeddings")]
+        public static partial float* GetEmbeddings(SafeContextHandle ctx);
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cache")]
-        public static extern IntPtr GetKvCache(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cache")]
+        public static partial IntPtr GetKvCache(SafeContextHandle ctx);
 
         /// <summary>
         /// Token logits obtained from the last call to llama_eval()
@@ -113,8 +115,8 @@ namespace LlamaNative.Interop
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_get_logits")]
-        public static extern float* GetLogits(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_logits")]
+        public static partial float* GetLogits(SafeContextHandle ctx);
 
         /// <summary>
         /// Returns the maximum size in bytes of the state (rng, logits, embedding
@@ -122,16 +124,16 @@ namespace LlamaNative.Interop
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_get_state_size")]
-        public static extern ulong GetStateSize(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_state_size")]
+        public static partial ulong GetStateSize(SafeContextHandle ctx);
 
         /// <summary>
         /// not great API - very likely to change.
         /// Initialize the llama + ggml backend
         /// Call once at the start of the program
         /// </summary>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_backend_init")]
-        public static extern void InitBackend(bool numa);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_backend_init")]
+        public static partial void InitBackend([MarshalAs(UnmanagedType.Bool)] bool numa);
 
         /// <summary>
         /// Various functions for loading a ggml llama model.
@@ -141,14 +143,15 @@ namespace LlamaNative.Interop
         /// <param name="path_model"></param>
         /// <param name="params_"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_init_from_file")]
-        public static extern IntPtr InitFromFile(string path_model, LlamaContextParams params_);
+        [DllImport(LIBRARY_NAME, EntryPoint = "llama_init_from_file", CharSet = CharSet.Unicode)]
+        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
+        public static extern IntPtr InitFromFile(string path_model, ContextParams params_);
 
         /// <summary>
         /// Removes all tokens that do not belong to the specified sequence.
         /// </summary>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_keep")]
-        public static extern void KeepCacheTokens(SafeLlamaContextHandle handle, int sequenceId);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_keep")]
+        public static partial void KeepCacheTokens(SafeContextHandle handle, int sequenceId);
 
         /// <summary>
         /// Various functions for loading a ggml llama model.
@@ -158,8 +161,9 @@ namespace LlamaNative.Interop
         /// <param name="path_model"></param>
         /// <param name="params_"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_load_model_from_file")]
-        public static extern IntPtr LoadModelFromFile(string path_model, LlamaModelParams params_);
+        [DllImport(LIBRARY_NAME, EntryPoint = "llama_load_model_from_file", CharSet = CharSet.Ansi)]
+        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
+        public static extern IntPtr LoadModelFromFile(string path_model, ModelParams params_);
 
         /// <summary>
         /// Load session file
@@ -170,23 +174,27 @@ namespace LlamaNative.Interop
         /// <param name="n_token_capacity"></param>
         /// <param name="n_token_count_out"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_load_session_file")]
-        public static extern bool LoadSessionFile(SafeLlamaContextHandle ctx, string path_session, int[] tokens_out, ulong n_token_capacity, ulong* n_token_count_out);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_load_session_file", StringMarshalling = StringMarshalling.Utf8)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool LoadSessionFile(SafeContextHandle ctx, string path_session, [Out] int[] tokens_out, ulong n_token_capacity, ulong* n_token_count_out);
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_mlock_supported")]
-        public static extern bool MlockSupported();
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_mlock_supported")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool MlockSupported();
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_mmap_supported")]
-        public static extern bool MmapSupported();
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_mmap_supported")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool MmapSupported();
 
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_model_default_params")]
-        public static extern LlamaModelParams ModelDefaultParams();
+        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
+        public static extern ModelParams ModelDefaultParams();
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_n_ctx")]
-        public static extern int NCtx(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_n_ctx")]
+        public static partial int NCtx(SafeContextHandle ctx);
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_n_embd")]
-        public static extern int NEmbd(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_n_embd")]
+        public static partial int NEmbd(SafeContextHandle ctx);
 
         /// <summary>
         /// Various functions for loading a ggml llama model.
@@ -197,31 +205,32 @@ namespace LlamaNative.Interop
         /// <param name="params_"></param>
         /// <returns></returns>
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_new_context_with_model")]
-        public static extern IntPtr NewContextWithModel(SafeLlamaModelHandle mdl, LlamaContextParams params_);
+        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
+        public static extern IntPtr NewContextWithModel(SafeModelHandle mdl, ContextParams params_);
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_n_vocab")]
-        public static extern int NVocab(SafeLlamaModelHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_n_vocab")]
+        public static partial int NVocab(SafeModelHandle ctx);
 
         /// <summary>
         /// Print system information
         /// </summary>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_print_system_info")]
-        public static extern IntPtr PrintSystemInfo();
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_print_system_info")]
+        public static partial IntPtr PrintSystemInfo();
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_print_timings")]
-        public static extern void PrintTimings(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_print_timings")]
+        public static partial void PrintTimings(SafeContextHandle ctx);
 
         /// <summary>
         /// Removes all tokens that belong to the specified sequence and have positions in [startPos, endPos)
         /// startPos < 0 : [0,  endPos]
         /// endPos < 0 : [startPos, inf)
         /// </summary>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_rm")]
-        public static extern void RemoveCacheTokens(SafeLlamaContextHandle handle, int sequenceId, int startPos, int endPos);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_rm")]
+        public static partial void RemoveCacheTokens(SafeContextHandle handle, int sequenceId, int startPos, int endPos);
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_reset_timings")]
-        public static extern void ResetTimings(SafeLlamaContextHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_reset_timings")]
+        public static partial void ResetTimings(SafeContextHandle ctx);
 
         /// <summary>
         /// Save session file
@@ -231,16 +240,17 @@ namespace LlamaNative.Interop
         /// <param name="tokens"></param>
         /// <param name="n_token_count"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_save_session_file")]
-        public static extern bool SaveSessionFile(SafeLlamaContextHandle ctx, string path_session, int[] tokens, ulong n_token_count);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_save_session_file", StringMarshalling = StringMarshalling.Utf8)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool SaveSessionFile(SafeContextHandle ctx, string path_session, [In] int[] tokens, ulong n_token_count);
 
         /// <summary>
         /// Sets the current rng seed.
         /// </summary>
         /// <param name="ctx"></param>
         /// <param name="seed"></param>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_set_rng_seed")]
-        public static extern void SetRngSeed(SafeLlamaContextHandle ctx, int seed);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_set_rng_seed")]
+        public static partial void SetRngSeed(SafeContextHandle ctx, int seed);
 
         /// <summary>
         /// Set the state reading from the specified address
@@ -249,8 +259,8 @@ namespace LlamaNative.Interop
         /// <param name="ctx"></param>
         /// <param name="src"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_set_state_data")]
-        public static extern ulong SetStateData(SafeLlamaContextHandle ctx, byte[] src);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_set_state_data")]
+        public static partial ulong SetStateData(SafeContextHandle ctx, [In] byte[] src);
 
         /// <summary>
         /// Adds relative position "delta" to all tokens that belong to the specified sequence and have positions in [startPos, endPos)
@@ -258,14 +268,14 @@ namespace LlamaNative.Interop
         /// startPos < 0 : [0,  endPos]
         /// endPos < 0 : [startPos, inf)
         /// </summary>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_add")]
-        public static extern void ShiftCacheTokens(SafeLlamaContextHandle handle, int sequenceId, int startPos, int endPos, int delta);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_add")]
+        public static partial void ShiftCacheTokens(SafeContextHandle handle, int sequenceId, int startPos, int endPos, int delta);
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_token_bos")]
-        public static extern int TokenBos();
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_bos")]
+        public static partial int TokenBos();
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_token_eos")]
-        public static extern int TokenEos();
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_eos")]
+        public static partial int TokenEos();
 
         /// <summary>
         /// Convert the provided text into tokens.
@@ -279,7 +289,7 @@ namespace LlamaNative.Interop
         /// <param name="n_max_tokens"></param>
         /// <param name="add_bos"></param>
         /// <returns></returns>
-        public static int Tokenize(SafeLlamaModelHandle ctx, string text, int[] tokens, int n_max_tokens, bool add_bos, bool special = false)
+        public static int Tokenize(SafeModelHandle ctx, string text, int[] tokens, int n_max_tokens, bool add_bos, bool special = false)
         {
             byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(text);
             int result;
@@ -295,20 +305,20 @@ namespace LlamaNative.Interop
             return result;
         }
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_tokenize")]
-        public static extern int TokenizeNative(SafeLlamaModelHandle model,
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_tokenize")]
+        public static partial int TokenizeNative(SafeModelHandle model,
             IntPtr text,
             int textLen,
             [Out] int[] tokens,
             int maxTokens,
-            bool addBos,
-            bool special);
+            [MarshalAs(UnmanagedType.Bool)] bool addBos,
+            [MarshalAs(UnmanagedType.Bool)] bool special);
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_token_nl")]
-        public static extern int TokenNl();
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_nl")]
+        public static partial int TokenNl();
 
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_token_to_piece", CharSet = CharSet.Ansi)]
-        public static extern int TokenToPiece(SafeLlamaModelHandle model, int token, [Out] char[] buf, int length);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_to_piece")]
+        public static partial int TokenToPiece(SafeModelHandle model, int token, [Out] byte[] buf, int length);
 
         /// <summary>
         /// Token Id -> String. Uses the vocabulary in the provided context
@@ -316,7 +326,7 @@ namespace LlamaNative.Interop
         /// <param name="ctx"></param>
         /// <param name="token"></param>
         /// <returns>Pointer to a string.</returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_token_get_text")]
-        public static extern IntPtr TokenToStr(SafeLlamaContextHandle ctx, int token);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_get_text")]
+        public static partial IntPtr TokenToStr(SafeContextHandle ctx, int token);
     }
 }

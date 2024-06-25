@@ -5,14 +5,9 @@ using LlamaNative.Sampling.Interfaces;
 
 namespace LlamaNative.Sampling.Samplers
 {
-    public class TfsSampler : ISimpleSampler
+    public class TfsSampler(TfsSamplerSettings temperatureSamplerSettings) : ISimpleSampler
     {
-        private readonly TfsSamplerSettings _settings;
-
-        public TfsSampler(TfsSamplerSettings temperatureSamplerSettings)
-        {
-            _settings = temperatureSamplerSettings;
-        }
+        private readonly TfsSamplerSettings _settings = temperatureSamplerSettings;
 
         public void SampleNext(SampleContext sampleContext)
         {

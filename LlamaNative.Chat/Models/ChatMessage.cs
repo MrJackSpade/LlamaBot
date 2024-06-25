@@ -4,9 +4,6 @@ namespace LlamaNative.Chat.Models
 {
     public class ChatMessage
     {
-        [JsonConstructor]
-        private ChatMessage() { }
-
         public ChatMessage(string user, string? content, string? externalId = null)
         {
             ExternalId = externalId;
@@ -18,6 +15,10 @@ namespace LlamaNative.Chat.Models
         {
             User = user ?? throw new ArgumentNullException(nameof(user));
         }
+
+        [JsonConstructor]
+        private ChatMessage()
+        { }
 
         public string? Content { get; set; }
 

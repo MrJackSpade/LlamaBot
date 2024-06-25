@@ -13,7 +13,7 @@ namespace LlamaNative.Sampling.Extensions
 
             for (int i = 0; i < candidates.Length; i++)
             {
-                if (candidates[i].id == tokenId)
+                if (candidates[i].Id == tokenId)
                 {
                     return candidates[i];
                 }
@@ -28,7 +28,7 @@ namespace LlamaNative.Sampling.Extensions
 
             for (ulong i = 0; i < ctx.OriginalCandidates.Size; i++)
             {
-                if (ctx.OriginalCandidates[i].id == tokenId)
+                if (ctx.OriginalCandidates[i].Id == tokenId)
                 {
                     tokenData = ctx.OriginalCandidates[i];
                     break;
@@ -39,16 +39,16 @@ namespace LlamaNative.Sampling.Extensions
 
             for (int i = 0; i < ctx.Candidates.Data.Length; i++)
             {
-                if (ctx.Candidates.Data.Span[i].id == tokenId)
+                if (ctx.Candidates.Data.Span[i].Id == tokenId)
                 {
                     newTokenData = ctx.Candidates.Data.Span[i];
                     break;
                 }
             }
 
-            Token token = ctx.GetToken(tokenData.id);
+            Token token = ctx.GetToken(tokenData.Id);
 
-            return $"{token.GetEscapedValue()} ({tokenData.p:0.00} => {newTokenData.p:0.00})";
+            return $"{token.GetEscapedValue()} ({tokenData.P:0.00} => {newTokenData.P:0.00})";
         }
 
         public static TokenData GetOriginalData(this SampleContext sampleContext, int tokenId)
@@ -57,7 +57,7 @@ namespace LlamaNative.Sampling.Extensions
 
             for (ulong i = 0; i < candidates.Size; i++)
             {
-                if (candidates[i].id == tokenId)
+                if (candidates[i].Id == tokenId)
                 {
                     return candidates[i];
                 }
@@ -70,9 +70,9 @@ namespace LlamaNative.Sampling.Extensions
         {
             foreach (TokenData ltd in context.OriginalCandidates)
             {
-                if (ltd.id == tokenId)
+                if (ltd.Id == tokenId)
                 {
-                    return ltd.p;
+                    return ltd.P;
                 }
             }
 

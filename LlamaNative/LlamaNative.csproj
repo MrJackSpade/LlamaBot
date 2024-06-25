@@ -12,12 +12,16 @@
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Cuda|AnyCPU'">
 		<CopyCUDAFiles>true</CopyCUDAFiles>
+		<DebugType>full</DebugType>
+		<DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
+		<Optimize>false</Optimize>
 	</PropertyGroup>
-
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug-Cpu|AnyCPU'">
 		<CopyCpuFiles>true</CopyCpuFiles>
+		<DebugType>full</DebugType>
+		<DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
+		<Optimize>false</Optimize>
 	</PropertyGroup>
-
 	<ItemGroup Condition="'$(CopyCUDAFiles)' == 'true'">
 		<Content Include="Binaries\CUDA\llama.dll">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -32,7 +36,6 @@
 			<TargetPath>llama.pdb</TargetPath>
 		</Content>
 	</ItemGroup>
-
 	<ItemGroup Condition="'$(CopyCpuFiles)' == 'true'">
 		<Content Include="Binaries\Cpu\llama.dll">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -47,11 +50,12 @@
 			<TargetPath>llama.pdb</TargetPath>
 		</Content>
 	</ItemGroup>
-
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+	  <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -Command &quot;Get-ChildItem -Path '$(ProjectDir)' -Filter '*.zip' -Recurse | ForEach-Object { Expand-Archive -Path $_.FullName -DestinationPath $_.DirectoryName -Force }&quot;" />
+	</Target>
 	<ItemGroup>
-		<Folder Include="Binaries\Cpu\" />
-		<Folder Include="Exceptions\" />
-		<Folder Include="Tokens\Collections\" />
+	  <None Remove="Binaries\CUDA\llama.dll.zip" />
+	  <None Remove="Binaries\CUDA\llama.ilk.zip" />
+	  <None Remove="Binaries\CUDA\llama.pdb.zip" />
 	</ItemGroup>
-
 </Project>

@@ -18,19 +18,19 @@ namespace LlamaNative.Apis
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
-        public static int Decode(SafeLlamaContextHandle handle, BatchDecode<int> batch, uint maxBatchSize)
+        public static int Decode(SafeContextHandle handle, BatchDecode<int> batch, uint maxBatchSize)
         {
             //for logging
             uint toDecode = (uint)batch.Items.Count;
             uint decoded = 0;
 
-            //if we have to reprocess a token thats AFTER our current token, the logits will be all fucked up
-            //when were done. We need to make SURE that the last token we process is what we originall expected
+            //if we have to reprocess a token that is AFTER our current token, the logits will be all fucked up
+            //when were done. We need to make SURE that the last token we process is what we original expected
             uint originalHighestPosition = batch.Items.Max(b => b.Position);
             uint currentHighestPosition = originalHighestPosition;
 
             //grab the items
-            List<BatchItem<int>> batchItems = batch.Items.ToList();
+            List<BatchItem<int>> batchItems = [.. batch.Items];
 
             if (batch.Embeddings != null)
             {
@@ -47,7 +47,7 @@ namespace LlamaNative.Apis
                 BatchDecode<int> thisBatch = new();
 
                 //Always process in order of position
-                batchItems = batchItems.OrderBy(b => b.Position).ToList();
+                batchItems = [.. batchItems.OrderBy(b => b.Position)];
 
                 //Our estimated batch size
                 uint thisBatchSize = Math.Min(maxBatchSize, (uint)batchItems.Count);
@@ -129,14 +129,14 @@ namespace LlamaNative.Apis
             return 0;
         }
 
-        public static int Eval(SafeLlamaContextHandle handle, int[] tokens, int length, uint evalPointer, int evalThreadCount)
+        public static int Eval(SafeContextHandle handle, int[] tokens, int length, uint evalPointer, int evalThreadCount)
         {
             Log(nameof(Eval), tokens, length, evalPointer, evalThreadCount);
 
             return LlamaCppApi.Eval(handle, tokens, length, (int)evalPointer, evalThreadCount);
         }
 
-        public static float[] GetEmbeddings(this SafeLlamaContextHandle handle)
+        public static float[] GetEmbeddings(this SafeContextHandle handle)
         {
             unsafe
             {
@@ -144,7 +144,7 @@ namespace LlamaNative.Apis
                 float* embeddings = LlamaCppApi.GetEmbeddings(handle);
                 if (embeddings == null)
                 {
-                    return Array.Empty<float>();
+                    return [];
                 }
 
                 Span<float> span = new(embeddings, n_embed);
@@ -154,27 +154,27 @@ namespace LlamaNative.Apis
             }
         }
 
-        public static Token[] GetEvaluated(SafeLlamaContextHandle context, SafeLlamaModelHandle model)
+        public static Token[] GetEvaluated(SafeContextHandle context, SafeModelHandle model)
         {
-            LlamaKvCell[] cells = GetKvCells(context);
+            KvCell[] cells = GetKvCells(context);
 
             Token[] evaluated = new Token[cells.Length];
 
-            Dictionary<int, List<CellDefinition>> cellDict = new();
+            Dictionary<int, List<CellDefinition>> cellDict = [];
 
             {
                 int i = 0;
-                foreach (LlamaKvCell cell in cells)
+                foreach (KvCell cell in cells)
                 {
-                    if (cell.pos == -1)
+                    if (cell.Pos == -1)
                     {
                         continue;
                     }
 
-                    if (!cellDict.TryGetValue(cell.pos, out List<CellDefinition>? cellColl))
+                    if (!cellDict.TryGetValue(cell.Pos, out List<CellDefinition>? cellColl))
                     {
-                        cellColl = new List<CellDefinition>();
-                        cellDict[cell.pos] = cellColl;
+                        cellColl = [];
+                        cellDict[cell.Pos] = cellColl;
                     }
 
                     cellColl.Add(new CellDefinition()
@@ -200,31 +200,31 @@ namespace LlamaNative.Apis
                 Debugger.Break();
             }
 
-            foreach (LlamaKvCell cell in cells)
+            foreach (KvCell cell in cells)
             {
                 Token token;
 
-                if (cell.pos < 0)
+                if (cell.Pos < 0)
                 {
                     continue;
                 }
 
-                if (cell.value == -1)
+                if (cell.Value == -1)
                 {
                     token = new Token(-1, null);
                 }
                 else
                 {
-                    token = new Token(cell.value, model.TokenToPiece(cell.value));
+                    token = new Token(cell.Value, model.TokenToPiece(cell.Value));
                 }
 
-                if (evaluated[cell.pos] != null)
+                if (evaluated[cell.Pos] != null)
                 {
                     //throw new InvalidOperationException("Can not double assign token");
                 }
                 else
                 {
-                    evaluated[cell.pos] = token;
+                    evaluated[cell.Pos] = token;
                 }
             }
 
@@ -239,41 +239,40 @@ namespace LlamaNative.Apis
             return evaluated;
         }
 
-        public static LlamaKvCache GetKvCache(SafeLlamaContextHandle context)
+        public static KvCache GetKvCache(SafeContextHandle context)
         {
             nint kvCachePtr = LlamaCppApi.GetKvCache(context);
-            return Marshal.PtrToStructure<LlamaKvCache>(kvCachePtr);
+            return Marshal.PtrToStructure<KvCache>(kvCachePtr);
         }
 
-        public static LlamaKvCell[] GetKvCells(SafeLlamaContextHandle context)
+        public static KvCell[] GetKvCells(SafeContextHandle context)
         {
-            LlamaKvCache cache = GetKvCache(context);
+            KvCache cache = GetKvCache(context);
 
             uint count = cache.Size;
 
-            LlamaKvCell[] cells = new LlamaKvCell[count];
+            KvCell[] cells = new KvCell[count];
 
-            int cellSize = Marshal.SizeOf<LlamaKvCell>();
+            int cellSize = Marshal.SizeOf<KvCell>();
 
             for (int i = 0; i < count; i++)
             {
-                cells[i] = Marshal.PtrToStructure<LlamaKvCell>(nint.Add(cache.CellsPointer, i * cellSize));
+                cells[i] = Marshal.PtrToStructure<KvCell>(nint.Add(cache.CellsPointer, i * cellSize));
             }
 
             return cells;
         }
 
-        public static unsafe Span<float> GetLogits(SafeLlamaContextHandle ctx, int length)
+        public static unsafe Span<float> GetLogits(SafeContextHandle ctx, int length)
         {
             float* logits = LlamaCppApi.GetLogits(ctx);
             return new Span<float>(logits, length);
         }
 
-        public static SafeLlamaContextHandle LoadContext(SafeLlamaModelHandle model, LlamaContextSettings contextSettings)
+        public static SafeContextHandle LoadContext(SafeModelHandle model, ContextSettings contextSettings, out ContextParams lparams)
         {
-            LlamaContextParams lparams = LlamaCppApi.ContextDefaultParams();
-
-            lparams.NCtx = contextSettings.ContextSize;
+            lparams = LlamaCppApi.ContextDefaultParams();
+            lparams.NCtx = contextSettings.ContextSize ?? lparams.NCtx;
             lparams.NBatch = contextSettings.BatchSize;
             lparams.Seed = contextSettings.Seed;
             lparams.TypeV = GgmlType.GGML_TYPE_F16;
@@ -291,15 +290,7 @@ namespace LlamaNative.Apis
             lparams.YarnExtFactor = contextSettings.YarnExtFactor;
             lparams.OffloadKQV = contextSettings.OffloadKQV;
             lparams.FlashAttn = true;
-
-            if (contextSettings.YarnOrigCtx == 0)
-            {
-                lparams.YarnOrigCtx = contextSettings.ContextSize;
-            }
-            else
-            {
-                lparams.YarnOrigCtx = contextSettings.YarnOrigCtx;
-            }
+            lparams.YarnOrigCtx = contextSettings.YarnOrigCtx ?? contextSettings.ContextSize ?? lparams.NCtx;
 
             nint ctx_ptr = LlamaCppApi.NewContextWithModel(model, lparams);
 
@@ -308,7 +299,7 @@ namespace LlamaNative.Apis
                 throw new LlamaCppRuntimeError($"Failed to load context.");
             }
 
-            SafeLlamaContextHandle ctx = new(ctx_ptr, model, LlamaCppApi.FreeContext);
+            SafeContextHandle ctx = new(ctx_ptr, LlamaCppApi.FreeContext);
 
             if (!string.IsNullOrEmpty(contextSettings.LoraAdapter))
             {
@@ -322,9 +313,9 @@ namespace LlamaNative.Apis
             return ctx;
         }
 
-        public static LlamaModel LoadModel(ModelSettings modelSettings)
+        public static Model LoadModel(ModelSettings modelSettings)
         {
-            LlamaModelParams lparams = LlamaCppApi.ModelDefaultParams();
+            ModelParams lparams = LlamaCppApi.ModelDefaultParams();
 
             lparams.NGpuLayers = modelSettings.GpuLayerCount;
             lparams.UseMmap = modelSettings.UseMemoryMap;
@@ -344,29 +335,29 @@ namespace LlamaNative.Apis
                 throw new LlamaCppRuntimeError($"Failed to load model {modelSettings.ModelPath}.");
             }
 
-            SafeLlamaModelHandle handle = new(model_ptr, LlamaCppApi.FreeModel);
+            SafeModelHandle handle = new(model_ptr, LlamaCppApi.FreeModel);
 
             int vocab = LlamaCppApi.NVocab(handle);
 
             return new(handle, vocab);
         }
 
-        public static int NVocab(SafeLlamaModelHandle handle)
+        public static int NVocab(SafeModelHandle handle)
         {
             return LlamaCppApi.NVocab(handle);
         }
 
-        public static void RemoveCacheToken(SafeLlamaContextHandle handle, uint pos)
+        public static void RemoveCacheToken(SafeContextHandle handle, uint pos)
         {
             LlamaCppApi.RemoveCacheTokens(handle, -1, (int)pos, (int)(pos + 1));
         }
 
-        public static void RemoveCacheTokens(SafeLlamaContextHandle handle, uint startPos, uint endPos)
+        public static void RemoveCacheTokens(SafeContextHandle handle, uint startPos, uint endPos)
         {
             LlamaCppApi.RemoveCacheTokens(handle, -1, (int)startPos, (int)endPos);
         }
 
-        public static void ShiftCacheTokens(SafeLlamaContextHandle handle, uint sequenceId, uint startPos, uint endPos, int delta)
+        public static void ShiftCacheTokens(SafeContextHandle handle, uint sequenceId, uint startPos, uint endPos, int delta)
         {
             LlamaCppApi.ShiftCacheTokens(handle, (int)sequenceId, (int)startPos, (int)endPos, delta);
         }
@@ -376,7 +367,7 @@ namespace LlamaNative.Apis
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
-        public static List<int> Tokenize(SafeLlamaModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
+        public static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
         {
             int cnt = Encoding.Unicode.GetByteCount(text + 1);
 
@@ -396,23 +387,22 @@ namespace LlamaNative.Apis
                 res = res.Skip(1).ToArray();
             }
 
-            return res.ToList();
+            return res;
         }
 
-        public static string TokenToPiece(this SafeLlamaModelHandle ctx, int token)
+        public static string TokenToPiece(this SafeModelHandle ctx, int token)
         {
             // Assuming a buffer size of 256, adjust as needed.
-            char[] buffer = new char[256];
+            byte[] buffer = new byte[256];
 
-            int result = 0;
-
+            int result;
             try
             {
                 result = LlamaCppApi.TokenToPiece(ctx, token, buffer, buffer.Length);
             }
             catch (Exception e)
             {
-                throw new InvalidOperationException($"An exception has occured converting the token '{token}' to a string", e);
+                throw new InvalidOperationException($"An exception has occurred converting the token '{token}' to a string", e);
             }
 
             // Assuming a successful result is indicated by a non-negative value.
@@ -422,7 +412,7 @@ namespace LlamaNative.Apis
                 throw new InvalidOperationException($"Failed to convert token to piece. Error code: {result}");
             }
 
-            string toReturn = new(buffer, 0, result);
+            string toReturn = System.Text.Encoding.UTF8.GetString(buffer, 0, result);
 
             byte[] dataAsWindows1252 = Encoding.GetEncoding("Windows-1252").GetBytes(toReturn);
 
@@ -433,12 +423,12 @@ namespace LlamaNative.Apis
 
         private static void Log(string method, params object[] args)
         {
-            args ??= Array.Empty<object>();
+            args ??= [];
 
             Debug.WriteLine($"{method}({string.Join(", ", args)})");
         }
 
-        private static int ProcessBatch(SafeLlamaContextHandle handle, BatchDecode<int> thisBatch)
+        private static int ProcessBatch(SafeContextHandle handle, BatchDecode<int> thisBatch)
         {
             int[] tokens = new int[thisBatch.Items.Count];
             int[] pos = new int[thisBatch.Items.Count];
@@ -451,7 +441,7 @@ namespace LlamaNative.Apis
                 nseq[i] = thisBatch.Items[i].SequenceIds.Length;
             }
 
-            LlamaBatchNative nbatch = new()
+            LlamaBatchNative nBatch = new()
             {
                 NTokens = thisBatch.Items.Count,
                 Token = Marshal.UnsafeAddrOfPinnedArrayElement(tokens, 0),
@@ -462,12 +452,12 @@ namespace LlamaNative.Apis
 
             if (thisBatch.Logits != null)
             {
-                nbatch.Logits = Marshal.UnsafeAddrOfPinnedArrayElement(thisBatch.Logits, 0);
+                nBatch.Logits = Marshal.UnsafeAddrOfPinnedArrayElement(thisBatch.Logits, 0);
             }
 
             if (thisBatch.Embeddings != null)
             {
-                nbatch.Embd = Marshal.UnsafeAddrOfPinnedArrayElement(thisBatch.Embeddings, 0);
+                nBatch.Embd = Marshal.UnsafeAddrOfPinnedArrayElement(thisBatch.Embeddings, 0);
             }
 
             // Allocate and set the unmanaged memory for the sequence IDs
@@ -480,19 +470,19 @@ namespace LlamaNative.Apis
                 Marshal.Copy(currentSeqIds, 0, unmanagedArray, currentSeqIds.Length);
 
                 // Set the pointer in the SeqId array
-                Marshal.WriteIntPtr(nbatch.SeqId, i * nint.Size, unmanagedArray);
+                Marshal.WriteIntPtr(nBatch.SeqId, i * nint.Size, unmanagedArray);
             }
 
             // Call the PInvoke method
-            int result = LlamaCppApi.Decode(handle, nbatch);
+            int result = LlamaCppApi.Decode(handle, nBatch);
 
             // Free the allocated memory
-            Marshal.FreeHGlobal(nbatch.SeqId);
+            Marshal.FreeHGlobal(nBatch.SeqId);
 
             return result;
         }
 
-        private static void SetTensors(ref LlamaModelParams param, float[] values)
+        private static void SetTensors(ref ModelParams param, float[] values)
         {
             // Populate your array.
             for (int i = 0; i < 16; i++)
@@ -510,11 +500,11 @@ namespace LlamaNative.Apis
             param.TensorSplit = tensorSplitPtr;
         }
 
-        private static bool TryFindBlock(SafeLlamaContextHandle handle, uint size, uint maxSize, out FoundBlock? foundBlock)
+        private static bool TryFindBlock(SafeContextHandle handle, uint size, uint maxSize, out FoundBlock? foundBlock)
         {
             foundBlock = null;
 
-            LlamaKvCell[] cells = GetKvCells(handle);
+            KvCell[] cells = GetKvCells(handle);
 
             List<uint> checkCells = new(cells.Length);
 
@@ -524,7 +514,7 @@ namespace LlamaNative.Apis
 
             for (uint i = 0; i < cells.Length; i++)
             {
-                if (cells[i].pos < 0)
+                if (cells[i].Pos < 0)
                 {
                     if (i <= endStart)
                     {
@@ -565,11 +555,11 @@ namespace LlamaNative.Apis
                         break;
                     }
 
-                    if (cells[offset].pos > 0)
+                    if (cells[offset].Pos > 0)
                     {
                         requiredSize++;
 
-                        thisBlock.AddReplacement(cells[offset].pos, cells[offset].value);
+                        thisBlock.AddReplacement(cells[offset].Pos, cells[offset].Value);
 
                         if (foundBlock != null && foundBlock.ActualSize <= thisBlock.ActualSize)
                         {
@@ -601,7 +591,7 @@ namespace LlamaNative.Apis
 
         private class CellDefinition
         {
-            public LlamaKvCell Cell { get; set; }
+            public KvCell Cell { get; set; }
 
             public int Index { get; set; }
         }

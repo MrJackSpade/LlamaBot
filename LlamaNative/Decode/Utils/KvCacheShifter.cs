@@ -7,23 +7,15 @@ using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Decode.Utils
 {
-    internal partial class KvCacheShifter : IArrayShifter<Token>
+    internal partial class KvCacheShifter(uint threadCount, uint batchSize, SafeContextHandle handle, SafeModelHandle modelHandle) : IArrayShifter<Token>
     {
-        private readonly uint _batchSize;
+        private readonly uint _batchSize = batchSize;
 
-        private readonly SafeLlamaContextHandle _handle;
+        private readonly SafeContextHandle _handle = handle;
 
-        private readonly SafeLlamaModelHandle _model;
+        private readonly SafeModelHandle _model = modelHandle;
 
-        private readonly uint _threadCount;
-
-        public KvCacheShifter(uint threadCount, uint batchSize, SafeLlamaContextHandle handle, SafeLlamaModelHandle modelHandle)
-        {
-            _threadCount = threadCount;
-            _handle = handle;
-            _model = modelHandle;
-            _batchSize = batchSize;
-        }
+        private readonly uint _threadCount = threadCount;
 
         public void CopyCacheTokens(uint sourceSequenceId, uint destinationSequenceId, uint startPos, uint endPos)
         {

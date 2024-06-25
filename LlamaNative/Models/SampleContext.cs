@@ -8,11 +8,11 @@ namespace LlamaNative.Models
     {
         public TokenDataArray Candidates { get; set; }
 
-        public SafeLlamaContextHandle ContextHandle { get; set; }
+        public SafeContextHandle ContextHandle { get; set; }
 
         public IReadOnlyTokenCollection ContextTokens { get; set; }
 
-        public SafeLlamaModelHandle ModelHandle { get; set; }
+        public SafeModelHandle ModelHandle { get; set; }
 
         public TokenDataArray OriginalCandidates { get; set; }
     }

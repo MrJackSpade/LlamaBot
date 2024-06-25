@@ -4,25 +4,19 @@ using LlamaNative.Decode.Models;
 
 namespace LlamaNative.Decode.Utils
 {
-    public partial class PointerArraySynchronizer<T>
+    public partial class PointerArraySynchronizer<T>(IArrayShifter<T> shifter, T defaultT)
     {
-        protected IArrayShifter<T> _arrayShifter;
+        protected IArrayShifter<T> _arrayShifter = shifter;
 
-        private readonly T _defaultToken;
-
-        public PointerArraySynchronizer(IArrayShifter<T> shifter, T defaultT)
-        {
-            _arrayShifter = shifter;
-            _defaultToken = defaultT;
-        }
+        private readonly T _defaultToken = defaultT;
 
         public void Sync(KvCacheState<T> kvCache, PointerArray<T> buffer)
         {
-            this.TranformCache(kvCache, buffer);
+            this.TransformCache(kvCache, buffer);
             this.DecodeNew(kvCache, buffer);
         }
 
-        public void TranformCache(KvCacheState<T> kvCache, PointerArray<T> buffer)
+        public void TransformCache(KvCacheState<T> kvCache, PointerArray<T> buffer)
         {
             uint matchCount = 0;
 

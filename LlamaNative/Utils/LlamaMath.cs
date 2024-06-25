@@ -4,19 +4,19 @@
     {
         public static int Min(int v1, int v2, params int[] values)
         {
-            List<int> othervalues = new()
-            {
+            List<int> otherValues =
+            [
                 v2
-            };
+            ];
 
             if (values != null)
             {
-                othervalues.AddRange(values);
+                otherValues.AddRange(values);
             }
 
             int returnValue = v1;
 
-            foreach (int v in othervalues)
+            foreach (int v in otherValues)
             {
                 returnValue = Math.Min(returnValue, v);
             }

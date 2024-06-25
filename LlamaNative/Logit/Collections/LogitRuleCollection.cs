@@ -6,7 +6,7 @@ namespace LlamaNative.Logit.Collections
 {
     public class LogitRuleCollection : IEnumerable<LogitRule>
     {
-        private readonly Dictionary<string, LogitRule> _keyValuePairs = new();
+        private readonly Dictionary<string, LogitRule> _keyValuePairs = [];
 
         public LogitRuleCollection()
         {
@@ -47,7 +47,7 @@ namespace LlamaNative.Logit.Collections
 
         public void Remove(LogitRuleLifetime lifetime)
         {
-            HashSet<string> toRemove = new();
+            HashSet<string> toRemove = [];
 
             foreach (LogitRule rule in this)
             {

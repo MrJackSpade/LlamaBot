@@ -33,9 +33,9 @@ namespace LlamaNative.Interop.Apis
             {
                 TokenData data = candidates.Data.Span[i];
 
-                if (data.p < min)
+                if (data.P < min)
                 {
-                    candidates.Data.Span[i].logit = float.NegativeInfinity;
+                    candidates.Data.Span[i].Logit = float.NegativeInfinity;
                 }
             }
 
@@ -48,11 +48,11 @@ namespace LlamaNative.Interop.Apis
             {
                 TokenData data = candidates.Data.Span[i];
 
-                if (data.id == tokenId)
+                if (data.Id == tokenId)
                 {
-                    if (data.p < min)
+                    if (data.P < min)
                     {
-                        candidates.Data.Span[i].logit = float.NegativeInfinity;
+                        candidates.Data.Span[i].Logit = float.NegativeInfinity;
                         candidates.Sorted = false;
                     }
 
@@ -96,7 +96,7 @@ namespace LlamaNative.Interop.Apis
             // Apply penalties
             for (int i = 0; i < (int)candidates.Size; i++)
             {
-                if (!tokenCount.TryGetValue(candidates.Data.Span[i].id, out FoundTokenData ftd))
+                if (!tokenCount.TryGetValue(candidates.Data.Span[i].Id, out FoundTokenData ftd))
                 {
                     continue;
                 }
@@ -106,19 +106,19 @@ namespace LlamaNative.Interop.Apis
                     float adjPenalty = CalculateAdjustedPenalty(penaltyRepeat, slopeRepeat, ftd.LastIndex, lastTokens.Length);
 
                     // Applying penalties
-                    if (candidates.Data.Span[i].logit <= 0)
+                    if (candidates.Data.Span[i].Logit <= 0)
                     {
-                        candidates.Data.Span[i].logit *= adjPenalty;
+                        candidates.Data.Span[i].Logit *= adjPenalty;
                     }
                     else
                     {
-                        candidates.Data.Span[i].logit /= adjPenalty;
+                        candidates.Data.Span[i].Logit /= adjPenalty;
                     }
                 }
 
                 float penalty = ftd.Count * penaltyFreq + (ftd.Count > 0 ? 1f : 0f) * penaltyPresent;
 
-                candidates.Data.Span[i].logit -= penalty;
+                candidates.Data.Span[i].Logit -= penalty;
             }
 
             candidates.Sorted = false;
@@ -144,7 +144,7 @@ namespace LlamaNative.Interop.Apis
                 // Using LINQ to sort, then copy back to the MemorySpan
                 TokenData[] sortedData = candidates.Data.ToArray();
 
-                Array.Sort(sortedData, (a, b) => b.logit.CompareTo(a.logit));
+                Array.Sort(sortedData, (a, b) => b.Logit.CompareTo(a.Logit));
 
                 for (int i = 0; i < sortedData.Length; i++)
                 {
@@ -154,27 +154,27 @@ namespace LlamaNative.Interop.Apis
                 candidates.Sorted = true;
             }
 
-            float maxLogit = candidateSpan[0].logit;
+            float maxLogit = candidateSpan[0].Logit;
 
             float cumSum = 0.0f;
 
             // Compute exponential values and cumulate sum
             for (int i = 0; i < candidateSpan.Length; i++)
             {
-                float expValue = (float)Math.Exp(candidateSpan[i].logit - maxLogit);
+                float expValue = (float)Math.Exp(candidateSpan[i].Logit - maxLogit);
 
-                candidateSpan[i].p = expValue;
+                candidateSpan[i].P = expValue;
 
                 if (float.IsNaN(expValue))
                 {
-                    throw new ArgumentOutOfRangeException();
+                    throw new InvalidOperationException();
                 }
 
                 cumSum += expValue;
 
                 if (float.IsNaN(cumSum))
                 {
-                    throw new ArgumentOutOfRangeException();
+                    throw new InvalidOperationException();
                 }
             }
 
@@ -184,38 +184,18 @@ namespace LlamaNative.Interop.Apis
             {
                 TokenData data = candidateSpan[i];
 
-                candidateSpan[i].p /= cumSum;
+                candidateSpan[i].P /= cumSum;
 
-                if (float.IsNaN(candidateSpan[i].p))
+                if (float.IsNaN(candidateSpan[i].P))
                 {
-                    throw new ArgumentOutOfRangeException();
+                    throw new InvalidOperationException();
                 }
 
                 index++;
             }
         }
 
-        public static void SuppressNonEnglish(SafeLlamaModelHandle handle, TokenDataArray candidates)
-        {
-            Parallel.For(
-                0,
-                candidates.Data.Length,
-                i =>
-            {
-                TokenData token = candidates.Data.Span[i];
-
-                bool isValid = TryTokenToPiece(handle, token.id, out string result) && !ContainsNonEnglishCharacters(result);
-
-                if (!isValid)
-                {
-                    candidates.Data.Span[i].logit = float.NegativeInfinity;
-                }
-            });
-
-            candidates.Sorted = false;
-        }
-
-        public static void SurpressNewline(SafeLlamaModelHandle handle, TokenDataArray candidates)
+        public static void SuppressNewline(SafeModelHandle handle, TokenDataArray candidates)
         {
             Parallel.For(
                 0,
@@ -224,13 +204,33 @@ namespace LlamaNative.Interop.Apis
                 {
                     TokenData token = candidates.Data.Span[i];
 
-                    bool isValid = TryTokenToPiece(handle, token.id, out string result) && (!result.Contains('\n') || result == "\n");
+                    bool isValid = TryTokenToPiece(handle, token.Id, out string result) && (!result.Contains('\n') || result == "\n");
 
                     if (!isValid)
                     {
-                        candidates.Data.Span[i].logit = float.NegativeInfinity;
+                        candidates.Data.Span[i].Logit = float.NegativeInfinity;
                     }
                 });
+
+            candidates.Sorted = false;
+        }
+
+        public static void SuppressNonEnglish(SafeModelHandle handle, TokenDataArray candidates)
+        {
+            Parallel.For(
+                0,
+                candidates.Data.Length,
+                i =>
+            {
+                TokenData token = candidates.Data.Span[i];
+
+                bool isValid = TryTokenToPiece(handle, token.Id, out string result) && !ContainsNonEnglishCharacters(result);
+
+                if (!isValid)
+                {
+                    candidates.Data.Span[i].Logit = float.NegativeInfinity;
+                }
+            });
 
             candidates.Sorted = false;
         }
@@ -249,15 +249,15 @@ namespace LlamaNative.Interop.Apis
                 return;
             }
 
-            SoftMax(candidates); // Assuming LlamaSampleSoftmax is defined elsewhere
+            SoftMax(candidates); // Assuming LlamaSampleSoftMax is defined elsewhere
 
-            List<float> firstDerivatives = new();
+            List<float> firstDerivatives = [];
             for (int i = 0; i < (int)(candidates.Size - 1); i++)
             {
-                firstDerivatives.Add(candidates.Data.Span[i].p - candidates.Data.Span[i + 1].p);
+                firstDerivatives.Add(candidates.Data.Span[i].P - candidates.Data.Span[i + 1].P);
             }
 
-            List<float> secondDerivatives = new();
+            List<float> secondDerivatives = [];
             for (int i = 0; i < firstDerivatives.Count - 1; i++)
             {
                 secondDerivatives.Add(firstDerivatives[i] - firstDerivatives[i + 1]);
@@ -286,7 +286,7 @@ namespace LlamaNative.Interop.Apis
 
             for (int i = lastIdx + 1; i < candidates.Data.Span.Length; i++)
             {
-                candidates.Data.Span[i].logit = float.NegativeInfinity;
+                candidates.Data.Span[i].Logit = float.NegativeInfinity;
             }
 
             candidates.Sorted = false;
@@ -296,7 +296,7 @@ namespace LlamaNative.Interop.Apis
         {
             for (int i = 0; i < candidates.Data.Length; i++)
             {
-                candidates.Data.Span[i].logit = candidates.Data.Span[i].logit / temp;
+                candidates.Data.Span[i].Logit = candidates.Data.Span[i].Logit / temp;
             }
 
             candidates.Sorted = false;
@@ -304,7 +304,7 @@ namespace LlamaNative.Interop.Apis
 
         public static void Temperature(TokenDataArray candidates, int index, float temp)
         {
-            candidates.Data.Span[index].logit = candidates.Data.Span[index].logit / temp;
+            candidates.Data.Span[index].Logit = candidates.Data.Span[index].Logit / temp;
 
             candidates.Sorted = false;
         }
@@ -315,7 +315,7 @@ namespace LlamaNative.Interop.Apis
         /// <param name="ctx"></param>
         /// <param name="candidates">Pointer to TokenDataArray</param>
         /// <returns></returns>
-        public static int Token(SafeLlamaContextHandle ctx, TokenDataArray candidates)
+        public static int Token(SafeContextHandle ctx, TokenDataArray candidates)
         {
             System.Buffers.MemoryHandle handle = candidates.Data.Pin();
             TokenDataArrayNative st = new()
@@ -337,7 +337,7 @@ namespace LlamaNative.Interop.Apis
         public static int TokenGreedy(TokenDataArray candidates)
         {
             SoftMax(candidates);
-            return candidates.Data.Span[0].id;
+            return candidates.Data.Span[0].Id;
         }
 
         /// <summary>
@@ -350,7 +350,7 @@ namespace LlamaNative.Interop.Apis
         /// <param name="m">The number of tokens considered in the estimation of `s_hat`. This is an arbitrary value that is used to calculate `s_hat`, which in turn helps to calculate the value of `k`. In the paper, they use `m = 100`, but you can experiment with different values to see how it affects the performance of the algorithm.</param>
         /// <param name="mu">Maximum cross-entropy. This value is initialized to be twice the target cross-entropy (`2 * tau`) and is updated in the algorithm based on the error between the target and observed surprisal.</param>
         /// <returns></returns>
-        public static int TokenMirostat(SafeLlamaContextHandle ctx, TokenDataArray candidates, float tau, float eta, int m, ref float mu)
+        public static int TokenMirostat(SafeContextHandle ctx, TokenDataArray candidates, float tau, float eta, int m, ref float mu)
         {
             System.Buffers.MemoryHandle handle = candidates.Data.Pin();
             TokenDataArrayNative st = new()
@@ -377,7 +377,7 @@ namespace LlamaNative.Interop.Apis
         /// <param name="eta">The learning rate used to update `mu` based on the error between the target and observed surprisal of the sampled word. A larger learning rate will cause `mu` to be updated more quickly, while a smaller learning rate will result in slower updates.</param>
         /// <param name="mu">Maximum cross-entropy. This value is initialized to be twice the target cross-entropy (`2 * tau`) and is updated in the algorithm based on the error between the target and observed surprisal.</param>
         /// <returns></returns>
-        public static int TokenMirostatV2(SafeLlamaContextHandle ctx, TokenDataArray candidates, float tau, float eta, ref float mu)
+        public static int TokenMirostatV2(SafeContextHandle ctx, TokenDataArray candidates, float tau, float eta, ref float mu)
         {
             System.Buffers.MemoryHandle handle = candidates.Data.Pin();
             TokenDataArrayNative st = new()
@@ -408,7 +408,7 @@ namespace LlamaNative.Interop.Apis
 
             for (int i = Math.Max(k, min_keep); i < candidates.Data.Span.Length; i++)
             {
-                candidates.Data.Span[i].logit = float.NegativeInfinity;
+                candidates.Data.Span[i].Logit = float.NegativeInfinity;
             }
 
             candidates.Size = (ulong)Math.Max(k, min_keep);
@@ -421,7 +421,7 @@ namespace LlamaNative.Interop.Apis
         /// <param name="candidates">Pointer to TokenDataArray</param>
         /// <param name="p"></param>
         /// <param name="min_keep"></param>
-        public static void TopP(SafeLlamaContextHandle ctx, TokenDataArray candidates, float p, ulong min_keep)
+        public static void TopP(SafeContextHandle ctx, TokenDataArray candidates, float p, ulong min_keep)
         {
             System.Buffers.MemoryHandle handle = candidates.Data.Pin();
             TokenDataArrayNative st = new()
@@ -444,7 +444,7 @@ namespace LlamaNative.Interop.Apis
         /// <param name="candidates">Pointer to TokenDataArray</param>
         /// <param name="p"></param>
         /// <param name="min_keep"></param>
-        public static void Typical(SafeLlamaContextHandle ctx, TokenDataArray candidates, float p, ulong min_keep)
+        public static void Typical(SafeContextHandle ctx, TokenDataArray candidates, float p, ulong min_keep)
         {
             System.Buffers.MemoryHandle handle = candidates.Data.Pin();
             TokenDataArrayNative st = new()
@@ -505,11 +505,9 @@ namespace LlamaNative.Interop.Apis
             }
         }
 
-        private static bool TryTokenToPiece(SafeLlamaModelHandle handle, int tokenId, out string result)
+        private static bool TryTokenToPiece(SafeModelHandle handle, int tokenId, out string? result)
         {
-            bool toReturn = false;
-
-            if (!_tokenToPieceCache.TryGetValue(handle.Handle, out ConcurrentDictionary<int, string> modelTokens))
+            if (!_tokenToPieceCache.TryGetValue(handle.Handle, out ConcurrentDictionary<int, string>? modelTokens))
             {
                 modelTokens = new ConcurrentDictionary<int, string>();
                 _tokenToPieceCache[handle.Handle] = modelTokens;

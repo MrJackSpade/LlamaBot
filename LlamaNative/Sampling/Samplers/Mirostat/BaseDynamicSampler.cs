@@ -8,23 +8,49 @@ using System.Text;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public abstract class BaseDynamicSampler
+    public abstract class BaseDynamicSampler(int queueSize, BaseDynamicSamplerSettings settings)
     {
         protected readonly Dictionary<int, bool> _isWords = [];
 
         protected readonly Queue<TokenData> SelectionHistory = new();
 
-        private readonly BaseDynamicSamplerSettings _settings;
+        private readonly BaseDynamicSamplerSettings _settings = settings;
 
-        public BaseDynamicSampler(int queueSize, BaseDynamicSamplerSettings settings)
+        protected int QueueSize { get; private set; } = queueSize;
+
+        protected static void WriteToLog(SampleContext sampleContext, Span<TokenData> candidateSpan, bool topOnly, int selectedToken, StringBuilder candidateBuilder)
         {
-            QueueSize = queueSize;
-            _settings = settings;
+            if (topOnly)
+            {
+                candidateBuilder.Append(" [SINGLE] [");
+                candidateBuilder.Append(sampleContext.GetDisplayString(selectedToken));
+            }
+            else
+            {
+                candidateBuilder.Append($"[{sampleContext.GetDisplayString(selectedToken)}] || ");
+
+                ulong displayCount = Math.Min(10, sampleContext.Candidates.Size);
+
+                for (int i = 0; i < (int)displayCount; i++)
+                {
+                    if (candidateSpan[i].P == 0)
+                    {
+                        break;
+                    }
+
+                    if (i > 0)
+                    {
+                        candidateBuilder.Append(" | ");
+                    }
+
+                    candidateBuilder.Append(sampleContext.GetDisplayString(candidateSpan[i].Id));
+                }
+            }
+
+            candidateBuilder.Append(']');
         }
 
-        protected int QueueSize { get; private set; }
-
-        protected bool IsWordCompletion(SafeLlamaModelHandle ctx, int id)
+        protected bool IsWordCompletion(SafeModelHandle ctx, int id)
         {
             if (!_isWords.TryGetValue(id, out bool word))
             {
@@ -46,7 +72,12 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
         }
 
-        protected int SelectToken(SampleContext sampleContext, float preserveWordsMinP, float preserveWordsMaxP, out bool topOnly)
+        protected int SelectToken(SampleContext sampleContext)
+        {
+            return this.SelectToken(sampleContext, out _);
+        }
+
+        protected int SelectToken(SampleContext sampleContext, out bool topOnly)
         {
             SamplingApi.SoftMax(sampleContext.Candidates);
             SamplingApi.SoftMax(sampleContext.OriginalCandidates);
@@ -55,30 +86,30 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             TokenData topToken = sampleContext.OriginalCandidates[0];
 
-            if (!_settings.GreedyExclude.Contains(topToken.id))
+            if (!_settings.GreedyExclude.Contains(topToken.Id))
             {
-                if (_settings.GreedyInclude.Contains(topToken.id))
+                if (_settings.GreedyInclude.Contains(topToken.Id))
                 {
                     topOnly = true;
                 }
-                else if (_settings.MaxPs.TryGetValue(topToken.id, out float maxP) && topToken.p >= maxP)
+                else if (_settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
                 {
                     topOnly = true;
                 }
-                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.id))
+                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id))
                 {
-                    if (topToken.p > preserveWordsMaxP)
+                    if (topToken.P > _settings.PreserveWordMaxP)
                     {
                         topOnly = true;
                     }
                     else
                     {
                         TokenData newTop = sampleContext.Candidates.Data.Span[0];
-                        //We cant min-p unless theres at least one leftover token, which isn't
+                        //We cant min-p unless there's at least one leftover token, which isn't
                         //true unless the top token has a high prob
-                        if (newTop.p > preserveWordsMinP)
+                        if (newTop.P > _settings.PreserveWordMinP)
                         {
-                            SamplingApi.MinP(sampleContext.Candidates, preserveWordsMinP);
+                            SamplingApi.MinP(sampleContext.Candidates, _settings.PreserveWordMinP);
                             SamplingApi.SoftMax(sampleContext.Candidates);
                         }
                     }
@@ -89,7 +120,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             if (topOnly)
             {
-                selectedToken = topToken.id;
+                selectedToken = topToken.Id;
             }
             else
             {
@@ -109,41 +140,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
             else
             {
-                avg = SelectionHistory.Average(l => l.p);
+                avg = SelectionHistory.Average(l => l.P);
                 return true;
             }
-        }
-
-        protected void WriteToLog(SampleContext sampleContext, Span<TokenData> candidateSpan, bool topOnly, int selectedToken, StringBuilder candidateBuilder)
-        {
-            if (topOnly)
-            {
-                candidateBuilder.Append(" [SINGLE] [");
-                candidateBuilder.Append(sampleContext.GetDisplayString(selectedToken));
-            }
-            else
-            {
-                candidateBuilder.Append($"[{sampleContext.GetDisplayString(selectedToken)}] || ");
-
-                ulong displayCount = Math.Min(10, sampleContext.Candidates.Size);
-
-                for (int i = 0; i < (int)displayCount; i++)
-                {
-                    if (candidateSpan[i].p == 0)
-                    {
-                        break;
-                    }
-
-                    if (i > 0)
-                    {
-                        candidateBuilder.Append(" | ");
-                    }
-
-                    candidateBuilder.Append(sampleContext.GetDisplayString(candidateSpan[i].id));
-                }
-            }
-
-            candidateBuilder.Append(']');
         }
     }
 }

@@ -6,6 +6,16 @@
 		<Nullable>enable</Nullable>
 		<Configurations>Debug-Cuda;Release;Debug-Cpu</Configurations>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Cuda|AnyCPU'">
+		<DebugType>full</DebugType>
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+		<Optimize>false</Optimize>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Cpu|AnyCPU'">
+		<DebugType>full</DebugType>
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+		<Optimize>false</Optimize>
+	</PropertyGroup>
 	<ItemGroup>
 		<Content Include="Characters\**\*">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

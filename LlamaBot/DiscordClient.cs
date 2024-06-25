@@ -35,12 +35,21 @@ namespace LlamaBot
             TaskCompletionSource taskCompletionSource = new();
             _discordSocketClient.Ready += () =>
             {
-                taskCompletionSource.SetResult();
+                if (!taskCompletionSource.Task.IsCompleted)
+                {
+                    taskCompletionSource.SetResult();
+                }
+
                 return Task.CompletedTask;
             };
             await _discordSocketClient.LoginAsync(TokenType.Bot, _discordToken);
             await _discordSocketClient.StartAsync();
             await taskCompletionSource.Task;
+        }
+
+        internal async Task SetUserName(string botName)
+        {
+            await _discordSocketClient.CurrentUser.ModifyAsync(s => s.Username = botName);
         }
     }
 }

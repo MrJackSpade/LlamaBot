@@ -4,7 +4,7 @@
 
     public class BatchDecode<T>
     {
-        private List<BatchItem<T>> _items = new();
+        private List<BatchItem<T>> _items = [];
 
         public int Count => _items.Count;
 
@@ -25,7 +25,7 @@
         {
             BatchItem<T> item = new()
             {
-                SequenceIds = sequenceIds ?? new int[] { 0 },
+                SequenceIds = sequenceIds ?? [0],
                 Position = position,
                 Token = token,
                 IncludeLogits = includeLogits
@@ -37,7 +37,7 @@
         public void AddItem(BatchItem<T> item)
         {
             _items.Add(item);
-            _items = _items.OrderBy(i => i.Position).ToList();
+            _items = [.. _items.OrderBy(i => i.Position)];
         }
 
         public void Clear()

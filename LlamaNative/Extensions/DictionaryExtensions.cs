@@ -10,9 +10,9 @@
 
         public static T2 GetOrDefault<T1, T2>(this Dictionary<T1, T2> dic, T1 key, T2 defaultValue)
         {
-            if (dic.ContainsKey(key))
+            if (dic.TryGetValue(key, out T2? value))
             {
-                return dic[key];
+                return value;
             }
 
             return defaultValue;

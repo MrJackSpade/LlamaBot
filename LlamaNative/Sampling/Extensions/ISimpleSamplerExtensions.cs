@@ -7,7 +7,7 @@ namespace LlamaNative.Sampling.Extensions
     public static class ISimpleSamplerExtensions
     {
         [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, int tryTake) => new(collection, tryTake, new HashSet<int>(), new HashSet<int>());
+        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, int tryTake) => new(collection, tryTake, [], []);
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
         public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, int tryTake, HashSet<int> include, HashSet<int> exclude) => new(collection, tryTake, include, exclude);
@@ -36,7 +36,7 @@ namespace LlamaNative.Sampling.Extensions
             }
             else if (include.Count > 0)
             {
-                availableEnumerable = availableEnumerable.Where(t => include.Contains(t));
+                availableEnumerable = availableEnumerable.Where(include.Contains);
             }
 
             Ids = availableEnumerable.ToArray();

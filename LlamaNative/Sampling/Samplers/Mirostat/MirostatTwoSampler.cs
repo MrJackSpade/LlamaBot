@@ -5,14 +5,9 @@ using LlamaNative.Sampling.Interfaces;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public class MirostatTwoSampler : ITokenSelector
+    public class MirostatTwoSampler(MirostatSamplerSettings settings) : ITokenSelector
     {
-        private readonly MirostatSamplerSettings _settings;
-
-        public MirostatTwoSampler(MirostatSamplerSettings settings)
-        {
-            _settings = settings;
-        }
+        private readonly MirostatSamplerSettings _settings = settings;
 
         public int SampleNext(SampleContext sampleContext)
         {

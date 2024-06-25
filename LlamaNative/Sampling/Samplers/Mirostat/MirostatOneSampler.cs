@@ -8,19 +8,13 @@ using System.Diagnostics;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public class MirostatOneSampler : ITokenSelector
+    public class MirostatOneSampler(MirostatSamplerSettings settings) : ITokenSelector
     {
-        private readonly Dictionary<int, bool> _isWords = new();
+        private readonly Dictionary<int, bool> _isWords = [];
 
-        private readonly MirostatSamplerSettings _settings;
+        private readonly MirostatSamplerSettings _settings = settings;
 
-        private float _mu;
-
-        public MirostatOneSampler(MirostatSamplerSettings settings)
-        {
-            _settings = settings;
-            _mu = settings.InitialMu;
-        }
+        private float _mu = settings.InitialMu;
 
         public static int Clamp(float k)
         {
@@ -58,7 +52,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             for (int i = 0; i < m - 1 && i < (int)sampleContext.Candidates.Size - 1; i++)
             {
                 float ti = (float)Math.Log((i + 2) / (double)(i + 1));
-                float b_i = (float)Math.Log(candidateSpan[i].p / candidateSpan[i + 1].p);
+                float b_i = (float)Math.Log(candidateSpan[i].P / candidateSpan[i + 1].P);
                 sum_ti_bi += ti * b_i;
                 sum_ti_sq += ti * ti;
             }
@@ -79,7 +73,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             if (_settings.PreserveWords)
             {
                 top_x = SamplingApi.TokenGreedy(sampleContext.Candidates);
-                topOnly = !CheckIfWord(sampleContext.ModelHandle, top_x);
+                topOnly = !this.CheckIfWord(sampleContext.ModelHandle, top_x);
             }
 
             int x;
@@ -101,14 +95,14 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             for (int i = 0; i < (int)sampleContext.Candidates.Size; i++)
             {
-                if (sampleContext.Candidates.Data.Span[i].id == x)
+                if (sampleContext.Candidates.Data.Span[i].Id == x)
                 {
                     x_idx = i;
                     break;
                 }
             }
 
-            float observed_surprise = -(float)(Math.Log(sampleContext.Candidates.Data.Span[x_idx].p) / Math.Log(2));
+            float observed_surprise = -(float)(Math.Log(sampleContext.Candidates.Data.Span[x_idx].P) / Math.Log(2));
             float e = observed_surprise - tau;
 
             // Update mu using the learning rate and error
@@ -119,7 +113,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             return x;
         }
 
-        private bool CheckIfWord(SafeLlamaModelHandle ctx, int id)
+        private bool CheckIfWord(SafeModelHandle ctx, int id)
         {
             if (!_isWords.TryGetValue(id, out bool word))
             {

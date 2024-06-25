@@ -1,7 +1,6 @@
 ﻿using LlamaNative.Chat.Models;
 using LlamaNative.Interop.Settings;
-using LlamaNative.Samplers.Settings;
-using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Models;
 using LlamaNative.Sampling.Samplers.Temperature;
 
 namespace LlamaNative.Chat
@@ -10,16 +9,23 @@ namespace LlamaNative.Chat
     {
         public string BeginText { get; set; } = "";
 
-        public required string BotName { get; set; }
+        public string BotName { get; set; } = "LlamaBot";
 
         public ChatTemplate ChatTemplate { get; set; } = new ChatTemplate();
 
-        public LlamaContextSettings ContextSettings { get; set; } = new LlamaContextSettings();
+        public ContextSettings ContextSettings { get; set; } = new ContextSettings();
 
-        public required ModelSettings ModelSettings { get; set; }
+        public ModelSettings ModelSettings { get; set; }
 
-        public List<ISimpleSampler> SimpleSamplers { get; set; } = [];
+        /// <summary>
+        /// Forces the bot to vary its response by X number
+        /// </summary>
+        public int ResponseStartBlock { get; set; }
 
-        public ITokenSelector TokenSelector { get; set; } = new TemperatureSampler(new TemperatureSamplerSettings());
+        public List<SamplerSetting> SimpleSamplers { get; set; } = [];
+
+        public ChatSplitSettings? SplitSettings { get; set; }
+
+        public SamplerSetting TokenSelector { get; set; } = new SamplerSetting(nameof(TemperatureSampler));
     }
 }

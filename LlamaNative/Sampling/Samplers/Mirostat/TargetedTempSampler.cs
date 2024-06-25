@@ -1,12 +1,10 @@
 ﻿using Llama.Data.Models.Settings;
-using LlamaNative.Apis;
 using LlamaNative.Interop.Apis;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Tokens.Extensions;
-using LlamaNative.Tokens.Models;
 using System.Diagnostics;
 using System.Text;
 
@@ -32,28 +30,28 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         {
             SamplingApi.SoftMax(context.Candidates);
 
-            Dictionary<int, int> mapping = new();
+            Dictionary<int, int>? mapping = [];
 
             Span<TokenData> newData = context.Candidates.Data.Span;
 
             for (int i = 0; i < context.Candidates.Data.Length; i++)
             {
                 TokenData newToken = newData[i];
-                mapping.Add(newToken.id, i);
+                mapping.Add(newToken.Id, i);
             }
 
             foreach (TokenData token in context.OriginalCandidates)
             {
-                float minp = _settings.MinP;
+                float minP = _settings.MinP;
 
-                if (_settings.MinPs.TryGetValue(token.id, out float cminp))
+                if (_settings.MinPs.TryGetValue(token.Id, out float cminp))
                 {
-                    minp = Math.Max(minp, cminp);
+                    minP = Math.Max(minP, cminp);
                 }
 
-                if (token.p < minp)
+                if (token.P < minP)
                 {
-                    int newIndex = mapping[token.id];
+                    int newIndex = mapping[token.Id];
 
                     //Don't apply it to the most likely new token.
                     if (newIndex > 0)
@@ -72,7 +70,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             // Calculate the sum of the values excluding the first element
-            float sumExcludingFirst = SelectionHistory.Skip(1).Sum(l => l.p);
+            float sumExcludingFirst = SelectionHistory.Skip(1).Sum(l => l.P);
 
             // Calculate the next value needed to achieve the target average
             float nextValue = _settings.Target * QueueSize - sumExcludingFirst;
@@ -82,32 +80,25 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         public int SampleNext(SampleContext sampleContext)
         {
-            int ts = 0;
+            int? ts = 0;
 
             for (int i = 0; i < sampleContext.Candidates.Data.Length; i++)
             {
                 TokenData newToken = sampleContext.Candidates.Data.Span[i];
 
-                if (newToken.p > 0.001f)
+                if (newToken.P > 0.001f)
                 {
                     ts++;
                 }
             }
 
-            //Softmax for backup
+            //SoftMax for backup
             this.ApplyOriginalMinP(sampleContext);
             SamplingApi.SoftMax(sampleContext.Candidates);
 
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
 
             float sampleTemp = _settings.Temperature;
-
-            if (sampleContext.ContextTokens.Count > 0)
-            {
-                Token token = sampleContext.ContextTokens.Trim().Last();
-
-                string value = sampleContext.ModelHandle.TokenToPiece(token.Id);
-            }
 
             if (this.TryGetQueueAverage(out float average))
             {
@@ -124,12 +115,12 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 {
                     TokenData token = candidateSpan[i];
 
-                    if (token.p > _settings.MinP)
+                    if (token.P > _settings.MinP)
                     {
-                        c_min = Math.Min(token.p, c_min);
+                        c_min = Math.Min(token.P, c_min);
                     }
 
-                    c_max = Math.Max(token.p, c_max);
+                    c_max = Math.Max(token.P, c_max);
                 }
 
                 //clamp the target to the real range
@@ -141,7 +132,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 for (int i = 0; i < candidateSpan.Length; i++)
                 {
                     TokenData token = candidateSpan[i];
-                    totalDiff += Math.Abs(token.p - c_target);
+                    totalDiff += Math.Abs(token.P - c_target);
                 }
 
                 //Now calculate the proportion of the distance and apply scaling
@@ -149,7 +140,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 for (int i = 0; i < candidateSpan.Length; i++)
                 {
                     TokenData token = candidateSpan[i];
-                    float diff = token.p - c_target;
+                    float diff = token.P - c_target;
                     float absDiff = Math.Abs(diff);
                     float scaledDiff = absDiff * (float)Math.Exp(1 - _settings.Scale);
                     float perDiff = scaledDiff / scaledTotalDiff;
@@ -165,13 +156,13 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             SamplingApi.TailFree(sampleContext.Candidates, _settings.Tfs, 1);
 
-            int selectedToken = this.SelectToken(sampleContext, _settings.PreserveWordMinP, _settings.PreserveWordMaxP, out bool topOnly);
+            int selectedToken = this.SelectToken(sampleContext, out bool topOnly);
 
             // Compute error as the difference between observed surprise and target surprise value
 
-            StringBuilder candidateBuilder = new();
+            StringBuilder? candidateBuilder = new();
 
-            this.WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
+            WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
 
             if (!topOnly || _settings.FactorPreservedWords)
             {
@@ -187,9 +178,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {_target:0.00}; Avg: {average:0.00}; {candidateBuilder}");
 
             TokenData originalP = sampleContext.GetOriginalData(selectedToken);
-            TokenData current = sampleContext.GetData(selectedToken);
 
-            if (originalP.p < _settings.MinP)
+            if (originalP.P < _settings.MinP)
             {
                 Debug.WriteLine("Token below min-p selected");
             }

@@ -14,25 +14,25 @@ namespace LlamaNative
     {
         public static INativeContext LoadContext(
             ModelSettings modelSettings,
-            LlamaContextSettings contextSettings,
+            ContextSettings contextSettings,
             params ISimpleSampler[] simpleSamplers)
         {
-            return LoadContext(modelSettings, contextSettings, new TemperatureSampler(new TemperatureSamplerSettings()));
+            return LoadContext(modelSettings, contextSettings, new TemperatureSampler(new TemperatureSamplerSettings()), simpleSamplers);
         }
 
         public static INativeContext LoadContext(
             ModelSettings modelSettings,
-            LlamaContextSettings contextSettings,
+            ContextSettings contextSettings,
             ITokenSelector tokenSelector,
             params ISimpleSampler[] simpleSamplers
         )
         {
-            LlamaModel loadedModel = NativeApi.LoadModel(modelSettings);
-            SafeLlamaContextHandle loadedContext = NativeApi.LoadContext(loadedModel.Handle, contextSettings);
+            Model loadedModel = NativeApi.LoadModel(modelSettings);
+            SafeContextHandle loadedContext = NativeApi.LoadContext(loadedModel.Handle, contextSettings, out ContextParams lparams);
 
             return new NativeContext(loadedContext,
                                      loadedModel.Handle,
-                                     contextSettings,
+                                     lparams,
                                      tokenSelector,
                                      simpleSamplers);
         }

@@ -7,39 +7,34 @@ using LlamaNative.Tokens.Extensions;
 
 namespace LlamaNative.Sampling.Samplers
 {
-    public class MinPSampler : ISimpleSampler
+    public class MinPSampler(MinPSamplerSettings temperatureSamplerSettings) : ISimpleSampler
     {
-        private readonly MinPSamplerSettings _settings;
-
-        public MinPSampler(MinPSamplerSettings temperatureSamplerSettings)
-        {
-            _settings = temperatureSamplerSettings;
-        }
+        private readonly MinPSamplerSettings _settings = temperatureSamplerSettings;
 
         public void ApplyOriginalMinP(SampleContext context)
         {
-            Dictionary<int, int> mapping = new();
+            Dictionary<int, int> mapping = [];
 
             Span<TokenData> newData = context.Candidates.Data.Span;
 
             for (int i = 0; i < context.Candidates.Data.Length; i++)
             {
                 TokenData newToken = newData[i];
-                mapping.Add(newToken.id, i);
+                mapping.Add(newToken.Id, i);
             }
 
             foreach (TokenData token in context.OriginalCandidates)
             {
-                float minp = _settings.MinP;
+                float minP = _settings.MinP;
 
-                if (_settings.MinPs.TryGetValue(token.id, out float cminp))
+                if (_settings.MinPs.TryGetValue(token.Id, out float cminp))
                 {
-                    minp = Math.Max(minp, cminp);
+                    minP = Math.Max(minP, cminp);
                 }
 
-                if (token.p < minp)
+                if (token.P < minP)
                 {
-                    int newIndex = mapping[token.id];
+                    int newIndex = mapping[token.Id];
                     context.Candidates.SetLogitAtIndex(newIndex, float.NegativeInfinity);
                 }
             }
