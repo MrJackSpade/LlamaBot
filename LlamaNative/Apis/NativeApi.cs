@@ -414,11 +414,7 @@ namespace LlamaNative.Apis
 
             string toReturn = System.Text.Encoding.UTF8.GetString(buffer, 0, result);
 
-            byte[] dataAsWindows1252 = Encoding.GetEncoding("Windows-1252").GetBytes(toReturn);
-
-            string correctlyInterpretedString = Encoding.UTF8.GetString(dataAsWindows1252);
-
-            return correctlyInterpretedString;
+            return toReturn;
         }
 
         private static void Log(string method, params object[] args)
