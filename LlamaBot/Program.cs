@@ -1,5 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using LlamaBot.Discord;
+using LlamaBot.Discord.Commands;
+using LlamaBot.Discord.Extensions;
+using LlamaBot.Discord.Model;
 using LlamaBot.Extensions;
 using LlamaNative.Chat;
 using LlamaNative.Chat.Extensions;
@@ -20,6 +24,8 @@ namespace LlamaBot
         private static readonly RecursiveConfigurationReader<Character> _recursiveConfigurationReader = new("Characters");
 
         private static readonly DateTime _startTime = DateTime.Now;
+
+        private static readonly MetaData _metaData = StaticConfiguration.Load<MetaData>();
 
         private static IChatContext? _chatContext;
 
@@ -97,8 +103,25 @@ namespace LlamaBot
 
             _chatContext.Insert(messageStart, GetDisplayName(message.Author), message.Content, message.Id);
 
+            DateTime stop = DateTime.MinValue;
+
+            if(_metaData.ClearValues.TryGetValue(message.Channel.Id, out DateTime savedStop))
+            {
+                stop = savedStop;
+            }
+
             foreach (IMessage? historicalMessage in await message.Channel.GetMessagesAsync(message, Direction.Before, 100).FlattenAsync())
             {
+                if(historicalMessage.CreatedAt.DateTime < stop)
+                {
+                    break;
+                }
+
+                if(historicalMessage.Type == MessageType.ApplicationCommand)
+                {
+                    continue;
+                }
+                
                 _chatContext.Insert(messageStart, GetDisplayName(historicalMessage.Author), historicalMessage.Content, historicalMessage.Id);
 
                 if (_chatContext.AvailableBuffer < 1000)
@@ -143,9 +166,24 @@ namespace LlamaBot
 
             await _discordClient.SetUserName(_recursiveConfiguration.Configuration.ChatSettings.BotName);
 
+            await _discordClient.AddCommand<ClearCommand>("clear", "clears the bots memory", OnClearCommand);
+
             Console.WriteLine("Connected.");
 
             _discordClient.MessageReceived += MessageReceived;
+        }
+
+        static async Task<CommandResult> OnClearCommand(ClearCommand clearCommand)
+        {
+            ulong channelId = clearCommand.Channel.Id;
+
+            DateTime triggered = clearCommand.Command.CreatedAt.DateTime;
+
+            _metaData.ClearValues[channelId] = triggered;
+
+            StaticConfiguration.Save(_metaData);
+
+            return CommandResult.Success("Memory Cleared");
         }
 
         private static void InsertContextHeaders()

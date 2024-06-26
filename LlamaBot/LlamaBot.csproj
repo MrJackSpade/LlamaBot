@@ -32,5 +32,6 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Folder Include="Characters\Llama3\Miyako\" />
+		<Folder Include="Discord\Exceptions\" />
 	</ItemGroup>
 </Project>
