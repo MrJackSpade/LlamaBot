@@ -148,9 +148,16 @@ namespace LlamaNative.Chat.Models
             {
                 string thisChunk = string.Join("", message.Select(s => s.SelectedToken.Value)).Trim();
 
-                foreach (string split in thisChunk.Split("\n\n"))
+                if (Settings?.SplitSettings?.DoubleNewlineSplit ?? false)
                 {
-                    yield return new ChatMessage(Settings.BotName, split);
+                    foreach (string split in thisChunk.Split("\n\n"))
+                    {
+                        yield return new ChatMessage(Settings.BotName, split);
+                    }
+                } 
+                else
+                {
+                    yield return new ChatMessage(Settings.BotName, thisChunk);
                 }
             }
         }

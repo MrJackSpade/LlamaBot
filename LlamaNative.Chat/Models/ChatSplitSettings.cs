@@ -15,5 +15,7 @@ namespace LlamaNative.Chat.Models
         public int MessageMax { get; set; } = 200;
 
         public int MessageMin { get; set; } = 10;
+
+        public bool DoubleNewlineSplit { get; set; } = true;
     }
 }
