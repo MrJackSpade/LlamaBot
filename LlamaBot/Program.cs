@@ -202,7 +202,7 @@ namespace LlamaBot
 
         private static async Task Main(string[] args)
         {
-            _recursiveConfiguration = _recursiveConfigurationReader.Read("Chie");
+            _recursiveConfiguration = _recursiveConfigurationReader.Read(args[0]);
 
             InitializeContext();
 
