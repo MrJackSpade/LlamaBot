@@ -60,7 +60,7 @@ namespace LlamaBot
 
         public static async Task MessageReceived(SocketMessage message)
         {
-            if (message.Author.Username == _discordClient.CurrentUser.Username)
+            if (message.Author.Id == _discordClient.CurrentUser.Id)
             {
                 return;
             }
