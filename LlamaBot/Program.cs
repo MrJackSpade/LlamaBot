@@ -165,7 +165,13 @@ namespace LlamaBot
 
             await _discordClient.Connect();
 
-            await _discordClient.SetUserName(_recursiveConfiguration.Configuration.ChatSettings.BotName);
+            try
+            {
+                await _discordClient.SetUserName(_recursiveConfiguration.Configuration.ChatSettings.BotName);
+            } catch(Exception e)
+            {
+                Console.WriteLine($"Failed to set username: {e.Message}");
+            }
 
             await _discordClient.AddCommand<ClearCommand>("clear", "clears the bots memory", OnClearCommand);
 
