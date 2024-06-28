@@ -10,7 +10,7 @@ namespace LlamaNative.Chat.Models
     {
         public int MessageSplitId { get; set; } = 0;
 
-        public int MessageMaxCharacters { get; set; } = 250;
+        public int MessageMaxCharacters { get; set; } = 500;
 
         public int MessageMinTokens { get; set; } = 10;
 
