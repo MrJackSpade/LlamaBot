@@ -51,7 +51,8 @@
 		</Content>
 	</ItemGroup>
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-	  <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -Command &quot;Get-ChildItem -Path '$(ProjectDir)' -Filter '*.zip' -Recurse | ForEach-Object { Expand-Archive -Path $_.FullName -DestinationPath $_.DirectoryName -Force }&quot;" />
+		<Exec Condition="'$(OS)' == 'Windows_NT'" Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -Command &quot;Get-ChildItem -Path '$(ProjectDir)' -Filter '*.zip' -Recurse | ForEach-Object { Expand-Archive -Path $_.FullName -DestinationPath $_.DirectoryName -Force }&quot;" />
+		<Exec Condition="'$(OS)' != 'Windows_NT'" Command="find '$(ProjectDir)' -name '*.zip' -execdir unzip -o {} \;" />
 	</Target>
 	<ItemGroup>
 	  <None Remove="Binaries\CUDA\llama.dll.zip" />
