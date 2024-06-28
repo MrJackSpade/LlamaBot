@@ -83,7 +83,9 @@ namespace LlamaNative.Utils
 
         public string Find(string configurationName)
         {
-            foreach (string directory in Directory.EnumerateDirectories(Path.Combine(AppContext.BaseDirectory, _root), "*", SearchOption.AllDirectories))
+            string searchPath = Path.Combine(AppContext.BaseDirectory, _root);
+
+            foreach (string directory in Directory.EnumerateDirectories(searchPath, "*", SearchOption.AllDirectories))
             {
                 if (new DirectoryInfo(directory).Name == configurationName)
                 {
@@ -91,7 +93,7 @@ namespace LlamaNative.Utils
                 }
             }
 
-            throw new DirectoryNotFoundException();
+            throw new DirectoryNotFoundException($"Configuration with name '{configurationName}' does not exist under '{searchPath}'");
         }
 
         public IEnumerable<string> FindFiles(string path, string fileName)
