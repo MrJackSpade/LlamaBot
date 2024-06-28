@@ -5,6 +5,7 @@ using LlamaBot.Discord.Commands;
 using LlamaBot.Discord.Extensions;
 using LlamaBot.Discord.Model;
 using LlamaBot.Extensions;
+using LlamaNative.Apis;
 using LlamaNative.Chat;
 using LlamaNative.Chat.Extensions;
 using LlamaNative.Chat.Interfaces;
@@ -44,7 +45,7 @@ namespace LlamaBot
                 return ChatSettings.BotName;
             }
 
-            if (Character.NameOverride.TryGetValue(user.Username, out var name))
+            if (Character.NameOverride.TryGetValue(user.Username, out string? name))
             {
                 return name;
             }

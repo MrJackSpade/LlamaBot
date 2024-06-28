@@ -170,8 +170,8 @@ namespace LlamaNative.Chat.Models
         private IEnumerable<List<TokenSelection>> RecursiveSplit(List<TokenSelection> tokenSelections)
         {
             int splitId = Settings.SplitSettings?.MessageSplitId ?? -1;
-            int messageMin = Settings.SplitSettings?.MessageMin ?? -1;
-            float minP = Settings.SplitSettings?.MessageSplitMinP ?? 0;
+            int messageMin = Settings.SplitSettings?.MessageMinTokens ?? -1;
+            int messageCurrent = string.Join("", tokenSelections.Select(s => s.SelectedToken.Value)).Length;
 
             if (Settings.SplitSettings is null || splitId < 0 || messageMin < 0)
             {
@@ -179,24 +179,19 @@ namespace LlamaNative.Chat.Models
                 yield break;
             }
 
-            if (tokenSelections.Count < Settings.SplitSettings.MessageMax)
+            if (messageCurrent < Settings.SplitSettings.MessageMaxCharacters)
             {
                 yield return tokenSelections;
                 yield break;
             }
 
             //Trim min off both sides to ensure we're not cutting too short
+            //TODO: Refactor this to use characters, like MAX
             int skip = messageMin;
             int take = tokenSelections.Count - (messageMin * 2);
             List<TokenSelection> checkTokens = tokenSelections.Skip(skip).Take(take).ToList();  
 
             TokenSelection maxSplitDetected = checkTokens.OrderByDescending(t => t.TokenData[splitId].P).First();
-
-            if (maxSplitDetected.TokenData[splitId].P < minP)
-            {
-                yield return tokenSelections;
-                yield break;
-            }
 
             int splitIndex = tokenSelections.IndexOf(maxSplitDetected);
 

@@ -199,6 +199,11 @@ namespace LlamaBot.Discord
             }
 
             await _discordClient.CreateGlobalApplicationCommandAsync(commandBuilder.Build());
+
+            foreach(IGuild guild in _discordClient.Guilds)
+            {
+                await guild.CreateApplicationCommandAsync(commandBuilder.Build());
+            }
         }
 
         private async Task SlashCommandHandler(SocketSlashCommand command)
