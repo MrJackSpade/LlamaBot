@@ -41,6 +41,10 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<TargetPath>llama.dll</TargetPath>
 		</Content>
+		<Content Include="Binaries\Cpu\libllama.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>libllama.so</TargetPath>
+		</Content>
 		<Content Include="Binaries\Cpu\llama.ilk">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<TargetPath>llama.ilk</TargetPath>
