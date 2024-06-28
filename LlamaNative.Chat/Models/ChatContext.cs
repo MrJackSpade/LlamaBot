@@ -1,6 +1,7 @@
 ﻿using LlamaNative.Chat.Interfaces;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
+using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Extensions;
@@ -133,8 +134,15 @@ namespace LlamaNative.Chat.Models
                 TokenSelection selection = new(token);
 
                 if (Settings.SplitSettings != null)
-                { 
-                    selection.TokenData.Add(Settings.SplitSettings.MessageSplitId, sampleContext.OriginalCandidates.GetTokenData(Settings.SplitSettings.MessageSplitId));
+                {
+                    try
+                    {
+                        TokenData data = sampleContext.OriginalCandidates.GetTokenData(Settings.SplitSettings.MessageSplitId);
+                        selection.TokenData.Add(Settings.SplitSettings.MessageSplitId, data);
+                    } catch(KeyNotFoundException kex)
+                    {
+                        Console.WriteLine($"Token with id {Settings.SplitSettings.MessageSplitId} not found");
+                    }
                 }
 
                 Console.Write(token);
