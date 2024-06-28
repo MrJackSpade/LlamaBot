@@ -161,7 +161,7 @@ namespace LlamaBot
         {
             _discordClient = new(_configuration.DiscordToken);
 
-            Console.WriteLine("Connecting to Discord...");
+            Console.WriteLine($"Connecting to Discord with token [{_configuration.DiscordToken}]...");
 
             await _discordClient.Connect();
 
