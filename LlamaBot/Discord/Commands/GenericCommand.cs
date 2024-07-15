@@ -3,9 +3,9 @@ using LlamaBot.Discord.Model;
 
 namespace LlamaBot.Discord.Commands
 {
-    internal class ClearCommand : BaseCommand
+    internal class GenericCommand : BaseCommand
     {
-        public ClearCommand(SocketSlashCommand command) : base(command)
+        public GenericCommand(SocketSlashCommand command) : base(command)
         {
         }
     }

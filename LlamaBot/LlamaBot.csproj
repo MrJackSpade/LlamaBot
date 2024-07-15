@@ -22,7 +22,10 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
-	  <None Remove="characters\llama3\llamabot\Configuration.json" />
+	  <Compile Remove="Characters\Llama3\Miyako\**" />
+	  <Content Remove="Characters\Llama3\Miyako\**" />
+	  <EmbeddedResource Remove="Characters\Llama3\Miyako\**" />
+	  <None Remove="Characters\Llama3\Miyako\**" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Discord.Net" Version="3.15.2" />
@@ -34,7 +37,6 @@
 		<ProjectReference Include="..\LlamaNative\LlamaNative.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Characters\Llama3\Miyako\" />
 		<Folder Include="Characters\Llama3\LlamaBot\" />
 		<Folder Include="Discord\Exceptions\" />
 	</ItemGroup>

@@ -89,10 +89,10 @@ namespace LlamaBot
                 return;
             }
 
-            await ProcessMessage(message);
+            await ProcessMessage(message.Channel);
         }
 
-        public static async Task ProcessMessage(SocketMessage message)
+        public static async Task ProcessMessage(ISocketMessageChannel channel)
         {
             Console.Clear();
 
@@ -102,16 +102,14 @@ namespace LlamaBot
 
             int messageStart = _chatContext.MessageCount;
 
-            _chatContext.Insert(messageStart, GetDisplayName(message.Author), message.Content, message.Id);
-
             DateTime stop = DateTime.MinValue;
 
-            if(_metaData.ClearValues.TryGetValue(message.Channel.Id, out DateTime savedStop))
+            if (_metaData.ClearValues.TryGetValue(channel.Id, out DateTime savedStop))
             {
                 stop = savedStop;
             }
 
-            foreach (IMessage? historicalMessage in await message.Channel.GetMessagesAsync(message, Direction.Before, 100).FlattenAsync())
+            foreach (IMessage? historicalMessage in await channel.GetMessagesAsync(1000).FlattenAsync())
             {
                 if(historicalMessage.CreatedAt.DateTime < stop)
                 {
@@ -131,11 +129,18 @@ namespace LlamaBot
                 }
             }
 
-            using IDisposable typingState = message.Channel.EnterTypingState();
+            using IDisposable typingState = channel.EnterTypingState();
 
             foreach (ChatMessage cm in _chatContext.ReadResponse())
             {
-                await message.Channel.SendMessageAsync(cm.Content);
+                if (string.IsNullOrEmpty(cm.Content))
+                {
+                    await channel.SendMessageAsync("[Empty Message]");
+                }
+                else
+                {
+                    await channel.SendMessageAsync(cm.Content);
+                }
             }
         }
 
@@ -173,14 +178,31 @@ namespace LlamaBot
                 Console.WriteLine($"Failed to set username: {e.Message}");
             }
 
-            await _discordClient.AddCommand<ClearCommand>("clear", "clears the bots memory", OnClearCommand);
+            await _discordClient.AddCommand<GenericCommand>("clear", "clears the bots memory", OnClearCommand);
+            await _discordClient.AddCommand<GenericCommand>("continue", "continues a response", OnContinueCommand);
+            await _discordClient.AddCommand<DeleteCommand>("delete", "deletes a message", OnDeleteCommand);
 
             Console.WriteLine("Connected.");
 
             _discordClient.MessageReceived += MessageReceived;
         }
 
-        static async Task<CommandResult> OnClearCommand(ClearCommand clearCommand)
+        static async Task<CommandResult> OnDeleteCommand(DeleteCommand deleteCommand)
+        {
+            if (deleteCommand.Channel is ISocketMessageChannel smc)
+            {
+                IMessage message = await smc.GetMessageAsync(deleteCommand.MessageId);
+                await message.DeleteAsync();
+                await deleteCommand.Command.DeleteOriginalResponseAsync();
+                return CommandResult.Success();
+            }
+            else
+            {
+                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
+            }
+        }
+
+        static async Task<CommandResult> OnClearCommand(GenericCommand clearCommand)
         {
             ulong channelId = clearCommand.Channel.Id;
 
@@ -191,6 +213,20 @@ namespace LlamaBot
             StaticConfiguration.Save(_metaData);
 
             return CommandResult.Success("Memory Cleared");
+        }
+
+        static async Task<CommandResult> OnContinueCommand(GenericCommand continueCommand)
+        {
+            if (continueCommand.Channel is ISocketMessageChannel smc)
+            {
+                await ProcessMessage(smc);
+                await continueCommand.Command.DeleteOriginalResponseAsync();
+                return CommandResult.Success();
+            }
+            else
+            {
+                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
+            }
         }
 
         private static void InsertContextHeaders()
