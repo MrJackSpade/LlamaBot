@@ -16,6 +16,8 @@ namespace LlamaNative.Chat.Models
 
         private readonly List<ChatMessage> _messages = [];
 
+        private bool _running = false;
+
         public uint AvailableBuffer
         {
             get
@@ -114,6 +116,8 @@ namespace LlamaNative.Chat.Models
 
         public IEnumerable<ChatMessage> ReadResponse()
         {
+            _running |= true;
+
             this.RefreshContext();
 
             NativeContext.Write(Settings.ChatTemplate.ToHeader(Settings.BotName));
@@ -124,6 +128,11 @@ namespace LlamaNative.Chat.Models
 
             do
             {
+                if (!_running)
+                {
+                    break;
+                }
+
                 Token token = NativeContext.SelectToken(out SampleContext sampleContext);
 
                 if (token.Value.Contains(Settings.ChatTemplate.EndMessage))
@@ -139,7 +148,8 @@ namespace LlamaNative.Chat.Models
                     {
                         TokenData data = sampleContext.OriginalCandidates.GetTokenData(Settings.SplitSettings.MessageSplitId);
                         selection.TokenData.Add(Settings.SplitSettings.MessageSplitId, data);
-                    } catch(KeyNotFoundException kex)
+                    }
+                    catch (KeyNotFoundException kex)
                     {
                         Console.WriteLine($"Token with id {Settings.SplitSettings.MessageSplitId} not found");
                     }
@@ -152,21 +162,62 @@ namespace LlamaNative.Chat.Models
                 NativeContext.Evaluate();
             } while (true);
 
-            foreach (List<TokenSelection> message in this.RecursiveSplit(response))
+            List<List<TokenSelection>> messageParts = this.RecursiveSplit(response).ToList();
+
+            List<string> toReturn = [];
+
+            for (int i = 0; i < messageParts.Count; i++)
             {
+                List<TokenSelection> message = messageParts[i];
+
                 string thisChunk = string.Join("", message.Select(s => s.SelectedToken.Value)).Trim();
 
                 if (Settings?.SplitSettings?.DoubleNewlineSplit ?? false)
                 {
                     foreach (string split in thisChunk.Split("\n\n"))
                     {
-                        yield return new ChatMessage(Settings.BotName, split);
+                        toReturn.Add(split);
                     }
-                } 
+                }
                 else
                 {
-                    yield return new ChatMessage(Settings.BotName, thisChunk);
+                    toReturn.Add(thisChunk);
                 }
+            }
+
+            if (!_running)
+            {
+                //If interrupted, append interrupt.
+                toReturn[^1] = toReturn[^1] + "-";
+            }
+            else
+            {
+                _running = false;
+            }
+
+            return toReturn.Select(s => new ChatMessage(Settings.BotName, s));
+        }
+
+        public void RemoveAt(int index) => _messages.RemoveAt(index);
+
+        public void SendMessage(ChatMessage message)
+        {
+            lock (_lock)
+            {
+                _messages.Add(message);
+            }
+        }
+
+        public bool TryInterrupt()
+        {
+            if (_running)
+            {
+                _running = false;
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
@@ -197,7 +248,7 @@ namespace LlamaNative.Chat.Models
             //TODO: Refactor this to use characters, like MAX
             int skip = messageMin;
             int take = tokenSelections.Count - (messageMin * 2);
-            List<TokenSelection> checkTokens = tokenSelections.Skip(skip).Take(take).ToList();  
+            List<TokenSelection> checkTokens = tokenSelections.Skip(skip).Take(take).ToList();
 
             TokenSelection maxSplitDetected = checkTokens.OrderByDescending(t => t.TokenData[splitId].P).First();
 
@@ -215,16 +266,6 @@ namespace LlamaNative.Chat.Models
             foreach (List<TokenSelection> cmb in this.RecursiveSplit(splitB))
             {
                 yield return cmb;
-            }
-        }
-
-        public void RemoveAt(int index) => _messages.RemoveAt(index);
-
-        public void SendMessage(ChatMessage message)
-        {
-            lock (_lock)
-            {
-                _messages.Add(message);
             }
         }
 

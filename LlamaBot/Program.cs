@@ -5,7 +5,6 @@ using LlamaBot.Discord.Commands;
 using LlamaBot.Discord.Extensions;
 using LlamaBot.Discord.Model;
 using LlamaBot.Extensions;
-using LlamaNative.Apis;
 using LlamaNative.Chat;
 using LlamaNative.Chat.Extensions;
 using LlamaNative.Chat.Interfaces;
@@ -111,16 +110,16 @@ namespace LlamaBot
 
             foreach (IMessage? historicalMessage in await channel.GetMessagesAsync(1000).FlattenAsync())
             {
-                if(historicalMessage.CreatedAt.DateTime < stop)
+                if (historicalMessage.CreatedAt.DateTime < stop)
                 {
                     break;
                 }
 
-                if(historicalMessage.Type == MessageType.ApplicationCommand)
+                if (historicalMessage.Type == MessageType.ApplicationCommand)
                 {
                     continue;
                 }
-                
+
                 _chatContext.Insert(messageStart, GetDisplayName(historicalMessage.Author), historicalMessage.Content, historicalMessage.Id);
 
                 if (_chatContext.AvailableBuffer < 1000)
@@ -173,13 +172,15 @@ namespace LlamaBot
             try
             {
                 await _discordClient.SetUserName(_recursiveConfiguration.Configuration.ChatSettings.BotName);
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Console.WriteLine($"Failed to set username: {e.Message}");
             }
 
             await _discordClient.AddCommand<GenericCommand>("clear", "clears the bots memory", OnClearCommand);
             await _discordClient.AddCommand<GenericCommand>("continue", "continues a response", OnContinueCommand);
+            await _discordClient.AddCommand<GenericCommand>("interrupt", "interrupts a response", OnInterruptCommand);
             await _discordClient.AddCommand<DeleteCommand>("delete", "deletes a message", OnDeleteCommand);
 
             Console.WriteLine("Connected.");
@@ -213,6 +214,15 @@ namespace LlamaBot
             StaticConfiguration.Save(_metaData);
 
             return CommandResult.Success("Memory Cleared");
+        }
+
+        static async Task<CommandResult> OnInterruptCommand(GenericCommand clearCommand)
+        {
+            _chatContext.TryInterrupt();
+
+            await clearCommand.Command.DeleteOriginalResponseAsync();
+
+            return CommandResult.Success();
         }
 
         static async Task<CommandResult> OnContinueCommand(GenericCommand continueCommand)
