@@ -142,7 +142,7 @@ namespace LlamaNative.Chat.Models
 
                 TokenSelection selection = new(token);
 
-                if (Settings.SplitSettings != null)
+                if (Settings.SplitSettings != null && Settings.SplitSettings.MessageSplitId >= 0)
                 {
                     try
                     {
