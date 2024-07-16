@@ -60,6 +60,11 @@ namespace LlamaNative.Interop.Structs
         public PoolingType PoolingType;
 
         /// <summary>
+        /// Attention type to use for embeddings
+        /// </summary>
+        public AttentionType AttentionType;
+
+        /// <summary>
         /// RoPE base frequency, 0 = from model.
         /// </summary>
         public float RopeFreqBase;

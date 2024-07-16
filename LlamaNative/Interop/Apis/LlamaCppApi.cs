@@ -119,6 +119,18 @@ namespace LlamaNative.Interop
         public static partial float* GetLogits(SafeContextHandle ctx);
 
         /// <summary>
+        /// Token logits obtained from the last call to llama_eval()
+        /// The logits for the last token are stored in the last row
+        /// Can be mutated in order to change the probabilities of the next token
+        /// Rows: n_tokens
+        /// Cols: n_vocab
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_logits_ith")]
+        public static partial float* GetLogitsIth(SafeContextHandle ctx, int idx);
+
+        /// <summary>
         /// Returns the maximum size in bytes of the state (rng, logits, embedding
         /// and kv_cache) - will often be smaller after compacting tokens
         /// </summary>

@@ -265,7 +265,7 @@ namespace LlamaNative.Apis
 
         public static unsafe Span<float> GetLogits(SafeContextHandle ctx, int length)
         {
-            float* logits = LlamaCppApi.GetLogits(ctx);
+            float* logits = LlamaCppApi.GetLogitsIth(ctx, -1);
             return new Span<float>(logits, length);
         }
 
