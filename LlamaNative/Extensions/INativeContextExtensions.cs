@@ -18,21 +18,6 @@ namespace LlamaNative.Extensions
             //}
         }
 
-        public static Token SelectToken(this INativeContext handler)
-        {
-            return handler.SelectToken(null, out _);
-        }
-
-        public static Token SelectToken(this INativeContext handler, LogitRuleCollection logitBias)
-        {
-            return handler.SelectToken(logitBias, out _);
-        }
-
-        public static Token SelectToken(this INativeContext handler, out SampleContext context)
-        {
-            return handler.SelectToken(null, out context);
-        }
-
         public static float[] GetEmbeddings(this INativeContext handler) => handler.Handle.GetEmbeddings();
 
         public static Span<float> GetLogits(this INativeContext handler)
@@ -51,6 +36,21 @@ namespace LlamaNative.Extensions
             handler.Evaluate();
 
             return handler.SelectToken(logitRules);
+        }
+
+        public static Token SelectToken(this INativeContext handler)
+        {
+            return handler.SelectToken(null, out _);
+        }
+
+        public static Token SelectToken(this INativeContext handler, LogitRuleCollection logitBias)
+        {
+            return handler.SelectToken(logitBias, out _);
+        }
+
+        public static Token SelectToken(this INativeContext handler, out SampleContext context)
+        {
+            return handler.SelectToken(null, out context);
         }
 
         public static void SetBuffer(this INativeContext context, TokenCollection Tokens)

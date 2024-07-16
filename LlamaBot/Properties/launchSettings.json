@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "\"Magnum Chie\"",
+      "commandLineArgs": "Miyako",
       "nativeDebugging": true
     }
   }

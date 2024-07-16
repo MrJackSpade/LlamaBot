@@ -14,6 +14,19 @@ namespace LlamaNative.Tokens.Extensions
             return existing.Logit;
         }
 
+        public static TokenData GetTokenData(this TokenDataArray tokens, int tokenId)
+        {
+            for (int i = 0; i < tokens.Data.Span.Length; i++)
+            {
+                if (tokens.Data.Span[i].Id == tokenId)
+                {
+                    return tokens.Data.Span[i];
+                }
+            }
+
+            throw new KeyNotFoundException();
+        }
+
         public static void SetBias(this TokenDataArray tokens, int tokenId, float probability, LogitBiasType logitBiasType)
         {
             Span<TokenData> span = tokens.Data.Span;
@@ -120,19 +133,6 @@ namespace LlamaNative.Tokens.Extensions
             {
                 tokens.SetProbability(Token.Key.Id, Token.Value);
             }
-        }
-
-        public static TokenData GetTokenData(this TokenDataArray tokens, int tokenId)
-        {
-            for (int i = 0; i < tokens.Data.Span.Length; i++)
-            {
-                if (tokens.Data.Span[i].Id == tokenId)
-                {
-                    return tokens.Data.Span[i];
-                }
-            }
-
-            throw new KeyNotFoundException();
         }
 
         private static int GetTokenIndex(this TokenDataArray tokens, int tokenId)

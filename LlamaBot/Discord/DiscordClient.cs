@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Commands;
 using Discord.WebSocket;
 using LlamaBot.Discord.Attributes;
 using LlamaBot.Discord.Exceptions;
@@ -200,7 +199,7 @@ namespace LlamaBot.Discord
 
             await _discordClient.CreateGlobalApplicationCommandAsync(commandBuilder.Build());
 
-            foreach(IGuild guild in _discordClient.Guilds)
+            foreach (IGuild guild in _discordClient.Guilds)
             {
                 await guild.CreateApplicationCommandAsync(commandBuilder.Build());
             }

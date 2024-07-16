@@ -35,6 +35,18 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<TargetPath>llama.pdb</TargetPath>
 		</Content>
+		<Content Include="Binaries\CUDA\ggml.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>ggml.dll</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\ggml.ilk">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>ggml.ilk</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\ggml.pdb">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>ggml.pdb</TargetPath>
+		</Content>
 	</ItemGroup>
 	<ItemGroup Condition="'$(CopyCpuFiles)' == 'true'">
 		<Content Include="Binaries\Cpu\llama.dll">
@@ -52,6 +64,22 @@
 		<Content Include="Binaries\Cpu\llama.pdb">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<TargetPath>llama.pdb</TargetPath>
+		</Content>
+		<Content Include="Binaries\Cpu\ggml.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>ggml.dll</TargetPath>
+		</Content>
+		<Content Include="Binaries\Cpu\libggml.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>libggml.so</TargetPath>
+		</Content>
+		<Content Include="Binaries\Cpu\ggml.ilk">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>ggml.ilk</TargetPath>
+		</Content>
+		<Content Include="Binaries\Cpu\ggml.pdb">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>ggml.pdb</TargetPath>
 		</Content>
 	</ItemGroup>
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">

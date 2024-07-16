@@ -25,6 +25,7 @@ namespace LlamaNative.Chat.Interfaces
         void RemoveAt(int index);
 
         void SendMessage(ChatMessage message);
+
         bool TryInterrupt();
     }
 }

@@ -21,11 +21,11 @@ namespace LlamaBot
     {
         private static readonly Configuration _configuration = StaticConfiguration.Load<Configuration>();
 
+        private static readonly MetaData _metaData = StaticConfiguration.Load<MetaData>();
+
         private static readonly RecursiveConfigurationReader<Character> _recursiveConfigurationReader = new("Characters");
 
         private static readonly DateTime _startTime = DateTime.Now;
-
-        private static readonly MetaData _metaData = StaticConfiguration.Load<MetaData>();
 
         private static IChatContext? _chatContext;
 
@@ -188,57 +188,6 @@ namespace LlamaBot
             _discordClient.MessageReceived += MessageReceived;
         }
 
-        static async Task<CommandResult> OnDeleteCommand(DeleteCommand deleteCommand)
-        {
-            if (deleteCommand.Channel is ISocketMessageChannel smc)
-            {
-                IMessage message = await smc.GetMessageAsync(deleteCommand.MessageId);
-                await message.DeleteAsync();
-                await deleteCommand.Command.DeleteOriginalResponseAsync();
-                return CommandResult.Success();
-            }
-            else
-            {
-                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
-            }
-        }
-
-        static async Task<CommandResult> OnClearCommand(GenericCommand clearCommand)
-        {
-            ulong channelId = clearCommand.Channel.Id;
-
-            DateTime triggered = clearCommand.Command.CreatedAt.DateTime;
-
-            _metaData.ClearValues[channelId] = triggered;
-
-            StaticConfiguration.Save(_metaData);
-
-            return CommandResult.Success("Memory Cleared");
-        }
-
-        static async Task<CommandResult> OnInterruptCommand(GenericCommand clearCommand)
-        {
-            _chatContext.TryInterrupt();
-
-            await clearCommand.Command.DeleteOriginalResponseAsync();
-
-            return CommandResult.Success();
-        }
-
-        static async Task<CommandResult> OnContinueCommand(GenericCommand continueCommand)
-        {
-            if (continueCommand.Channel is ISocketMessageChannel smc)
-            {
-                await ProcessMessage(smc);
-                await continueCommand.Command.DeleteOriginalResponseAsync();
-                return CommandResult.Success();
-            }
-            else
-            {
-                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
-            }
-        }
-
         private static void InsertContextHeaders()
         {
             if (_recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText))
@@ -261,6 +210,57 @@ namespace LlamaBot
             await InitializeDiscordClient();
 
             await Task.Delay(-1);
+        }
+
+        private static async Task<CommandResult> OnClearCommand(GenericCommand clearCommand)
+        {
+            ulong channelId = clearCommand.Channel.Id;
+
+            DateTime triggered = clearCommand.Command.CreatedAt.DateTime;
+
+            _metaData.ClearValues[channelId] = triggered;
+
+            StaticConfiguration.Save(_metaData);
+
+            return CommandResult.Success("Memory Cleared");
+        }
+
+        private static async Task<CommandResult> OnContinueCommand(GenericCommand continueCommand)
+        {
+            if (continueCommand.Channel is ISocketMessageChannel smc)
+            {
+                await ProcessMessage(smc);
+                await continueCommand.Command.DeleteOriginalResponseAsync();
+                return CommandResult.Success();
+            }
+            else
+            {
+                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
+            }
+        }
+
+        private static async Task<CommandResult> OnDeleteCommand(DeleteCommand deleteCommand)
+        {
+            if (deleteCommand.Channel is ISocketMessageChannel smc)
+            {
+                IMessage message = await smc.GetMessageAsync(deleteCommand.MessageId);
+                await message.DeleteAsync();
+                await deleteCommand.Command.DeleteOriginalResponseAsync();
+                return CommandResult.Success();
+            }
+            else
+            {
+                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
+            }
+        }
+
+        private static async Task<CommandResult> OnInterruptCommand(GenericCommand clearCommand)
+        {
+            _chatContext.TryInterrupt();
+
+            await clearCommand.Command.DeleteOriginalResponseAsync();
+
+            return CommandResult.Success();
         }
     }
 }
