@@ -390,7 +390,7 @@ namespace LlamaNative.Apis
             return res;
         }
 
-        public static string TokenToPiece(this SafeModelHandle ctx, int token)
+        public static string TokenToPiece(this SafeModelHandle ctx, int token, bool special = true)
         {
             // Assuming a buffer size of 256, adjust as needed.
             byte[] buffer = new byte[256];
@@ -398,7 +398,7 @@ namespace LlamaNative.Apis
             int result;
             try
             {
-                result = LlamaCppApi.TokenToPiece(ctx, token, buffer, buffer.Length, 0, false);
+                result = LlamaCppApi.TokenToPiece(ctx, token, buffer, buffer.Length, 0, special);
             }
             catch (Exception e)
             {
