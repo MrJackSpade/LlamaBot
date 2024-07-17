@@ -27,6 +27,14 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<TargetPath>llama.dll</TargetPath>
 		</Content>
+		<Content Include="Binaries\CUDA\libllama.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>libllama.so</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\libggml.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>libggml.so</TargetPath>
+		</Content>
 		<Content Include="Binaries\CUDA\llama.ilk">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<TargetPath>llama.ilk</TargetPath>

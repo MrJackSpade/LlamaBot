@@ -22,12 +22,6 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
-	  <Compile Remove="Characters\Llama3\Miyako\**" />
-	  <Content Remove="Characters\Llama3\Miyako\**" />
-	  <EmbeddedResource Remove="Characters\Llama3\Miyako\**" />
-	  <None Remove="Characters\Llama3\Miyako\**" />
-	</ItemGroup>
-	<ItemGroup>
 		<PackageReference Include="Discord.Net" Version="3.15.2" />
 		<PackageReference Include="Loxifi.StaticConfiguration" Version="0.8.0" />
 	</ItemGroup>
