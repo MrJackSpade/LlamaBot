@@ -330,7 +330,12 @@ namespace LlamaNative.Interop
         public static partial int TokenNl();
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_to_piece")]
-        public static partial int TokenToPiece(SafeModelHandle model, int token, [Out] byte[] buf, int length);
+        public static partial int TokenToPiece(SafeModelHandle model,
+                                               int token,
+                                               [Out] byte[] buf,
+                                               int length,
+                                               int ltrim,
+                                               [MarshalAs(UnmanagedType.Bool)] bool special);
 
         /// <summary>
         /// Token Id -> String. Uses the vocabulary in the provided context

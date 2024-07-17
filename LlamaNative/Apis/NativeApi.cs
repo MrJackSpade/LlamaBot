@@ -398,7 +398,7 @@ namespace LlamaNative.Apis
             int result;
             try
             {
-                result = LlamaCppApi.TokenToPiece(ctx, token, buffer, buffer.Length);
+                result = LlamaCppApi.TokenToPiece(ctx, token, buffer, buffer.Length, 0, false);
             }
             catch (Exception e)
             {
