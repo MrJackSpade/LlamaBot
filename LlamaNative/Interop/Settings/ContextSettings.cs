@@ -15,6 +15,8 @@ namespace LlamaNative.Interop.Settings
         /// </summary>
         public uint BatchSize { get; set; } = 512;
 
+        public bool FlashAttention { get; set; }
+
         public bool OffloadKQV { get; set; } = true;
 
         /// <summary>
