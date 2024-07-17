@@ -98,5 +98,7 @@
 	  <None Remove="Binaries\CUDA\llama.dll.zip" />
 	  <None Remove="Binaries\CUDA\llama.ilk.zip" />
 	  <None Remove="Binaries\CUDA\llama.pdb.zip" />
+	  <None Remove="Binaries\CUDA\libllama.so.zip" />
+	  <None Remove="Binaries\CUDA\libggml.so.zip" />
 	</ItemGroup>
 </Project>
