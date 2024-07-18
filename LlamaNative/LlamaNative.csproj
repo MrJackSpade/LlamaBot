@@ -24,69 +24,69 @@
 	</PropertyGroup>
 	<ItemGroup Condition="'$(CopyCUDAFiles)' == 'true'">
 		<Content Include="Binaries\CUDA\llama.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.dll</TargetPath>
 		</Content>
 		<Content Include="Binaries\CUDA\libllama.so">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>libllama.so</TargetPath>
 		</Content>
 		<Content Include="Binaries\CUDA\libggml.so">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>libggml.so</TargetPath>
 		</Content>
 		<Content Include="Binaries\CUDA\llama.ilk">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.ilk</TargetPath>
 		</Content>
 		<Content Include="Binaries\CUDA\llama.pdb">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.pdb</TargetPath>
 		</Content>
 		<Content Include="Binaries\CUDA\ggml.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.dll</TargetPath>
 		</Content>
 		<Content Include="Binaries\CUDA\ggml.ilk">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.ilk</TargetPath>
 		</Content>
 		<Content Include="Binaries\CUDA\ggml.pdb">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.pdb</TargetPath>
 		</Content>
 	</ItemGroup>
 	<ItemGroup Condition="'$(CopyCpuFiles)' == 'true'">
 		<Content Include="Binaries\Cpu\llama.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.dll</TargetPath>
 		</Content>
 		<Content Include="Binaries\Cpu\libllama.so">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>libllama.so</TargetPath>
 		</Content>
 		<Content Include="Binaries\Cpu\llama.ilk">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.ilk</TargetPath>
 		</Content>
 		<Content Include="Binaries\Cpu\llama.pdb">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.pdb</TargetPath>
 		</Content>
 		<Content Include="Binaries\Cpu\ggml.dll">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.dll</TargetPath>
 		</Content>
 		<Content Include="Binaries\Cpu\libggml.so">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>libggml.so</TargetPath>
 		</Content>
 		<Content Include="Binaries\Cpu\ggml.ilk">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.ilk</TargetPath>
 		</Content>
 		<Content Include="Binaries\Cpu\ggml.pdb">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.pdb</TargetPath>
 		</Content>
 	</ItemGroup>
