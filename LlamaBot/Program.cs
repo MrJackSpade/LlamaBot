@@ -208,7 +208,7 @@ namespace LlamaBot
 
         private static void InsertContextHeaders()
         {
-            if (_recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText))
+            if (_recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText) && !string.IsNullOrWhiteSpace(systemText))
             {
                 _chatContext.SendMessage("System", systemText);
             }
