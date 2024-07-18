@@ -17,6 +17,7 @@ namespace LlamaNative.Interop.Settings
 
         public bool OffloadKQV { get; set; } = true;
 
+        public bool FlashAttention { get; set; } = false;
         /// <summary>
         /// Default 4096
         /// </summary>

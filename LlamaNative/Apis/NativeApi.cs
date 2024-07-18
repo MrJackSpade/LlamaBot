@@ -289,7 +289,7 @@ namespace LlamaNative.Apis
             lparams.YarnAttnFactor = contextSettings.YarnAttnFactor;
             lparams.YarnExtFactor = contextSettings.YarnExtFactor;
             lparams.OffloadKQV = contextSettings.OffloadKQV;
-            lparams.FlashAttn = true;
+            lparams.FlashAttn = contextSettings.FlashAttention;
             lparams.YarnOrigCtx = contextSettings.YarnOrigCtx ?? contextSettings.ContextSize ?? lparams.NCtx;
 
             nint ctx_ptr = LlamaCppApi.NewContextWithModel(model, lparams);
