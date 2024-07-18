@@ -156,9 +156,17 @@ namespace LlamaBot
                 }
                 else
                 {
-                    await channel.SendMessageAsync(cm.Content);
+                    string content = cm.Content;
+                    while (content.Length > 0)
+                    {
+                        int chunkSize = Math.Min(1950, content.Length);
+                        string chunk = content[..chunkSize];
+                        await channel.SendMessageAsync(chunk);
+                        content = content[chunkSize..];
+                    }
                 }
             }
+
         }
 
         private static void InitializeContext()
