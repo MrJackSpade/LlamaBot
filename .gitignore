@@ -11,3 +11,8 @@ LlamaBot/Characters/
 LlamaNative/Binaries/CUDA/llama.dll
 LlamaNative/Binaries/CUDA/llama.ilk
 LlamaNative/Binaries/CUDA/llama.pdb
+LlamaNative/Binaries/CUDA/ggml.dll
+LlamaNative/Binaries/CUDA/ggml.ilk
+LlamaNative/Binaries/CUDA/ggml.pdb
+LlamaNative/Binaries/CUDA/libggml.so
+LlamaNative/Binaries/CUDA/libllama.so
