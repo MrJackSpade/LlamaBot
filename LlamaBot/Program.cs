@@ -33,6 +33,8 @@ namespace LlamaBot
 
         private static RecursiveConfiguration<Character>? _recursiveConfiguration;
 
+        private static Thread _processMessageThread;
+
         private static Character? Character => _recursiveConfiguration?.Configuration;
 
         private static ChatSettings ChatSettings => Character.ChatSettings;
@@ -88,7 +90,11 @@ namespace LlamaBot
                 return;
             }
 
-            await ProcessMessage(message.Channel);
+            if(_processMessageThread is null || _processMessageThread.ThreadState != ThreadState.Running)
+            {
+                _processMessageThread = new Thread(async () => await ProcessMessage(message.Channel));
+                _processMessageThread.Start();
+            }
         }
 
         public static async Task ProcessMessage(ISocketMessageChannel channel)
@@ -108,21 +114,33 @@ namespace LlamaBot
                 stop = savedStop;
             }
 
-            foreach (IMessage? historicalMessage in await channel.GetMessagesAsync(1000).FlattenAsync())
+            await foreach (IReadOnlyCollection<IMessage>? historicalMessages in channel.GetMessagesAsync(1000))
             {
-                if (historicalMessage.CreatedAt.DateTime < stop)
+                bool done = false;
+
+                foreach (IMessage historicalMessage in historicalMessages)
                 {
-                    break;
+                    if (historicalMessage.CreatedAt.DateTime < stop)
+                    {
+                        done = true;
+                        break;
+                    }
+
+                    if (historicalMessage.Type == MessageType.ApplicationCommand)
+                    {
+                        continue;
+                    }
+
+                    _chatContext.Insert(messageStart, GetDisplayName(historicalMessage.Author), historicalMessage.Content, historicalMessage.Id);
+
+                    if (_chatContext.AvailableBuffer < 1000)
+                    {
+                        done = true;
+                        break;
+                    }
                 }
 
-                if (historicalMessage.Type == MessageType.ApplicationCommand)
-                {
-                    continue;
-                }
-
-                _chatContext.Insert(messageStart, GetDisplayName(historicalMessage.Author), historicalMessage.Content, historicalMessage.Id);
-
-                if (_chatContext.AvailableBuffer < 1000)
+                if (done)
                 {
                     break;
                 }
