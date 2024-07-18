@@ -53,7 +53,7 @@ namespace LlamaNative.Interop.Settings
 
         public bool GenerateEmbedding { get; set; }
 
-        public RopeScalingType RopeScalingType { get; set; } = RopeScalingType.Unspecified;
+        public RopeScalingType RopeScalingType { get; set; } = RopeScalingType.None;
 
         public float YarnExtFactor { get; set; } = -1.0f;
 
