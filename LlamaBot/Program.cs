@@ -14,6 +14,7 @@ using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Settings;
 using LlamaNative.Utils;
 using Loxifi;
+using System.Runtime.CompilerServices;
 
 namespace LlamaBot
 {
@@ -34,6 +35,8 @@ namespace LlamaBot
         private static RecursiveConfiguration<Character>? _recursiveConfiguration;
 
         private static Thread _processMessageThread;
+
+        private static string _systemPrompt = string.Empty;
 
         private static Character? Character => _recursiveConfiguration?.Configuration;
 
@@ -207,6 +210,7 @@ namespace LlamaBot
             await _discordClient.AddCommand<GenericCommand>("clear", "clears the bots memory", OnClearCommand);
             await _discordClient.AddCommand<GenericCommand>("continue", "continues a response", OnContinueCommand);
             await _discordClient.AddCommand<GenericCommand>("interrupt", "interrupts a response", OnInterruptCommand);
+            await _discordClient.AddCommand<SystemPromptCommand>("prompt", "updates the system prompt", OnSystemPromptCommand);
             await _discordClient.AddCommand<DeleteCommand>("delete", "deletes a message", OnDeleteCommand);
 
             Console.WriteLine("Connected.");
@@ -216,9 +220,9 @@ namespace LlamaBot
 
         private static void InsertContextHeaders()
         {
-            if (_recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText) && !string.IsNullOrWhiteSpace(systemText))
+            if (!string.IsNullOrWhiteSpace(_systemPrompt))
             {
-                _chatContext.SendMessage("System", systemText);
+                _chatContext.SendMessage("System", _systemPrompt);
             }
 
             foreach (ChatMessage cm in Character.ChatMessages)
@@ -230,6 +234,11 @@ namespace LlamaBot
         private static async Task Main(string[] args)
         {
             _recursiveConfiguration = _recursiveConfigurationReader.Read(args[0]);
+
+            if (_recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemText) && !string.IsNullOrWhiteSpace(systemText))
+            {
+                _systemPrompt = systemText;
+            }
 
             InitializeContext();
 
@@ -277,6 +286,24 @@ namespace LlamaBot
             else
             {
                 return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
+            }
+        }
+
+        private static async Task<CommandResult> OnSystemPromptCommand(SystemPromptCommand systemPromptCommand)
+        {
+            if(systemPromptCommand.ClearContext)
+            {
+                await OnClearCommand(systemPromptCommand);
+            }
+
+            if (systemPromptCommand.Prompt is null)
+            {
+                return CommandResult.Success(_systemPrompt);
+            }
+            else
+            {
+                _systemPrompt = systemPromptCommand.Prompt;
+                return CommandResult.Success("System Prompt Updated: " + systemPromptCommand.Prompt);
             }
         }
 
