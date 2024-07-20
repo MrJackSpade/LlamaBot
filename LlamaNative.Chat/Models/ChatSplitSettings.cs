@@ -8,6 +8,6 @@
 
         public int MessageMinTokens { get; set; } = 10;
 
-        public int MessageSplitId { get; set; } = 0;
+        public int MessageSplitId { get; set; } = -1;
     }
 }
