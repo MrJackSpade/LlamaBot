@@ -222,7 +222,7 @@ namespace LlamaBot
         {
             if (!string.IsNullOrWhiteSpace(_systemPrompt))
             {
-                _chatContext.SendMessage("System", _systemPrompt);
+                _chatContext.SendMessage(ChatSettings.SystemPromptUser, _systemPrompt);
             }
 
             foreach (ChatMessage cm in Character.ChatMessages)

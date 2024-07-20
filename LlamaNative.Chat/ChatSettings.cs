@@ -9,6 +9,8 @@ namespace LlamaNative.Chat
     {
         public string BeginText { get; set; } = "";
 
+        public string SystemPromptUser { get; set; } = "System";
+
         public string BotName { get; set; } = "LlamaBot";
 
         public ChatTemplate ChatTemplate { get; set; } = new ChatTemplate();
