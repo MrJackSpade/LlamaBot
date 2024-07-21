@@ -14,6 +14,7 @@ using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Settings;
 using LlamaNative.Utils;
 using Loxifi;
+using Newtonsoft.Json.Linq;
 using System.Runtime.CompilerServices;
 
 namespace LlamaBot
@@ -169,7 +170,6 @@ namespace LlamaBot
                     }
                 }
             }
-
         }
 
         private static void InitializeContext()
@@ -209,6 +209,7 @@ namespace LlamaBot
 
             await _discordClient.AddCommand<GenericCommand>("clear", "clears the bots memory", OnClearCommand);
             await _discordClient.AddCommand<GenericCommand>("continue", "continues a response", OnContinueCommand);
+            await _discordClient.AddCommand<GenericCommand>("regenerate", "regenerates the last response", OnRegenerateCommand);
             await _discordClient.AddCommand<GenericCommand>("interrupt", "interrupts a response", OnInterruptCommand);
             await _discordClient.AddCommand<SystemPromptCommand>("prompt", "updates the system prompt", OnSystemPromptCommand);
             await _discordClient.AddCommand<DeleteCommand>("delete", "deletes a message", OnDeleteCommand);
@@ -216,6 +217,44 @@ namespace LlamaBot
             Console.WriteLine("Connected.");
 
             _discordClient.MessageReceived += MessageReceived;
+        }
+
+        private static async Task<CommandResult> OnRegenerateCommand(GenericCommand regenerateCommand)
+        {
+            List<IMessage> messages = null;
+
+            if(regenerateCommand.Channel is ISocketMessageChannel smc)
+            {
+                foreach(IMessage checkMessage in await smc.GetMessagesAsync(500).FlattenAsync())
+                {
+                    if(checkMessage.Type == MessageType.ApplicationCommand)
+                    {
+                        continue;
+                    }
+
+                    if(checkMessage.Author.Id == _discordClient.CurrentUser.Id)
+                    {
+                        messages.Add(checkMessage);
+                    } else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if(messages != null)
+            {
+                foreach(IMessage message in messages)
+                {
+                    await message.DeleteAsync();
+                }
+
+                await OnContinueCommand(regenerateCommand);
+                return CommandResult.Success();
+            } else
+            {
+                return CommandResult.Error("No message found after checking 5 messages");
+            }
         }
 
         private static void InsertContextHeaders()
