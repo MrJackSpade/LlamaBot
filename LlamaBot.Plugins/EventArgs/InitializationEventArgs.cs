@@ -1,13 +1,16 @@
-﻿using LlamaBot.Shared.Interfaces;
+﻿using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Shared.Interfaces;
 using Loxifi;
 
 namespace LlamaBot.Plugins.EventArgs
 {
-    public struct InitializationEventArgs(string module, IPluginService pluginService, ILogger logger, IDiscordClient discordService)
+    public struct InitializationEventArgs(string module, IPluginService pluginService, ILogger logger, IDiscordService discordService, ILlamaBotClient llamaBotClient)
     {
         private readonly string _module = module;
 
-        public IDiscordClient DiscordService { get; private set; } = discordService;
+        public IDiscordService DiscordService { get; private set; } = discordService;
+
+        public ILlamaBotClient LlamaBotClient { get; private set; } = llamaBotClient;
 
         public ILogger Logger { get; private set; } = logger;
 

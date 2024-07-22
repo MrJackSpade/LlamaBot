@@ -2,12 +2,19 @@
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 
 namespace LlamaBot.Plugins.Commands.Continue
 {
     internal class ContinueCommandProvider : ICommandProvider<ContinueCommand>
     {
+        private IDiscordService? _discordClient;
+
+        private ILlamaBotClient? _llamaBotClient;
+
+        private IPluginService? _pluginService;
+
         public string Command => "continue";
 
         public string Description => "Continues the last response";
@@ -18,7 +25,7 @@ namespace LlamaBot.Plugins.Commands.Continue
         {
             if (command.Channel is ISocketMessageChannel smc)
             {
-                TryProcessMessageThread(smc);
+                _llamaBotClient.TryProcessMessageThread(smc);
                 await command.Command.DeleteOriginalResponseAsync();
                 return CommandResult.Success();
             }
@@ -30,7 +37,10 @@ namespace LlamaBot.Plugins.Commands.Continue
 
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
         {
-            throw new NotImplementedException();
+            _pluginService = args.PluginService;
+            _discordClient = args.DiscordService;
+            _llamaBotClient = args.LlamaBotClient;
+            return InitializationResult.SuccessAsync();
         }
     }
 }

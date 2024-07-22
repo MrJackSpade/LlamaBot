@@ -1,14 +1,20 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using LlamaBot.Plugins.Commands.Continue;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 
 namespace LlamaBot.Plugins.Commands.Regenerate
 {
     internal class RegenerateCommandProvider : ICommandProvider<RegenerateCommand>
     {
+        private IDiscordService? _discordClient;
+
+        private IPluginService? _pluginService;
+
         public string Command => "regenerate";
 
         public string Description => "Regenerates the last bot message";
@@ -46,7 +52,7 @@ namespace LlamaBot.Plugins.Commands.Regenerate
                     await message.DeleteAsync();
                 }
 
-                await OnContinueCommand(command);
+                await _pluginService.Command(new ContinueCommand(command.Command));
                 return CommandResult.Success();
             }
             else
@@ -57,7 +63,9 @@ namespace LlamaBot.Plugins.Commands.Regenerate
 
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
         {
-            throw new NotImplementedException();
+            _pluginService = args.PluginService;
+            _discordClient = args.DiscordService;
+            return InitializationResult.SuccessAsync();
         }
     }
 }

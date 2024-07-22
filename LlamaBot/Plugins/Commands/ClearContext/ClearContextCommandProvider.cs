@@ -1,13 +1,19 @@
 ﻿using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
-using Loxifi;
 
 namespace LlamaBot.Plugins.Commands.ClearContext
 {
     internal class ClearContextCommandProvider : ICommandProvider<ClearContextCommand>
     {
+        private IDiscordService? _discordClient;
+
+        private ILlamaBotClient? _llamaBotClient;
+
+        private IPluginService? _pluginService;
+
         public string Command => "clear";
 
         public string Description => "Clears the bots memory";
@@ -20,13 +26,11 @@ namespace LlamaBot.Plugins.Commands.ClearContext
 
             DateTime triggered = command.Command.CreatedAt.DateTime;
 
-            _metaData.ClearValues[channelId] = triggered;
+            _llamaBotClient.SetClearDate(channelId, triggered);
 
-            StaticConfiguration.Save(_metaData);
-
-            if (includeCache)
+            if (command.IncludeCache)
             {
-                _chatContext.Clear(true);
+                _llamaBotClient.Clear(true);
             }
 
             return CommandResult.SuccessAsync("Memory Cleared");
@@ -34,7 +38,10 @@ namespace LlamaBot.Plugins.Commands.ClearContext
 
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
         {
-            throw new NotImplementedException();
+            _pluginService = args.PluginService;
+            _discordClient = args.DiscordService;
+            _llamaBotClient = args.LlamaBotClient;
+            return InitializationResult.SuccessAsync();
         }
     }
 }

@@ -16,16 +16,19 @@ namespace LlamaBot.Services
 
         private readonly List<ICommandProvider> _commandProviders = [];
 
-        private readonly IDiscordClient _discordService;
+        private readonly IDiscordService _discordService;
+
+        private readonly ILlamaBotClient _llamaBotClient;
 
         private readonly ILogger _logger;
 
         private readonly List<IReactionHandler> _reactionHandlers = [];
 
-        public PluginService(ILogger logger, IDiscordClient discordService)
+        public PluginService(ILogger logger, IDiscordService discordService, ILlamaBotClient llamaBotClient)
         {
             _logger = logger;
             _discordService = discordService;
+            _llamaBotClient = llamaBotClient;
             AppDomain.CurrentDomain.AssemblyResolve += this.OnResolveAssembly!;
         }
 
@@ -68,7 +71,9 @@ namespace LlamaBot.Services
                 InitializationEventArgs initializationEventArgs = new(Path.GetFileNameWithoutExtension(assemblyName),
                                                                       this,
                                                                       _logger,
-                                                                      _discordService);
+                                                                      _discordService,
+                                                                      _llamaBotClient
+                                                                      );
 
                 await this.TryInitialize(_commandProviders, type, initializationEventArgs);
                 await this.TryInitialize(_reactionHandlers, type, initializationEventArgs);

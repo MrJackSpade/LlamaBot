@@ -5,13 +5,14 @@ using LlamaBot.Discord.Exceptions;
 using LlamaBot.Discord.Extensions;
 using LlamaBot.Models.Events;
 using LlamaBot.Shared.Models;
+using LlamaBot.Shared.Utils;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using IDiscordClient = LlamaBot.Shared.Interfaces.IDiscordClient;
+using IDiscordService = LlamaBot.Shared.Interfaces.IDiscordService;
 
 namespace LlamaBot.Discord
 {
-    public class DiscordClient : IDiscordClient
+    public class DiscordService : IDiscordService
     {
         public Func<SocketMessage, Task>? MessageReceived;
 
@@ -21,8 +22,12 @@ namespace LlamaBot.Discord
 
         private readonly string _discordToken;
 
-        public DiscordClient(string discordToken)
+        private bool _connected;
+
+        public DiscordService(string? discordToken)
         {
+            discordToken = Ensure.NotNullOrWhiteSpace(discordToken);
+
             _discordToken = discordToken;
 
             _discordClient = new DiscordSocketClient(new DiscordSocketConfig()
@@ -43,7 +48,7 @@ namespace LlamaBot.Discord
 
         public IUser CurrentUser => _discordClient.CurrentUser;
 
-        public Func<ReactionEventArgs, Task> ReactionAdded { get; internal set; }
+        public Func<ReactionEventArgs, Task>? ReactionAdded { get; set; }
 
         public async Task AddCommand(string command, string description, Type t, Func<BaseCommand, Task<CommandResult>> action, params SlashCommandOption[] slashCommandOptions)
         {
@@ -56,19 +61,24 @@ namespace LlamaBot.Discord
 
         public async Task Connect()
         {
-            TaskCompletionSource taskCompletionSource = new();
-            _discordClient.Ready += () =>
+            if (!_connected)
             {
-                if (!taskCompletionSource.Task.IsCompleted)
+                TaskCompletionSource taskCompletionSource = new();
+                _discordClient.Ready += () =>
                 {
-                    taskCompletionSource.SetResult();
-                }
+                    if (!taskCompletionSource.Task.IsCompleted)
+                    {
+                        taskCompletionSource.SetResult();
+                    }
 
-                return Task.CompletedTask;
-            };
-            await _discordClient.LoginAsync(TokenType.Bot, _discordToken);
-            await _discordClient.StartAsync();
-            await taskCompletionSource.Task;
+                    _connected = true;
+
+                    return Task.CompletedTask;
+                };
+                await _discordClient.LoginAsync(TokenType.Bot, _discordToken);
+                await _discordClient.StartAsync();
+                await taskCompletionSource.Task;
+            }
         }
 
         internal async Task SetUserName(string botName)

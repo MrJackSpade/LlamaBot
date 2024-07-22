@@ -4,12 +4,17 @@ using Discord.WebSocket;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 
 namespace LlamaBot.Plugins.Commands.Update
 {
     internal class UpdateCommandProvider : ICommandProvider<UpdateCommand>
     {
+        private IDiscordService? _discordClient;
+
+        private IPluginService? _pluginService;
+
         public string Command => "update";
 
         public string Description => "Updates an existing message";
@@ -38,7 +43,9 @@ namespace LlamaBot.Plugins.Commands.Update
 
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
         {
-            throw new NotImplementedException();
+            _pluginService = args.PluginService;
+            _discordClient = args.DiscordService;
+            return InitializationResult.SuccessAsync();
         }
     }
 }

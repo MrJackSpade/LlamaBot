@@ -1,12 +1,20 @@
-﻿using LlamaBot.Plugins.EventArgs;
+﻿using LlamaBot.Plugins.Commands.ClearContext;
+using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 
 namespace LlamaBot.Plugins.Commands.SystemPrompt
 {
     internal class SystemPromptCommandProvider : ICommandProvider<SystemPromptCommand>
     {
+        private IDiscordService? _discordClient;
+
+        private ILlamaBotClient? _lamaBotClient;
+
+        private IPluginService? _pluginService;
+
         public string Command => "prompt";
 
         public string Description => "Updates or displays the bots system prompt";
@@ -17,23 +25,29 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
         {
             if (command.ClearContext)
             {
-                await OnClearCommand(command, true);
+                await _pluginService.Command(new ClearContextCommand(command.Command)
+                {
+                    IncludeCache = true,
+                });
             }
 
             if (command.Prompt is null)
             {
-                return CommandResult.Success(_systemPrompt);
+                return CommandResult.Success(_lamaBotClient.SystemPrompt);
             }
             else
             {
-                _systemPrompt = command.Prompt;
+                _lamaBotClient.SystemPrompt = command.Prompt;
                 return CommandResult.Success("System Prompt Updated: " + command.Prompt);
             }
         }
 
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
         {
-            throw new NotImplementedException();
+            _pluginService = args.PluginService;
+            _discordClient = args.DiscordService;
+            _lamaBotClient = args.LlamaBotClient;
+            return InitializationResult.SuccessAsync();
         }
     }
 }
