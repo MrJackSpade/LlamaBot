@@ -33,9 +33,9 @@ namespace LlamaBot
 
         private static DiscordClient? _discordClient;
 
-        private static RecursiveConfiguration<Character>? _recursiveConfiguration;
-
         private static Thread _processMessageThread;
+
+        private static RecursiveConfiguration<Character>? _recursiveConfiguration;
 
         private static string _systemPrompt = string.Empty;
 
@@ -94,11 +94,7 @@ namespace LlamaBot
                 return;
             }
 
-            if(_processMessageThread is null || _processMessageThread.ThreadState != ThreadState.Running)
-            {
-                _processMessageThread = new Thread(async () => await ProcessMessage(message.Channel));
-                _processMessageThread.Start();
-            }
+            TryProcessMessageThread(message.Channel);
         }
 
         public static async Task ProcessMessage(ISocketMessageChannel channel)
@@ -172,6 +168,15 @@ namespace LlamaBot
             }
         }
 
+        public static void TryProcessMessageThread(ISocketMessageChannel smc)
+        {
+            if (_processMessageThread is null || _processMessageThread.ThreadState != ThreadState.Running)
+            {
+                _processMessageThread = new Thread(async () => await ProcessMessage(smc));
+                _processMessageThread.Start();
+            }
+        }
+
         private static void InitializeContext()
         {
             if (ChatSettings.ResponseStartBlock > 0)
@@ -213,48 +218,11 @@ namespace LlamaBot
             await _discordClient.AddCommand<GenericCommand>("interrupt", "interrupts a response", OnInterruptCommand);
             await _discordClient.AddCommand<SystemPromptCommand>("prompt", "updates the system prompt", OnSystemPromptCommand);
             await _discordClient.AddCommand<DeleteCommand>("delete", "deletes a message", OnDeleteCommand);
+            await _discordClient.AddCommand<UpdateCommand>("update", "updates a message", OnUpdateCommand);
 
             Console.WriteLine("Connected.");
 
             _discordClient.MessageReceived += MessageReceived;
-        }
-
-        private static async Task<CommandResult> OnRegenerateCommand(GenericCommand regenerateCommand)
-        {
-            List<IMessage> messages = null;
-
-            if(regenerateCommand.Channel is ISocketMessageChannel smc)
-            {
-                foreach(IMessage checkMessage in await smc.GetMessagesAsync(500).FlattenAsync())
-                {
-                    if(checkMessage.Type == MessageType.ApplicationCommand)
-                    {
-                        continue;
-                    }
-
-                    if(checkMessage.Author.Id == _discordClient.CurrentUser.Id)
-                    {
-                        messages.Add(checkMessage);
-                    } else
-                    {
-                        break;
-                    }
-                }
-            }
-
-            if(messages != null)
-            {
-                foreach(IMessage message in messages)
-                {
-                    await message.DeleteAsync();
-                }
-
-                await OnContinueCommand(regenerateCommand);
-                return CommandResult.Success();
-            } else
-            {
-                return CommandResult.Error("No message found after checking 5 messages");
-            }
         }
 
         private static void InsertContextHeaders()
@@ -303,7 +271,7 @@ namespace LlamaBot
         {
             if (continueCommand.Channel is ISocketMessageChannel smc)
             {
-                await ProcessMessage(smc);
+                TryProcessMessageThread(smc);
                 await continueCommand.Command.DeleteOriginalResponseAsync();
                 return CommandResult.Success();
             }
@@ -328,9 +296,78 @@ namespace LlamaBot
             }
         }
 
+        private static async Task<CommandResult> OnUpdateCommand(UpdateCommand updateCommand)
+        {
+            if (updateCommand.Channel is ISocketMessageChannel smc)
+            {
+                IMessage message = await smc.GetMessageAsync(updateCommand.MessageId);
+                
+                if(message is IUserMessage um)
+                {
+                    await um.ModifyAsync(m => m.Content = updateCommand.Content);
+                }
+
+                await updateCommand.Command.DeleteOriginalResponseAsync();
+                return CommandResult.Success();
+            }
+            else
+            {
+                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
+            }
+        }
+
+        private static async Task<CommandResult> OnInterruptCommand(GenericCommand clearCommand)
+        {
+            _chatContext.TryInterrupt();
+
+            await clearCommand.Command.DeleteOriginalResponseAsync();
+
+            return CommandResult.Success();
+        }
+
+        private static async Task<CommandResult> OnRegenerateCommand(GenericCommand regenerateCommand)
+        {
+            List<IMessage> messages = new();
+
+            if (regenerateCommand.Channel is ISocketMessageChannel smc)
+            {
+                foreach (IMessage checkMessage in await smc.GetMessagesAsync(500).FlattenAsync())
+                {
+                    if (checkMessage.Type == MessageType.ApplicationCommand)
+                    {
+                        continue;
+                    }
+
+                    if (checkMessage.Author.Id == _discordClient.CurrentUser.Id)
+                    {
+                        messages.Add(checkMessage);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (messages.Count > 0)
+            {
+                foreach (IMessage message in messages)
+                {
+                    await message.DeleteAsync();
+                }
+
+                await OnContinueCommand(regenerateCommand);
+                return CommandResult.Success();
+            }
+            else
+            {
+                return CommandResult.Error("No message found after checking 500 messages");
+            }
+        }
+
         private static async Task<CommandResult> OnSystemPromptCommand(SystemPromptCommand systemPromptCommand)
         {
-            if(systemPromptCommand.ClearContext)
+            if (systemPromptCommand.ClearContext)
             {
                 await OnClearCommand(systemPromptCommand);
             }
@@ -344,15 +381,6 @@ namespace LlamaBot
                 _systemPrompt = systemPromptCommand.Prompt;
                 return CommandResult.Success("System Prompt Updated: " + systemPromptCommand.Prompt);
             }
-        }
-
-        private static async Task<CommandResult> OnInterruptCommand(GenericCommand clearCommand)
-        {
-            _chatContext.TryInterrupt();
-
-            await clearCommand.Command.DeleteOriginalResponseAsync();
-
-            return CommandResult.Success();
         }
     }
 }
