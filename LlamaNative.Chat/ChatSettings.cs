@@ -9,8 +9,6 @@ namespace LlamaNative.Chat
     {
         public string BeginText { get; set; } = "";
 
-        public string SystemPromptUser { get; set; } = "System";
-
         public string BotName { get; set; } = "LlamaBot";
 
         public ChatTemplate ChatTemplate { get; set; } = new ChatTemplate();
@@ -27,6 +25,8 @@ namespace LlamaNative.Chat
         public List<SamplerSetting> SimpleSamplers { get; set; } = [];
 
         public ChatSplitSettings? SplitSettings { get; set; }
+
+        public string SystemPromptUser { get; set; } = "System";
 
         public SamplerSetting TokenSelector { get; set; } = new SamplerSetting(nameof(TemperatureSampler));
     }

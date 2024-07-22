@@ -1,6 +1,6 @@
 ﻿using Discord;
 using LlamaBot.Discord.Attributes;
-using LlamaBot.Discord.Model;
+using LlamaBot.Shared.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Runtime.Serialization;

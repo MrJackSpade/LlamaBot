@@ -55,7 +55,7 @@ namespace LlamaNative.Extensions
 
         public static void SetBuffer(this INativeContext context, TokenCollection Tokens)
         {
-            context.Clear();
+            context.Clear(false);
 
             context.Write(Tokens);
         }
@@ -69,7 +69,7 @@ namespace LlamaNative.Extensions
                 throw new InvalidOperationException("Generated context state is larger than context size");
             }
 
-            context.Clear();
+            context.Clear(false);
 
             context.Write(toSet);
 

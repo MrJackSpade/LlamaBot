@@ -25,8 +25,6 @@ namespace Llama.Core
 
         private readonly float[,] _embeddingStack;
 
-        private readonly KvCacheState<Token> _kvCache;
-
         private readonly ContextParams _settings;
 
         private readonly IList<ISimpleSampler> _simpleSamplers;
@@ -34,6 +32,8 @@ namespace Llama.Core
         private readonly PointerArraySynchronizer<Token> _synchronizer;
 
         private readonly ITokenSelector _tokenSelector;
+
+        private KvCacheState<Token> _kvCache;
 
         public NativeContext(SafeContextHandle handle, SafeModelHandle modelHandle, ContextParams settings, ITokenSelector tokenSelector, IEnumerable<ISimpleSampler>? simpleSamplers = null)
         {
@@ -94,9 +94,14 @@ namespace Llama.Core
 
         public uint Size { get; private set; }
 
-        public void Clear()
+        public void Clear(bool includeCache)
         {
             this._buffer.Clear();
+
+            if (includeCache)
+            {
+                this._kvCache = new KvCacheState<Token>(this.Size, new Token(-1, null));
+            }
         }
 
         public void Dispose() => this.Handle.Dispose();

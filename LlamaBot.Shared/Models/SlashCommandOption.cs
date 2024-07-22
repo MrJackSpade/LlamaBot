@@ -1,6 +1,6 @@
 ﻿using Discord;
 
-namespace LlamaBot.Discord.Model
+namespace LlamaBot.Shared.Models
 {
     public class SlashCommandOption
     {

@@ -3,15 +3,17 @@ using Discord.WebSocket;
 using LlamaBot.Discord.Attributes;
 using LlamaBot.Discord.Exceptions;
 using LlamaBot.Discord.Extensions;
-using LlamaBot.Discord.Model;
+using LlamaBot.Models.Events;
+using LlamaBot.Shared.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using IDiscordClient = LlamaBot.Shared.Interfaces.IDiscordClient;
 
 namespace LlamaBot.Discord
 {
-    public class DiscordClient
+    public class DiscordClient : IDiscordClient
     {
-        public Func<SocketMessage, Task> MessageReceived;
+        public Func<SocketMessage, Task>? MessageReceived;
 
         private readonly Dictionary<string, Func<SocketSlashCommand, Task<CommandResult>>> _commandCallbacks = [];
 
@@ -40,6 +42,8 @@ namespace LlamaBot.Discord
         }
 
         public IUser CurrentUser => _discordClient.CurrentUser;
+
+        public Func<ReactionEventArgs, Task> ReactionAdded { get; internal set; }
 
         public async Task AddCommand(string command, string description, Type t, Func<BaseCommand, Task<CommandResult>> action, params SlashCommandOption[] slashCommandOptions)
         {

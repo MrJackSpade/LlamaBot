@@ -1,10 +1,12 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using LlamaBot.Discord;
-using LlamaBot.Discord.Commands;
-using LlamaBot.Discord.Extensions;
-using LlamaBot.Discord.Model;
 using LlamaBot.Extensions;
+using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Services;
+using LlamaBot.Shared.Interfaces;
+using LlamaBot.Shared.Loggers;
+using LlamaBot.Shared.Models;
 using LlamaNative.Chat;
 using LlamaNative.Chat.Extensions;
 using LlamaNative.Chat.Interfaces;
@@ -14,8 +16,7 @@ using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Settings;
 using LlamaNative.Utils;
 using Loxifi;
-using Newtonsoft.Json.Linq;
-using System.Runtime.CompilerServices;
+using System.Reflection;
 
 namespace LlamaBot
 {
@@ -32,6 +33,10 @@ namespace LlamaBot
         private static IChatContext? _chatContext;
 
         private static DiscordClient? _discordClient;
+
+        private static IPluginService _pluginService;
+
+        private static readonly ILogger _logger = new ConsoleLogger();
 
         private static Thread _processMessageThread;
 
@@ -101,7 +106,7 @@ namespace LlamaBot
         {
             Console.Clear();
 
-            _chatContext.Clear();
+            _chatContext.Clear(false);
 
             InsertContextHeaders();
 
@@ -212,14 +217,6 @@ namespace LlamaBot
                 Console.WriteLine($"Failed to set username: {e.Message}");
             }
 
-            await _discordClient.AddCommand<GenericCommand>("clear", "clears the bots memory", OnClearCommand);
-            await _discordClient.AddCommand<GenericCommand>("continue", "continues a response", OnContinueCommand);
-            await _discordClient.AddCommand<GenericCommand>("regenerate", "regenerates the last response", OnRegenerateCommand);
-            await _discordClient.AddCommand<GenericCommand>("interrupt", "interrupts a response", OnInterruptCommand);
-            await _discordClient.AddCommand<SystemPromptCommand>("prompt", "updates the system prompt", OnSystemPromptCommand);
-            await _discordClient.AddCommand<DeleteCommand>("delete", "deletes a message", OnDeleteCommand);
-            await _discordClient.AddCommand<UpdateCommand>("update", "updates a message", OnUpdateCommand);
-
             Console.WriteLine("Connected.");
 
             _discordClient.MessageReceived += MessageReceived;
@@ -251,136 +248,32 @@ namespace LlamaBot
 
             await InitializeDiscordClient();
 
+            _pluginService = new PluginService(_logger, _discordClient);
+
+            await _pluginService.LoadPlugins();
+
+            foreach (ICommandProvider commandProvider in _pluginService.CommandProviders)
+            {
+                Type parameterType = commandProvider.GetType()
+                                                    .GetInterface(typeof(ICommandProvider<>).Name)!
+                                                    .GetGenericArguments()[0];
+
+                MethodInfo invocationMethod = commandProvider.GetType().GetMethod(nameof(ICommandProvider<object>.OnCommand))!;
+
+                await _discordClient.AddCommand(commandProvider.Command,
+                                                 commandProvider.Description,
+                                                 parameterType,
+                                                 c =>
+                                                 {
+                                                     object result = invocationMethod.Invoke(commandProvider, [c])!;
+                                                     return (Task<CommandResult>)result;
+                                                 },
+                                                 commandProvider.SlashCommandOptions);
+            }
+
+            _discordClient.ReactionAdded += _pluginService.React;
+
             await Task.Delay(-1);
-        }
-
-        private static async Task<CommandResult> OnClearCommand(GenericCommand clearCommand)
-        {
-            ulong channelId = clearCommand.Channel.Id;
-
-            DateTime triggered = clearCommand.Command.CreatedAt.DateTime;
-
-            _metaData.ClearValues[channelId] = triggered;
-
-            StaticConfiguration.Save(_metaData);
-
-            return CommandResult.Success("Memory Cleared");
-        }
-
-        private static async Task<CommandResult> OnContinueCommand(GenericCommand continueCommand)
-        {
-            if (continueCommand.Channel is ISocketMessageChannel smc)
-            {
-                TryProcessMessageThread(smc);
-                await continueCommand.Command.DeleteOriginalResponseAsync();
-                return CommandResult.Success();
-            }
-            else
-            {
-                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
-            }
-        }
-
-        private static async Task<CommandResult> OnDeleteCommand(DeleteCommand deleteCommand)
-        {
-            if (deleteCommand.Channel is ISocketMessageChannel smc)
-            {
-                IMessage message = await smc.GetMessageAsync(deleteCommand.MessageId);
-                await message.DeleteAsync();
-                await deleteCommand.Command.DeleteOriginalResponseAsync();
-                return CommandResult.Success();
-            }
-            else
-            {
-                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
-            }
-        }
-
-        private static async Task<CommandResult> OnUpdateCommand(UpdateCommand updateCommand)
-        {
-            if (updateCommand.Channel is ISocketMessageChannel smc)
-            {
-                IMessage message = await smc.GetMessageAsync(updateCommand.MessageId);
-                
-                if(message is IUserMessage um)
-                {
-                    await um.ModifyAsync(m => m.Content = updateCommand.Content);
-                }
-
-                await updateCommand.Command.DeleteOriginalResponseAsync();
-                return CommandResult.Success();
-            }
-            else
-            {
-                return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
-            }
-        }
-
-        private static async Task<CommandResult> OnInterruptCommand(GenericCommand clearCommand)
-        {
-            _chatContext.TryInterrupt();
-
-            await clearCommand.Command.DeleteOriginalResponseAsync();
-
-            return CommandResult.Success();
-        }
-
-        private static async Task<CommandResult> OnRegenerateCommand(GenericCommand regenerateCommand)
-        {
-            List<IMessage> messages = new();
-
-            if (regenerateCommand.Channel is ISocketMessageChannel smc)
-            {
-                foreach (IMessage checkMessage in await smc.GetMessagesAsync(500).FlattenAsync())
-                {
-                    if (checkMessage.Type == MessageType.ApplicationCommand)
-                    {
-                        continue;
-                    }
-
-                    if (checkMessage.Author.Id == _discordClient.CurrentUser.Id)
-                    {
-                        messages.Add(checkMessage);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-
-            if (messages.Count > 0)
-            {
-                foreach (IMessage message in messages)
-                {
-                    await message.DeleteAsync();
-                }
-
-                await OnContinueCommand(regenerateCommand);
-                return CommandResult.Success();
-            }
-            else
-            {
-                return CommandResult.Error("No message found after checking 500 messages");
-            }
-        }
-
-        private static async Task<CommandResult> OnSystemPromptCommand(SystemPromptCommand systemPromptCommand)
-        {
-            if (systemPromptCommand.ClearContext)
-            {
-                await OnClearCommand(systemPromptCommand);
-            }
-
-            if (systemPromptCommand.Prompt is null)
-            {
-                return CommandResult.Success(_systemPrompt);
-            }
-            else
-            {
-                _systemPrompt = systemPromptCommand.Prompt;
-                return CommandResult.Success("System Prompt Updated: " + systemPromptCommand.Prompt);
-            }
         }
     }
 }

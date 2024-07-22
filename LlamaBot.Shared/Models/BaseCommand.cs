@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 
-namespace LlamaBot.Discord.Model
+namespace LlamaBot.Shared.Models
 {
     public class BaseCommand
     {
@@ -10,10 +10,10 @@ namespace LlamaBot.Discord.Model
             Command = command;
         }
 
-        public IChannel Channel => Command.Channel;
+        public IChannel Channel => this.Command.Channel;
 
         public SocketSlashCommand Command { get; }
 
-        public SocketUser? User => Command.User;
+        public SocketUser? User => this.Command.User;
     }
 }

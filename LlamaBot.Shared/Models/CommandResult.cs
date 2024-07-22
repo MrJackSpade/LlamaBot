@@ -1,4 +1,4 @@
-﻿namespace LlamaBot.Discord.Model
+﻿namespace LlamaBot.Shared.Models
 {
     public class CommandResult
     {

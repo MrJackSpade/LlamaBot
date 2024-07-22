@@ -1,4 +1,4 @@
-﻿using LlamaBot.Discord.Model;
+﻿using LlamaBot.Shared.Models;
 
 namespace LlamaBot.Discord.Extensions
 {

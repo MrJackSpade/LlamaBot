@@ -45,11 +45,16 @@ namespace LlamaNative.Chat.Models
             return tokenized.Count;
         }
 
-        public void Clear()
+        public void Clear(bool includeCache)
         {
             lock (_lock)
             {
                 _messages.Clear();
+
+                if (includeCache)
+                {
+                    NativeContext.Clear(includeCache);
+                }
             }
         }
 
@@ -271,7 +276,7 @@ namespace LlamaNative.Chat.Models
 
         private void RefreshContext()
         {
-            NativeContext.Clear();
+            NativeContext.Clear(false);
 
             NativeContext.Write(this.ContextToString());
         }

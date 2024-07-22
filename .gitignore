@@ -16,3 +16,7 @@ LlamaNative/Binaries/CUDA/ggml.ilk
 LlamaNative/Binaries/CUDA/ggml.pdb
 LlamaNative/Binaries/CUDA/libggml.so
 LlamaNative/Binaries/CUDA/libllama.so
+LlamaBot.Plugins/obj/
+LlamaBot.Shared/obj/
+LlamaBot.Plugins/bin/
+LlamaBot.Shared/bin/

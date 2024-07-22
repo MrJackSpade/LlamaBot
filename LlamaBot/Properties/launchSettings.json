@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "Chie",
+      "commandLineArgs": "Blank",
       "nativeDebugging": true
     }
   }

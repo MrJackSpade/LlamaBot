@@ -22,16 +22,23 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
+	  <None Remove="Characters\Llama3\Blank\Configuration.json" />
+	  <None Remove="Characters\Llama3\Blank\System.txt" />
+	</ItemGroup>
+	<ItemGroup>
 		<PackageReference Include="Discord.Net" Version="3.15.2" />
 		<PackageReference Include="Loxifi.StaticConfiguration" Version="0.8.0" />
 	</ItemGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\LlamaBot.Plugins\LlamaBot.Plugins.csproj" />
 		<ProjectReference Include="..\LlamaNative.Chat\LlamaNative.Chat.csproj" />
 		<ProjectReference Include="..\LlamaNative.Utils\LlamaNative.Utils.csproj" />
 		<ProjectReference Include="..\LlamaNative\LlamaNative.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<Folder Include="Characters\Llama3\LlamaBot\" />
+		<Folder Include="Discord\Commands\" />
 		<Folder Include="Discord\Exceptions\" />
+		<Folder Include="Discord\Model\" />
 	</ItemGroup>
 </Project>

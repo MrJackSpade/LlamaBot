@@ -20,7 +20,7 @@ namespace LlamaNative.Interfaces
 
         uint Size { get; }
 
-        void Clear();
+        void Clear(bool includeCache);
 
         void Dispose();
 
