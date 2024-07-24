@@ -152,7 +152,12 @@ namespace LlamaNative.Chat.Models
                 string s_end = Settings.ChatTemplate.EndMessage;
                 string s_value = token.Value ?? string.Empty;
 
-                if (s_value.Contains(s_end))
+                //Check for explicit stop token
+                if(Settings.ChatTemplate.StopTokenIds.Contains(token.Id))
+                {
+                    break;
+                } else if (s_value.Contains(s_end))
+                //Check for primary stop string, trim if needed.
                 {
                     foreach (Token c_token in NativeContext.RemoveString(token, s_end))
                     {
@@ -161,6 +166,7 @@ namespace LlamaNative.Chat.Models
 
                     break;
                 }
+                //Else we just use this token and continue generating
                 else
                 {
                     this.SelectToken(response, token, sampleContext);
