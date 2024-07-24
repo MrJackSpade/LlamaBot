@@ -1,4 +1,5 @@
-﻿using LlamaNative.Apis;
+﻿using Llama.Core;
+using LlamaNative.Apis;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
 using LlamaNative.Logit.Collections;
@@ -27,6 +28,34 @@ namespace LlamaNative.Extensions
             Span<float> logits = NativeApi.GetLogits(handler.Handle, n_vocab);
 
             return logits;
+        }
+
+        public static IEnumerable<Token> RemoveString(this INativeContext handler, Token token, string s_end)
+        {
+            string s_val = token.Value ?? string.Empty;
+
+            //If this token contains the end string
+            if (s_val.Contains(s_end))
+            {
+                //check where in the token the end is
+                int e_index = s_val.IndexOf(s_end);
+
+                //if theres text before the end string
+                if (e_index > 0)
+                {
+                    //clip the next before the end
+                    string clipped_value = s_val[..e_index];
+
+                    //tokenize it
+                    TokenCollection clipped_tokens = handler.Tokenize(clipped_value);
+
+                    //then add it to the response.
+                    foreach (var clipped_token in clipped_tokens)
+                    {
+                        yield return clipped_token;
+                    }
+                }
+            }
         }
 
         public static Token GetToken(this INativeContext handler, int id) => new(id, NativeApi.TokenToPiece(handler.ModelHandle, id));

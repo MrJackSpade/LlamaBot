@@ -119,17 +119,26 @@ namespace LlamaNative.Chat.Models
             return response.ToString();
         }
 
+        private void SelectToken(List<TokenSelection> response, Token token, SampleContext sampleContext)
+        {
+            TokenSelection selection = this.TryGetSelectedToken(token, sampleContext);
+            Console.Write(selection.SelectedToken);
+            response.Add(selection);
+            NativeContext.Write(selection.SelectedToken);
+            NativeContext.Evaluate();
+        }
+
         public IEnumerable<ChatMessage> ReadResponse()
         {
             _running |= true;
 
             this.RefreshContext();
 
-            NativeContext.Write(Settings.ChatTemplate.ToHeader(Settings.BotName));
+            NativeContext.Write(Settings.ChatTemplate.ToHeader(Settings.BotName, true));
 
             NativeContext.Evaluate();
 
-            List<TokenSelection> response = new();
+            List<TokenSelection> response = [];
 
             do
             {
@@ -140,31 +149,22 @@ namespace LlamaNative.Chat.Models
 
                 Token token = NativeContext.SelectToken(out SampleContext sampleContext);
 
-                if (token.Value.Contains(Settings.ChatTemplate.EndMessage))
+                string s_end = Settings.ChatTemplate.EndMessage;
+                string s_value = token.Value ?? string.Empty;
+
+                if (s_value.Contains(s_end))
                 {
+                    foreach (Token c_token in NativeContext.RemoveString(token, s_end))
+                    {
+                        this.SelectToken(response, token, sampleContext);
+                    }
+
                     break;
                 }
-
-                TokenSelection selection = new(token);
-
-                if (Settings.SplitSettings != null && Settings.SplitSettings.MessageSplitId >= 0)
+                else
                 {
-                    try
-                    {
-                        TokenData data = sampleContext.OriginalCandidates.GetTokenData(Settings.SplitSettings.MessageSplitId);
-                        selection.TokenData.Add(Settings.SplitSettings.MessageSplitId, data);
-                    }
-                    catch (KeyNotFoundException kex)
-                    {
-                        Console.WriteLine($"Token with id {Settings.SplitSettings.MessageSplitId} not found");
-                    }
+                    this.SelectToken(response, token, sampleContext);
                 }
-
-                Console.Write(token);
-                response.Add(selection);
-
-                NativeContext.Write(token);
-                NativeContext.Evaluate();
             } while (true);
 
             List<List<TokenSelection>> messageParts = this.RecursiveSplit(response).ToList();
@@ -201,6 +201,26 @@ namespace LlamaNative.Chat.Models
             }
 
             return toReturn.Select(s => new ChatMessage(Settings.BotName, s));
+        }
+
+        private TokenSelection TryGetSelectedToken(Token token, SampleContext sampleContext)
+        {
+            TokenSelection selection = new(token);
+
+            if (Settings.SplitSettings != null && Settings.SplitSettings.MessageSplitId >= 0)
+            {
+                try
+                {
+                    TokenData data = sampleContext.OriginalCandidates.GetTokenData(Settings.SplitSettings.MessageSplitId);
+                    selection.TokenData.Add(Settings.SplitSettings.MessageSplitId, data);
+                }
+                catch (KeyNotFoundException kex)
+                {
+                    Console.WriteLine($"Token with id {Settings.SplitSettings.MessageSplitId} not found");
+                }
+            }
+
+            return selection;
         }
 
         public void RemoveAt(int index) => _messages.RemoveAt(index);

@@ -8,13 +8,13 @@ using System.Text;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public abstract class BaseDynamicSampler(int queueSize, BaseDynamicSamplerSettings settings)
+    public abstract class BaseDynamicSampler<TSettings>(int queueSize, TSettings settings) where TSettings : BaseDynamicSamplerSettings
     {
         protected readonly Dictionary<int, bool> _isWords = [];
 
         protected readonly Queue<TokenData> SelectionHistory = new();
 
-        private readonly BaseDynamicSamplerSettings _settings = settings;
+        protected readonly TSettings _settings = settings;
 
         protected int QueueSize { get; private set; } = queueSize;
 
@@ -72,12 +72,12 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
         }
 
-        protected int SelectToken(SampleContext sampleContext)
+        protected int SelectToken(SampleContext sampleContext, bool greedy)
         {
-            return this.SelectToken(sampleContext, out _);
+            return this.SelectToken(sampleContext, greedy, out _);
         }
 
-        protected int SelectToken(SampleContext sampleContext, out bool topOnly)
+        protected int SelectToken(SampleContext sampleContext, bool greedy, out bool topOnly)
         {
             SamplingApi.SoftMax(sampleContext.Candidates);
             SamplingApi.SoftMax(sampleContext.OriginalCandidates);
@@ -125,7 +125,14 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             else
             {
                 SamplingApi.SoftMax(sampleContext.Candidates);
-                selectedToken = SamplingApi.Token(sampleContext.ContextHandle, sampleContext.Candidates);
+
+                if (!greedy)
+                {
+                    selectedToken = SamplingApi.Token(sampleContext.ContextHandle, sampleContext.Candidates);
+                } else
+                {
+                    selectedToken = sampleContext.Candidates[0].Id;
+                }
             }
 
             return selectedToken;

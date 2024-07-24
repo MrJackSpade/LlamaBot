@@ -2,7 +2,7 @@
 
 namespace Llama.Data.Models.Settings
 {
-    public class TargetedTempSamplerSettings : BaseDynamicSamplerSettings
+    public class TargetedTemperatureSamplerSettings : BaseDynamicSamplerSettings
     {
         /// <summary>
         ///

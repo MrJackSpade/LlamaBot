@@ -24,6 +24,8 @@
 	<ItemGroup>
 	  <None Remove="Characters\Llama3\Blank\Configuration.json" />
 	  <None Remove="Characters\Llama3\Blank\System.txt" />
+	  <None Remove="Characters\Magnum\Magnum Blank\Configuration.json" />
+	  <None Remove="Characters\Magnum\Magnum Blank\System.txt" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Discord.Net" Version="3.15.2" />

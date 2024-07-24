@@ -18,7 +18,7 @@ namespace LlamaNative.Serialization
 
         static SamplerDeserializer()
         {
-            RegisterSelector<TargetedTempSampler>();
+            RegisterSelector<TargetedTemperatureSampler>();
             RegisterSelector<TemperatureSampler>();
 
             RegisterSimple<RepetitionSampler>();

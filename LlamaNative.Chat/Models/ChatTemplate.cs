@@ -8,38 +8,39 @@ namespace LlamaNative.Chat.Models
 
         public string EndMessage { get; set; } = "\n";
 
-        public bool HeaderNewline { get; set; } = false;
+        public string HeaderPadding { get; set; } = string.Empty;
 
-        public bool MessageNewline { get; set; } = false;
+        public string NewHeaderPadding { get; set; } = string.Empty;
+
+        public string MessagePadding { get; set; } = string.Empty;
 
         public string StartHeader { get; set; } = "|";
 
-        public string ToHeader(string userName)
+        public string ToHeader(string userName, bool newHeader)
         {
             StringBuilder sb = new();
             sb.Append(StartHeader);
             sb.Append(userName);
             sb.Append(EndHeader);
 
-            if (HeaderNewline)
+            if (newHeader)
             {
-                sb.Append('\n');
+                sb.Append(NewHeaderPadding);
+            } else
+            {
+                sb.Append(HeaderPadding);
             }
-
+            
             return sb.ToString();
         }
 
         public string ToString(ChatMessage message)
         {
             StringBuilder sb = new();
-            sb.Append(this.ToHeader(message.User));
+            sb.Append(this.ToHeader(message.User, false));
             sb.Append(message.Content);
             sb.Append(EndMessage);
-
-            if (MessageNewline)
-            {
-                sb.Append('\n');
-            }
+            sb.Append(MessagePadding);
 
             return sb.ToString();
         }
