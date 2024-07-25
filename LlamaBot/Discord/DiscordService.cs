@@ -7,6 +7,7 @@ using LlamaBot.Models.Events;
 using LlamaBot.Shared.Models;
 using LlamaBot.Shared.Utils;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Reflection;
 using IDiscordService = LlamaBot.Shared.Interfaces.IDiscordService;
 
@@ -225,7 +226,13 @@ namespace LlamaBot.Discord
             {
                 CommandResult result = CommandResult.Error("You should never see this message");
 
-                await command.DeferAsync();
+                try
+                {
+                    await command.DeferAsync();
+                } catch (Exception ex)
+                {
+                    Debug.WriteLine($"An exception occurred while deferring the message {ex}");
+                }
 
                 try
                 {
