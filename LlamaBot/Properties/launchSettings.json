@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "Llama3.1",
+      "commandLineArgs": "Llama3.1-70B",
       "nativeDebugging": true
     }
   }

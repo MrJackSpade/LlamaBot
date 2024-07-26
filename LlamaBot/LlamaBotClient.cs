@@ -10,6 +10,8 @@ using LlamaNative.Sampling.Models;
 using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Settings;
 using Loxifi;
+using System.Diagnostics;
+using ThreadState = System.Threading.ThreadState;
 
 namespace LlamaBot
 {
@@ -129,6 +131,10 @@ namespace LlamaBot
                     break;
                 }
             }
+
+            //string nextUser = _chatContext.PredictNextUser();
+
+            //Debug.WriteLine("Predicted User:" + nextUser);
 
             using IDisposable typingState = channel.EnterTypingState();
 
