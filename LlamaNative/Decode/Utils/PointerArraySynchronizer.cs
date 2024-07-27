@@ -1,6 +1,7 @@
 ﻿using LlamaNative.Decode.Collections;
 using LlamaNative.Decode.Decode;
 using LlamaNative.Decode.Models;
+using System.Diagnostics;
 
 namespace LlamaNative.Decode.Utils
 {
@@ -52,6 +53,16 @@ namespace LlamaNative.Decode.Utils
             }
 
             uint clearStart = matchCount + bestShiftCount;
+
+            if(clearStart > buffer.Pointer - 1)
+            {
+                //If the clear is > the buffer pointer, that means we've moved backwards (or not at all)
+                //In this event, we're going to recalculate the last token so we can ensure we have the 
+                //correct logits. Otherwise the logits in memory will still represent the future decode
+                //position.
+                clearStart = buffer.Pointer - 1;
+                Debug.WriteLine("Null decode. Recalculating last token.");
+            }
 
             this.RemoveCacheTokens(kvCache, clearStart, kvCache.Length);
         }

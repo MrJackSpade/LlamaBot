@@ -24,10 +24,16 @@ namespace LlamaNative.Apis
             uint toDecode = (uint)batch.Items.Count;
             uint decoded = 0;
 
-            //if we have to reprocess a token that is AFTER our current token, the logits will be all fucked up
-            //when were done. We need to make SURE that the last token we process is what we original expected
-            uint originalHighestPosition = batch.Items.Max(b => b.Position);
-            uint currentHighestPosition = originalHighestPosition;
+            uint originalHighestPosition = 0;
+            uint currentHighestPosition = 0;
+
+            if (batch.Items.Count > 0) //Do we need this? Should we have a batch size zero?
+            {
+                //if we have to reprocess a token that is AFTER our current token, the logits will be all fucked up
+                //when were done. We need to make SURE that the last token we process is what we original expected
+                originalHighestPosition = batch.Items.Max(b => b.Position);
+                currentHighestPosition = originalHighestPosition;
+            }
 
             //grab the items
             List<BatchItem<int>> batchItems = [.. batch.Items];

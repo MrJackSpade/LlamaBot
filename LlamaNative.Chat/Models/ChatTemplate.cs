@@ -8,7 +8,7 @@ namespace LlamaNative.Chat.Models
 
         public string EndMessage { get; set; } = "\n";
 
-        public int[] StopTokenIds { get; set; } = new int[0];
+        public int[] StopTokenIds { get; set; } = [];
 
         public string HeaderPadding { get; set; } = string.Empty;
 
