@@ -199,7 +199,7 @@ namespace LlamaNative.Chat.Models
             {
                 List<TokenSelection> message = messageParts[i];
 
-                string thisChunk = string.Join("", message.Select(s => s.SelectedToken.Value)).Trim();
+                string thisChunk = string.Join("", message.Select(s => s.SelectedToken.Value));
 
                 if (Settings?.SplitSettings?.DoubleNewlineSplit ?? false)
                 {

@@ -154,6 +154,8 @@ namespace LlamaBot
 
                 content += cm.Content;
 
+                content = content.Trim();
+
                 if (string.IsNullOrEmpty(content))
                 {
                     await channel.SendMessageAsync("[Empty Message]");
