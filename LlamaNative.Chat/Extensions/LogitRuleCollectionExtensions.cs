@@ -13,7 +13,7 @@ namespace LlamaNative.Chat.Extensions
     {
         public static void BlockToken(this LogitRuleCollection collection, Token token, LogitRuleLifetime logitRuleLifetime = LogitRuleLifetime.Token)
         {
-            collection.Add(new LogitBias(token.Id, float.PositiveInfinity, logitRuleLifetime, LogitBiasType.Additive));
+            collection.Add(new LogitBias(token.Id, float.NegativeInfinity, logitRuleLifetime, LogitBiasType.Additive));
         }
     }
 }
