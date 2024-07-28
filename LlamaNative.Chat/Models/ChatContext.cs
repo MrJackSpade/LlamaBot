@@ -130,15 +130,19 @@ namespace LlamaNative.Chat.Models
 
         public IEnumerable<ChatMessage> ReadResponse(bool continueLast)
         {
+            LogitRuleCollection logitRules = [];
+            List<TokenSelection> response = [];
+
             _running |= true;
 
             this.RefreshContext(continueLast);
 
-            LogitRuleCollection logitRules = [];
+            if (!continueLast)
+            {
+                NativeContext.Write(Settings.ChatTemplate.ToHeader(Settings.BotName, true));
+            }
 
             NativeContext.Evaluate();
-
-            List<TokenSelection> response = [];
 
             do
             {
