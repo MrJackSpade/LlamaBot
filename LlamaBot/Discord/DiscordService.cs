@@ -229,7 +229,8 @@ namespace LlamaBot.Discord
                 try
                 {
                     await command.DeferAsync();
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     Debug.WriteLine($"An exception occurred while deferring the message {ex}");
                 }

@@ -4,6 +4,7 @@ using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
+using LlamaBot.Shared.Utils;
 
 namespace LlamaBot.Plugins.Commands.Continue
 {
@@ -23,10 +24,13 @@ namespace LlamaBot.Plugins.Commands.Continue
 
         public async Task<CommandResult> OnCommand(ContinueCommand command)
         {
+            Ensure.NotNull(_llamaBotClient);
+
             if (command.Channel is ISocketMessageChannel smc)
             {
-                _llamaBotClient.TryProcessMessageThread(smc);
+                bool continueLast = !command.NewMessage && await _llamaBotClient.TryGetLastBotMessage(smc) is not null;
                 await command.Command.DeleteOriginalResponseAsync();
+                _llamaBotClient.TryProcessMessageThread(smc, continueLast);
                 return CommandResult.Success();
             }
             else

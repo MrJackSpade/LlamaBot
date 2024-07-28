@@ -19,6 +19,16 @@ namespace LlamaNative.Chat.Extensions
             context.Insert(index, chatMessage);
         }
 
+        public static void SendContent(this IChatContext context, string message, string? externalId = null)
+        {
+            ChatMessage chatMessage = new(null, message, externalId)
+            {
+                ContentOnly = true
+            };
+
+            context.SendMessage(chatMessage);
+        }
+
         public static void SendMessage(this IChatContext context, string username, string message, string? externalId = null)
         {
             ChatMessage chatMessage = new(username, message, externalId);

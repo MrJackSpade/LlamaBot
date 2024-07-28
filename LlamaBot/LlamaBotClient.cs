@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using LlamaBot.Extensions;
 using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Shared.Utils;
 using LlamaNative.Chat;
 using LlamaNative.Chat.Extensions;
 using LlamaNative.Chat.Interfaces;
@@ -10,7 +11,6 @@ using LlamaNative.Sampling.Models;
 using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Settings;
 using Loxifi;
-using System.Diagnostics;
 using ThreadState = System.Threading.ThreadState;
 
 namespace LlamaBot
@@ -31,6 +31,9 @@ namespace LlamaBot
 
         public LlamaBotClient(Character character, string? systemPrompt, ulong botId)
         {
+            Ensure.NotNull(character);
+            Ensure.NotNull(character.ChatSettings);
+
             _chatContext = LlamaChatClient.LoadChatContext(character.ChatSettings);
 
             if (!string.IsNullOrWhiteSpace(systemPrompt))
@@ -65,6 +68,8 @@ namespace LlamaBot
 
         public string GetDisplayName(IUser user)
         {
+            Ensure.NotNull(_character);
+
             if (user.Id == _botId)
             {
                 return _chatSettings.BotName;
@@ -83,8 +88,10 @@ namespace LlamaBot
             return user.Username;
         }
 
-        public async Task ProcessMessage(ISocketMessageChannel channel)
+        public async Task ProcessMessage(ISocketMessageChannel channel, bool continueLast)
         {
+            Ensure.NotNull(_chatContext);
+
             Console.Clear();
 
             _chatContext.Clear(false);
@@ -132,21 +139,27 @@ namespace LlamaBot
                 }
             }
 
-            //string nextUser = _chatContext.PredictNextUser();
+            IMessage? prependMessage = null;
 
-            //Debug.WriteLine("Predicted User:" + nextUser);
+            if (continueLast)
+            {
+                prependMessage = await this.TryGetLastBotMessage(channel);
+            }
 
             using IDisposable typingState = channel.EnterTypingState();
 
-            foreach (ChatMessage cm in _chatContext.ReadResponse())
+            foreach (ChatMessage cm in _chatContext.ReadResponse(continueLast))
             {
-                if (string.IsNullOrEmpty(cm.Content))
+                string content = prependMessage?.Content ?? string.Empty;
+
+                content += cm.Content;
+
+                if (string.IsNullOrEmpty(content))
                 {
                     await channel.SendMessageAsync("[Empty Message]");
                 }
                 else
                 {
-                    string content = cm.Content;
                     while (content.Length > 0)
                     {
                         int chunkSize = Math.Min(1950, content.Length);
@@ -155,6 +168,11 @@ namespace LlamaBot
                         content = content[chunkSize..];
                     }
                 }
+            }
+
+            if (prependMessage != null)
+            {
+                await prependMessage.DeleteAsync();
             }
         }
 
@@ -165,25 +183,58 @@ namespace LlamaBot
             StaticConfiguration.Save(_metaData);
         }
 
+        public async Task<IMessage?> TryGetLastBotMessage(ISocketMessageChannel channel)
+        {
+            await foreach (IMessage lm in channel.GetMessagesAsync(5).Flatten())
+            {
+                if (lm.Type == MessageType.ApplicationCommand)
+                {
+                    continue;
+                }
+
+                if (lm.Author.Id == _botId)
+                {
+                    return lm;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
         public void TryInterrupt()
         {
+            Ensure.NotNull(_chatContext);
             _chatContext.TryInterrupt();
         }
 
-        public void TryProcessMessageThread(ISocketMessageChannel smc)
+        public void TryProcessMessageThread(ISocketMessageChannel smc, bool continueLast)
         {
             if (_processMessageThread is null || _processMessageThread.ThreadState != ThreadState.Running)
             {
-                _processMessageThread = new Thread(async () => await this.ProcessMessage(smc));
+                _processMessageThread = new Thread(async () => await this.ProcessMessage(smc, continueLast));
                 _processMessageThread.Start();
             }
         }
 
         private void InsertContextHeaders()
         {
+            Ensure.NotNull(_chatContext);
+            Ensure.NotNull(_character);
+
             if (!string.IsNullOrWhiteSpace(SystemPrompt))
             {
-                _chatContext.SendMessage(_chatSettings.SystemPromptUser, SystemPrompt);
+                if (_chatSettings.SystemPromptUser is null)
+                {
+                    _chatContext.SendContent(SystemPrompt);
+                }
+                else
+                {
+                    _chatContext.SendMessage(_chatSettings.SystemPromptUser, SystemPrompt);
+                }
             }
 
             foreach (ChatMessage cm in _character.ChatMessages)

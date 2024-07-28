@@ -43,7 +43,7 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
                 responseString = "System Prompt Updated: " + command.Prompt;
             }
 
-            if(responseString.Length > 1995)
+            if (responseString.Length > 1995)
             {
                 responseString = responseString[..1990] + "...";
             }

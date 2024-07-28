@@ -4,11 +4,11 @@ namespace LlamaNative.Chat.Models
 {
     public class ChatMessage
     {
-        public ChatMessage(string user, string? content, string? externalId = null)
+        public ChatMessage(string? user, string? content, string? externalId = null)
         {
             ExternalId = externalId;
             Content = content;
-            User = user ?? throw new ArgumentNullException(nameof(user));
+            User = user;
         }
 
         public ChatMessage(string user)
@@ -22,8 +22,10 @@ namespace LlamaNative.Chat.Models
 
         public string? Content { get; set; }
 
+        public bool ContentOnly { get; set; }
+
         public string? ExternalId { get; set; }
 
-        public string User { get; set; }
+        public string? User { get; set; }
     }
 }

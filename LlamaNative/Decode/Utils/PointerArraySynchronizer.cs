@@ -54,10 +54,10 @@ namespace LlamaNative.Decode.Utils
 
             uint clearStart = matchCount + bestShiftCount;
 
-            if(clearStart > buffer.Pointer - 1)
+            if (clearStart > buffer.Pointer - 1)
             {
                 //If the clear is > the buffer pointer, that means we've moved backwards (or not at all)
-                //In this event, we're going to recalculate the last token so we can ensure we have the 
+                //In this event, we're going to recalculate the last token so we can ensure we have the
                 //correct logits. Otherwise the logits in memory will still represent the future decode
                 //position.
                 clearStart = buffer.Pointer - 1;

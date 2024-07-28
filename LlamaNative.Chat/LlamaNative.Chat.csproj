@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\LlamaNative.Utils\LlamaNative.Utils.csproj" />
     <ProjectReference Include="..\LlamaNative\LlamaNative.csproj" />
   </ItemGroup>
 

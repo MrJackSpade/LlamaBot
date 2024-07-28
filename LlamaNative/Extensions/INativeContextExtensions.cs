@@ -30,6 +30,15 @@ namespace LlamaNative.Extensions
             return logits;
         }
 
+        public static Token GetToken(this INativeContext handler, int id) => new(id, NativeApi.TokenToPiece(handler.ModelHandle, id));
+
+        public static Token Predict(this INativeContext handler, LogitRuleCollection logitRules)
+        {
+            handler.Evaluate();
+
+            return handler.SelectToken(logitRules);
+        }
+
         public static IEnumerable<Token> RemoveString(this INativeContext handler, Token token, string s_end)
         {
             string s_val = token.Value ?? string.Empty;
@@ -58,15 +67,6 @@ namespace LlamaNative.Extensions
             }
         }
 
-        public static Token GetToken(this INativeContext handler, int id) => new(id, NativeApi.TokenToPiece(handler.ModelHandle, id));
-
-        public static Token Predict(this INativeContext handler, LogitRuleCollection logitRules)
-        {
-            handler.Evaluate();
-
-            return handler.SelectToken(logitRules);
-        }
-
         public static Token SelectToken(this INativeContext handler)
         {
             return handler.SelectToken(null, out _);
@@ -75,6 +75,11 @@ namespace LlamaNative.Extensions
         public static Token SelectToken(this INativeContext handler, LogitRuleCollection logitBias)
         {
             return handler.SelectToken(logitBias, out _);
+        }
+
+        public static Token SelectToken(this INativeContext handler, LogitRuleCollection logitBias, out SampleContext context)
+        {
+            return handler.SelectToken(logitBias, out context);
         }
 
         public static Token SelectToken(this INativeContext handler, out SampleContext context)

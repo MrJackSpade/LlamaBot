@@ -12,9 +12,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
     {
         protected readonly Dictionary<int, bool> _isWords = [];
 
-        protected readonly Queue<TokenData> SelectionHistory = new();
-
         protected readonly TSettings _settings = settings;
+
+        protected readonly Queue<TokenData> SelectionHistory = new();
 
         protected int QueueSize { get; private set; } = queueSize;
 
@@ -129,7 +129,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 if (!greedy)
                 {
                     selectedToken = SamplingApi.Token(sampleContext.ContextHandle, sampleContext.Candidates);
-                } else
+                }
+                else
                 {
                     selectedToken = sampleContext.Candidates[0].Id;
                 }

@@ -100,7 +100,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             float sampleTemp = _settings.Temperature;
 
-            if (this.TryGetQueueAverage(out float average) && 
+            if (this.TryGetQueueAverage(out float average) &&
                 _settings.Temperature > 0)
             {
                 float totalDiff = 0;
@@ -157,7 +157,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             SamplingApi.TailFree(sampleContext.Candidates, _settings.Tfs, 1);
 
-            int selectedToken = this.SelectToken(sampleContext, _settings.Temperature <= 0,  out bool topOnly);
+            int selectedToken = this.SelectToken(sampleContext, _settings.Temperature <= 0, out bool topOnly);
 
             // Compute error as the difference between observed surprise and target surprise value
 

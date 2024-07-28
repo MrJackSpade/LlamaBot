@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace LlamaBot.Shared.Utils
 {
@@ -14,7 +15,7 @@ namespace LlamaBot.Shared.Utils
             return o;
         }
 
-        public static T NotNull<T>(T? o, [CallerArgumentExpression(nameof(o))] string memberName = "") where T : class
+        public static T NotNull<T>([NotNull] T? o, [CallerArgumentExpression(nameof(o))] string memberName = "") where T : class
         {
             if (o == null)
             {
@@ -24,7 +25,7 @@ namespace LlamaBot.Shared.Utils
             return o;
         }
 
-        public static T NotNull<T>(T? o, [CallerArgumentExpression(nameof(o))] string memberName = "") where T : struct
+        public static T NotNull<T>([NotNull] T? o, [CallerArgumentExpression(nameof(o))] string memberName = "") where T : struct
         {
             if (!o.HasValue)
             {
@@ -34,7 +35,7 @@ namespace LlamaBot.Shared.Utils
             return o.Value;
         }
 
-        public static ulong NotNullOrDefault(ulong? o, [CallerArgumentExpression(nameof(o))] string memberName = "")
+        public static ulong NotNullOrDefault([NotNull] ulong? o, [CallerArgumentExpression(nameof(o))] string memberName = "")
         {
             if (!o.HasValue || o.Value == default)
             {
@@ -44,7 +45,7 @@ namespace LlamaBot.Shared.Utils
             return o.Value;
         }
 
-        public static T[] NotNullOrEmpty<T>(T[]? o, [CallerArgumentExpression(nameof(o))] string memberName = "")
+        public static T[] NotNullOrEmpty<T>([NotNull] T[]? o, [CallerArgumentExpression(nameof(o))] string memberName = "")
         {
             if (o == null || o.Length == 0)
             {
@@ -54,7 +55,7 @@ namespace LlamaBot.Shared.Utils
             return o;
         }
 
-        public static string NotNullOrWhiteSpace(string? o, [CallerArgumentExpression(nameof(o))] string memberName = "")
+        public static string NotNullOrWhiteSpace([NotNull] string? o, [CallerArgumentExpression(nameof(o))] string memberName = "")
         {
             if (string.IsNullOrWhiteSpace(o))
             {

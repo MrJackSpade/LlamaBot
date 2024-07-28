@@ -1,7 +1,10 @@
-﻿using LlamaNative.Chat.Interfaces;
+﻿using LlamaNative.Chat.Extensions;
+using LlamaNative.Chat.Interfaces;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
 using LlamaNative.Interop.Structs;
+using LlamaNative.Logit.Collections;
+using LlamaNative.Logit.Models;
 using LlamaNative.Models;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Extensions;
@@ -22,7 +25,7 @@ namespace LlamaNative.Chat.Models
         {
             get
             {
-                TokenCollection contextTokens = NativeContext.Tokenize(this.ContextToString());
+                TokenCollection contextTokens = NativeContext.Tokenize(this.ContextToString(false));
 
                 return NativeContext.Size - contextTokens.Count;
             }
@@ -40,7 +43,7 @@ namespace LlamaNative.Chat.Models
 
         public uint CalculateLength(ChatMessage message)
         {
-            TokenCollection tokenized = NativeContext.Tokenize(Settings.ChatTemplate.ToString(message));
+            TokenCollection tokenized = NativeContext.Tokenize(Settings.ChatTemplate.ToString(message, true));
 
             return tokenized.Count;
         }
@@ -58,7 +61,7 @@ namespace LlamaNative.Chat.Models
             }
         }
 
-        public string ContextToString()
+        public string ContextToString(bool continueLast)
         {
             StringBuilder sb = new();
 
@@ -74,9 +77,15 @@ namespace LlamaNative.Chat.Models
                 messages = [.. _messages];
             }
 
-            foreach (ChatMessage message in messages)
+            for (int i = 0; i < messages.Count; i++)
             {
-                string messageContent = Settings.ChatTemplate.ToString(message);
+                var message = messages[i];
+
+                //We don't want to append message ending characters if we're the last message and
+                //we're intending on continuing the last generation
+                bool endMessage = !continueLast || i < messages.Count - 1;
+
+                string messageContent = Settings.ChatTemplate.ToString(message, endMessage);
 
                 sb.Append(messageContent);
             }
@@ -94,7 +103,7 @@ namespace LlamaNative.Chat.Models
 
         public string PredictNextUser()
         {
-            this.RefreshContext();
+            this.RefreshContext(false);
 
             NativeContext.Write(Settings.ChatTemplate.StartHeader);
 
@@ -119,22 +128,13 @@ namespace LlamaNative.Chat.Models
             return response.ToString();
         }
 
-        private void SelectToken(List<TokenSelection> response, Token token, SampleContext sampleContext)
-        {
-            TokenSelection selection = this.TryGetSelectedToken(token, sampleContext);
-            Console.Write(selection.SelectedToken);
-            response.Add(selection);
-            NativeContext.Write(selection.SelectedToken);
-            NativeContext.Evaluate();
-        }
-
-        public IEnumerable<ChatMessage> ReadResponse()
+        public IEnumerable<ChatMessage> ReadResponse(bool continueLast)
         {
             _running |= true;
 
-            this.RefreshContext();
+            this.RefreshContext(continueLast);
 
-            NativeContext.Write(Settings.ChatTemplate.ToHeader(Settings.BotName, true));
+            LogitRuleCollection logitRules = [];
 
             NativeContext.Evaluate();
 
@@ -147,18 +147,31 @@ namespace LlamaNative.Chat.Models
                     break;
                 }
 
-                Token token = NativeContext.SelectToken(out SampleContext sampleContext);
+                Token token = NativeContext.SelectToken(logitRules, out SampleContext sampleContext);
 
                 string s_end = Settings.ChatTemplate.EndMessage;
                 string s_value = token.Value ?? string.Empty;
 
                 //Check for explicit stop token
-                if(Settings.ChatTemplate.StopTokenIds.Contains(token.Id))
+                if (Settings.ChatTemplate.StopTokenIds.Contains(token.Id))
                 {
+                    if (response.Count == 0 && continueLast)
+                    {
+                        logitRules.BlockToken(token);
+                        continue;
+                    }
+
                     break;
-                } else if (s_value.Contains(s_end))
+                }
+                else if (s_value.Contains(s_end))
                 //Check for primary stop string, trim if needed.
                 {
+                    if (response.Count == 0 && continueLast)
+                    {
+                        logitRules.BlockToken(token);
+                        continue;
+                    }
+
                     foreach (Token c_token in NativeContext.RemoveString(token, s_end))
                     {
                         this.SelectToken(response, token, sampleContext);
@@ -166,10 +179,11 @@ namespace LlamaNative.Chat.Models
 
                     break;
                 }
-                //Else we just use this token and continue generating
+                //else we just use this token and continue generating
                 else
                 {
                     this.SelectToken(response, token, sampleContext);
+                    logitRules.Remove(LogitRuleLifetime.Token);
                 }
             } while (true);
 
@@ -207,26 +221,6 @@ namespace LlamaNative.Chat.Models
             }
 
             return toReturn.Select(s => new ChatMessage(Settings.BotName, s));
-        }
-
-        private TokenSelection TryGetSelectedToken(Token token, SampleContext sampleContext)
-        {
-            TokenSelection selection = new(token);
-
-            if (Settings.SplitSettings != null && Settings.SplitSettings.MessageSplitId >= 0)
-            {
-                try
-                {
-                    TokenData data = sampleContext.OriginalCandidates.GetTokenData(Settings.SplitSettings.MessageSplitId);
-                    selection.TokenData.Add(Settings.SplitSettings.MessageSplitId, data);
-                }
-                catch (KeyNotFoundException kex)
-                {
-                    Console.WriteLine($"Token with id {Settings.SplitSettings.MessageSplitId} not found");
-                }
-            }
-
-            return selection;
         }
 
         public void RemoveAt(int index) => _messages.RemoveAt(index);
@@ -300,11 +294,40 @@ namespace LlamaNative.Chat.Models
             }
         }
 
-        private void RefreshContext()
+        private void RefreshContext(bool continueLast)
         {
             NativeContext.Clear(false);
 
-            NativeContext.Write(this.ContextToString());
+            NativeContext.Write(this.ContextToString(continueLast));
+        }
+
+        private void SelectToken(List<TokenSelection> response, Token token, SampleContext sampleContext)
+        {
+            TokenSelection selection = this.TryGetSelectedToken(token, sampleContext);
+            Console.Write(selection.SelectedToken);
+            response.Add(selection);
+            NativeContext.Write(selection.SelectedToken);
+            NativeContext.Evaluate();
+        }
+
+        private TokenSelection TryGetSelectedToken(Token token, SampleContext sampleContext)
+        {
+            TokenSelection selection = new(token);
+
+            if (Settings.SplitSettings != null && Settings.SplitSettings.MessageSplitId >= 0)
+            {
+                try
+                {
+                    TokenData data = sampleContext.OriginalCandidates.GetTokenData(Settings.SplitSettings.MessageSplitId);
+                    selection.TokenData.Add(Settings.SplitSettings.MessageSplitId, data);
+                }
+                catch (KeyNotFoundException)
+                {
+                    Console.WriteLine($"Token with id {Settings.SplitSettings.MessageSplitId} not found");
+                }
+            }
+
+            return selection;
         }
     }
 }
