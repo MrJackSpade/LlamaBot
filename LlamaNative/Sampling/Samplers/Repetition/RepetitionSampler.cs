@@ -34,7 +34,7 @@ namespace LlamaNative.Sampling.Samplers.Repetition
         {
             TokenCollection? sampleTokens = sampleContext.ContextTokens.Trim();
 
-            LastTokens? lastTokens = this.GetLastTokens(sampleTokens, _settings.RepeatPenaltyWindow, _include, _exclude);
+            LastTokens? lastTokens = this.GetLastTokens(sampleTokens, _settings.TokenMask, _settings.RepeatPenaltyWindow, _include, _exclude);
 
             SamplingApi.RepetitionPenalties(sampleContext.Candidates, lastTokens.Ids, _settings.RepeatPenalty, _settings.FrequencyPenalty, _settings.PresencePenalty);
         }

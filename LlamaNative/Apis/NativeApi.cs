@@ -160,7 +160,7 @@ namespace LlamaNative.Apis
             }
         }
 
-        public static Token[] GetEvaluated(SafeContextHandle context, SafeModelHandle model)
+        internal static Token[] GetEvaluated(SafeContextHandle context, SafeModelHandle model)
         {
             KvCell[] cells = GetKvCells(context);
 
@@ -217,11 +217,11 @@ namespace LlamaNative.Apis
 
                 if (cell.Value == -1)
                 {
-                    token = new Token(-1, null);
+                    token = Token.Null;
                 }
                 else
                 {
-                    token = new Token(cell.Value, model.TokenToPiece(cell.Value));
+                    token = new Token(cell.Value, model.TokenToPiece(cell.Value), TokenMask.Undefined);
                 }
 
                 if (evaluated[cell.Pos] != null)
@@ -238,7 +238,7 @@ namespace LlamaNative.Apis
             {
                 if (evaluated[i] == null)
                 {
-                    evaluated[i] = new Token(-1, null);
+                    evaluated[i] = Token.Null;
                 }
             }
 
@@ -373,7 +373,7 @@ namespace LlamaNative.Apis
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
-        public static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
+        internal static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
         {
             int cnt = Encoding.Unicode.GetByteCount(text + 1);
 

@@ -56,7 +56,7 @@ namespace Llama.Core
 
             _synchronizer = new PointerArraySynchronizer<Token>(
                 new KvCacheShifter(settings.NThreads, settings.NBatch, handle, modelHandle),
-                new Token(-1, null)
+                Token.Null
                 );
 
             this.Handle = handle;
@@ -66,9 +66,9 @@ namespace Llama.Core
             this.Size = this._settings.NCtx;
 
             this._buffer = new PointerArray<Token>(this.Size);
-            this._buffer.Fill(new Token(-1, null));
+            this._buffer.Fill(Token.Null);
 
-            this._kvCache = new KvCacheState<Token>(this.Size, new Token(-1, null));
+            this._kvCache = new KvCacheState<Token>(this.Size, Token.Null);
 
             this.ModelHandle = modelHandle;
 
@@ -100,7 +100,7 @@ namespace Llama.Core
 
             if (includeCache)
             {
-                this._kvCache = new KvCacheState<Token>(this.Size, new Token(-1, null));
+                this._kvCache = new KvCacheState<Token>(this.Size, Token.Null);
             }
         }
 
@@ -169,7 +169,7 @@ namespace Llama.Core
 
             int tokenId = this._tokenSelector.SampleNext(sampleContext);
 
-            Token toReturn = this.GetToken(tokenId);
+            Token toReturn = this.GetToken(TokenMask.Bot, tokenId);
 
             return toReturn;
         }

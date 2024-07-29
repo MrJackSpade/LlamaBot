@@ -1,4 +1,5 @@
 ﻿using LlamaBot.Shared.Utils;
+using LlamaNative.Tokens.Models;
 using System.Text;
 
 namespace LlamaNative.Chat.Models
@@ -19,7 +20,7 @@ namespace LlamaNative.Chat.Models
 
         public int[] StopTokenIds { get; set; } = [];
 
-        public string ToHeader(string userName, bool newHeader)
+        public MaskedString ToHeader(string userName, bool newHeader)
         {
             StringBuilder sb = new();
 
@@ -36,7 +37,7 @@ namespace LlamaNative.Chat.Models
                 sb.Append(HeaderPadding);
             }
 
-            return sb.ToString();
+            return new MaskedString(sb.ToString(), TokenMask.Template);
         }
 
         /// <summary>
@@ -45,27 +46,41 @@ namespace LlamaNative.Chat.Models
         /// <param name="message">The message to write</param>
         /// <param name="endMessage">If true, append the end message characters and padding</param>
         /// <returns></returns>
-        public string ToString(ChatMessage message, bool endMessage)
+        public IEnumerable<MaskedString> ToMaskedString(ChatMessage message, bool endMessage)
         {
             if (message.ContentOnly)
             {
                 Ensure.NotNull(message.Content);
-                return message.Content;
+                string content = message.Content;
+
+                if(endMessage)
+                {
+                    content += EndMessage + MessagePadding;
+                }
+
+                yield return new MaskedString(content, message.ContentMask);
+                yield break;
             }
 
             Ensure.NotNull(message.User);
 
-            StringBuilder sb = new();
+            yield return this.ToHeader(message.User, false);
 
-            sb.Append(this.ToHeader(message.User, false));
-
-            sb.Append(message.Content);
+            yield return new MaskedString(message.Content, message.ContentMask);
 
             if (endMessage)
             {
-                sb.Append(EndMessage);
+                yield return new MaskedString(EndMessage + MessagePadding, TokenMask.Template);
+            }
+        }
 
-                sb.Append(MessagePadding);
+        public string ToString(ChatMessage message, bool endMessage)
+        {
+            StringBuilder sb = new();
+
+            foreach (MaskedString ms in this.ToMaskedString(message, endMessage))
+            {
+                sb.Append(ms.Value);
             }
 
             return sb.ToString();

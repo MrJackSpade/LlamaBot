@@ -1,5 +1,4 @@
-﻿using Llama.Core;
-using LlamaNative.Apis;
+﻿using LlamaNative.Apis;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
 using LlamaNative.Logit.Collections;
@@ -30,7 +29,7 @@ namespace LlamaNative.Extensions
             return logits;
         }
 
-        public static Token GetToken(this INativeContext handler, int id) => new(id, NativeApi.TokenToPiece(handler.ModelHandle, id));
+        public static Token GetToken(this INativeContext handler, TokenMask mask, int id) => new(id, NativeApi.TokenToPiece(handler.ModelHandle, id), mask);
 
         public static Token Predict(this INativeContext handler, LogitRuleCollection logitRules)
         {
@@ -49,14 +48,14 @@ namespace LlamaNative.Extensions
                 //check where in the token the end is
                 int e_index = s_val.IndexOf(s_end);
 
-                //if theres text before the end string
+                //if there's text before the end string
                 if (e_index > 0)
                 {
                     //clip the next before the end
                     string clipped_value = s_val[..e_index];
 
                     //tokenize it
-                    TokenCollection clipped_tokens = handler.Tokenize(clipped_value);
+                    TokenCollection clipped_tokens = handler.Tokenize(token.Mask, clipped_value);
 
                     //then add it to the response.
                     foreach (var clipped_token in clipped_tokens)
@@ -110,25 +109,25 @@ namespace LlamaNative.Extensions
             context.Ensure();
         }
 
-        public static TokenCollection Tokenize(this INativeContext context, string value, bool addBos = false)
+        public static TokenCollection Tokenize(this INativeContext context, TokenMask tokenMask, string value, bool addBos = false)
         {
             TokenCollection tokens = new();
 
             foreach (int id in NativeApi.Tokenize(context.ModelHandle, value, addBos))
             {
-                tokens.Append(context.GetToken(id));
+                tokens.Append(context.GetToken(tokenMask, id));
             }
 
             return tokens;
         }
 
-        public static TokenCollection Tokenize(this INativeContext context, IEnumerable<int> value)
+        public static TokenCollection Tokenize(this INativeContext context, TokenMask mask, IEnumerable<int> value)
         {
             TokenCollection tokens = new();
 
             foreach (int id in value)
             {
-                tokens.Append(context.GetToken(id));
+                tokens.Append(context.GetToken(mask, id));
             }
 
             return tokens;
@@ -136,7 +135,7 @@ namespace LlamaNative.Extensions
 
         public static int VocabCount(this INativeContext handler) => NativeApi.NVocab(handler.ModelHandle);
 
-        public static void Write(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, inputText);
+        public static void Write(this INativeContext handler, TokenMask mask, params string[] inputText) => ProcessInputText(handler, mask, inputText);
 
         public static void Write(this INativeContext context, IEnumerable<Token> tokens)
         {
@@ -148,7 +147,15 @@ namespace LlamaNative.Extensions
             }
         }
 
-        private static void ProcessInputText(this INativeContext handler, params string[] inputTexts)
+        public static void WriteBot(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, TokenMask.Bot, inputText);
+
+        public static void WritePrompt(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, TokenMask.Prompt, inputText);
+
+        public static void WriteTemplate(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, TokenMask.Template, inputText);
+
+        public static void WriteUser(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, TokenMask.User, inputText);
+
+        private static void ProcessInputText(this INativeContext handler, TokenMask mask, params string[] inputTexts)
         {
             foreach (string inputText in inputTexts)
             {
@@ -156,7 +163,7 @@ namespace LlamaNative.Extensions
 
                 if (inputText.Length > 1)
                 {
-                    TokenCollection line_inp = handler.Tokenize(inputText);
+                    TokenCollection line_inp = handler.Tokenize(mask, inputText);
 
                     handler.Write(line_inp);
                 }

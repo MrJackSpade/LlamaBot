@@ -10,6 +10,7 @@ using LlamaNative.Chat.Models;
 using LlamaNative.Sampling.Models;
 using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Settings;
+using LlamaNative.Tokens.Models;
 using Loxifi;
 using ThreadState = System.Threading.ThreadState;
 
@@ -53,7 +54,7 @@ namespace LlamaBot
                         new SubsequenceBlockingSamplerSettings()
                         {
                             ResponseStartBlock = _chatSettings.ResponseStartBlock,
-                            SubSequence = _chatSettings.ChatTemplate.ToHeader(_chatSettings.BotName, false)
+                            SubSequence = _chatSettings.ChatTemplate.ToHeader(_chatSettings.BotName, false).Value
                         }
                     ));
             }
@@ -124,7 +125,13 @@ namespace LlamaBot
                         continue;
                     }
 
-                    _chatContext.Insert(messageStart, this.GetDisplayName(historicalMessage.Author), historicalMessage.Content, historicalMessage.Id);
+                    string displayName = this.GetDisplayName(historicalMessage.Author);
+
+                    TokenMask contentMask = historicalMessage.Author.Id == _botId ? 
+                                                                TokenMask.Bot :
+                                                                TokenMask.User;
+
+                    _chatContext.Insert(messageStart, contentMask, displayName, historicalMessage.Content, historicalMessage.Id);
 
                     if (_chatContext.AvailableBuffer < 1000)
                     {
@@ -231,11 +238,11 @@ namespace LlamaBot
             {
                 if (_chatSettings.SystemPromptUser is null)
                 {
-                    _chatContext.SendContent(SystemPrompt);
+                    _chatContext.SendContent(TokenMask.Prompt, SystemPrompt);
                 }
                 else
                 {
-                    _chatContext.SendMessage(_chatSettings.SystemPromptUser, SystemPrompt);
+                    _chatContext.SendMessage(TokenMask.Prompt, _chatSettings.SystemPromptUser, SystemPrompt);
                 }
             }
 

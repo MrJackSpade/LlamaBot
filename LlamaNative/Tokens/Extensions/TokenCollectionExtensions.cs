@@ -13,16 +13,6 @@ namespace LlamaNative.Tokens.Extensions
             }
         }
 
-        public static void AppendControl(this TokenCollection target, IEnumerable<int> source)
-        {
-            foreach (int item in source)
-            {
-                target.AppendControl(item);
-            }
-        }
-
-        public static void AppendControl(this TokenCollection target, int id) => target.Append(new Token(id, null));
-
         public static bool Contains(this TokenCollection target, int tokenId)
         {
             foreach (Token token in target)

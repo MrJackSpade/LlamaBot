@@ -3,9 +3,13 @@
 namespace LlamaNative.Tokens.Models
 {
     [DebuggerDisplay("{Value}")]
-    public class Token(int id, string? value)
+    public class Token(int id, string? value, TokenMask mask)
     {
+        public static readonly Token Null = new(-1, null, TokenMask.Undefined);
+
         public int Id { get; private set; } = id;
+
+        public TokenMask Mask { get; set; } = mask;
 
         public string? Value { get; private set; } = value;
 

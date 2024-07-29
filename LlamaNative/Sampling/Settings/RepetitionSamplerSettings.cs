@@ -1,7 +1,14 @@
-﻿namespace LlamaNative.Samplers.Settings
+﻿using LlamaNative.Tokens.Models;
+
+namespace LlamaNative.Samplers.Settings
 {
     public class RepetitionSamplerSettings
     {
+        /// <summary>
+        /// Applies the penalty only to tokens with the given mask
+        /// </summary>
+        public TokenMask TokenMask { get; set; } = TokenMask.Bot;
+
         /// <summary>
         /// Exclude from penalty
         /// </summary>

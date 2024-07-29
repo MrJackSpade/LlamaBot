@@ -4,7 +4,7 @@ using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Extensions;
-using System.ComponentModel.Design;
+using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Sampling.Samplers.Repetition
 {
@@ -16,7 +16,7 @@ namespace LlamaNative.Sampling.Samplers.Repetition
         {
             TokenCollection sampleTokens = sampleContext.ContextTokens.Trim();
 
-            LastTokens lastTokens = this.GetLastTokens(sampleTokens, _settings.MaxRepetitions);
+            LastTokens lastTokens = this.GetLastTokens(sampleTokens, TokenMask.Undefined, _settings.MaxRepetitions);
 
             if (lastTokens.Ids.Length == _settings.MaxRepetitions)
             {

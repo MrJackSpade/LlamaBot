@@ -46,7 +46,7 @@ namespace LlamaNative.Sampling.Extensions
                 }
             }
 
-            Token token = ctx.GetToken(tokenData.Id);
+            Token token = ctx.GetToken(TokenMask.Undefined, tokenData.Id);
 
             return $"{token.GetEscapedValue()} ({tokenData.P:0.00} => {newTokenData.P:0.00})";
         }
@@ -79,9 +79,9 @@ namespace LlamaNative.Sampling.Extensions
             throw new InvalidDataException();
         }
 
-        public static Token GetToken(this SampleContext ctx, int id)
+        public static Token GetToken(this SampleContext ctx, TokenMask tokenMask, int id)
         {
-            return new(id, ctx.ModelHandle.TokenToPiece(id));
+            return new(id, ctx.ModelHandle.TokenToPiece(id), tokenMask);
         }
     }
 }

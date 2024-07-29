@@ -1,5 +1,6 @@
 ﻿using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Tokens.Interfaces;
+using LlamaNative.Tokens.Models;
 using System.Diagnostics.CodeAnalysis;
 
 namespace LlamaNative.Sampling.Extensions
@@ -7,15 +8,15 @@ namespace LlamaNative.Sampling.Extensions
     public static class ISimpleSamplerExtensions
     {
         [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, int tryTake) => new(collection, tryTake, [], []);
+        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, TokenMask tokenMask, int tryTake) => new(collection, tokenMask, tryTake, [], []);
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, int tryTake, HashSet<int> include, HashSet<int> exclude) => new(collection, tryTake, include, exclude);
+        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, TokenMask tokenMask, int tryTake, HashSet<int> include, HashSet<int> exclude) => new(collection, tokenMask, tryTake, include, exclude);
     }
 
     public class LastTokens
     {
-        public LastTokens(IReadOnlyTokenCollection collection, int tryTake, HashSet<int> include, HashSet<int> exclude)
+        public LastTokens(IReadOnlyTokenCollection collection, TokenMask tokenMask, int tryTake, HashSet<int> include, HashSet<int> exclude)
         {
             int availableCount = collection.Trim().Ids.Count();
 
@@ -28,18 +29,23 @@ namespace LlamaNative.Sampling.Extensions
 
             int skip = availableCount - canTake;
 
-            IEnumerable<int> availableEnumerable = collection.Trim().Ids.Skip(skip).Take(canTake);
+            IEnumerable<Token> availableEnumerable = collection.Trim().Skip(skip).Take(canTake);
 
             if (exclude.Count > 0)
             {
-                availableEnumerable = availableEnumerable.Where(t => !exclude.Contains(t));
+                availableEnumerable = availableEnumerable.Where(t => !exclude.Contains(t.Id));
             }
             else if (include.Count > 0)
             {
-                availableEnumerable = availableEnumerable.Where(include.Contains);
+                availableEnumerable = availableEnumerable.Where(t => include.Contains(t.Id));
             }
 
-            Ids = availableEnumerable.ToArray();
+            if(tokenMask != TokenMask.Undefined)
+            {
+                availableEnumerable = availableEnumerable.Where(t => t.Mask.HasFlag(tokenMask));
+            }
+
+            Ids = availableEnumerable.Select(t => t.Id).ToArray();
             Length = Ids.Length;
         }
 

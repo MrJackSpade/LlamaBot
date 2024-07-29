@@ -25,7 +25,7 @@ namespace LlamaNative.Chat.Models
         {
             get
             {
-                TokenCollection contextTokens = NativeContext.Tokenize(this.ContextToString(false));
+                TokenCollection contextTokens = NativeContext.Tokenize(TokenMask.Undefined, this.ContextToString(false));
 
                 return NativeContext.Size - contextTokens.Count;
             }
@@ -43,7 +43,7 @@ namespace LlamaNative.Chat.Models
 
         public uint CalculateLength(ChatMessage message)
         {
-            TokenCollection tokenized = NativeContext.Tokenize(Settings.ChatTemplate.ToString(message, true));
+            TokenCollection tokenized = NativeContext.Tokenize(TokenMask.Undefined, Settings.ChatTemplate.ToString(message, true));
 
             return tokenized.Count;
         }
@@ -62,6 +62,18 @@ namespace LlamaNative.Chat.Models
         }
 
         public string ContextToString(bool continueLast)
+        {
+            StringBuilder sb = new();
+
+            foreach (MaskedString ms in this.ContextToMaskedString(continueLast))
+            {
+                sb.Append(ms.Value);
+            }
+
+            return sb.ToString();
+        }
+
+        public IEnumerable<MaskedString> ContextToMaskedString(bool continueLast)
         {
             StringBuilder sb = new();
 
@@ -85,12 +97,11 @@ namespace LlamaNative.Chat.Models
                 //we're intending on continuing the last generation
                 bool endMessage = !continueLast || i < messages.Count - 1;
 
-                string messageContent = Settings.ChatTemplate.ToString(message, endMessage);
-
-                sb.Append(messageContent);
+                foreach (MaskedString ms in Settings.ChatTemplate.ToMaskedString(message, endMessage))
+                {
+                    yield return ms;
+                }
             }
-
-            return sb.ToString();
         }
 
         public void Insert(int index, ChatMessage message)
@@ -105,7 +116,7 @@ namespace LlamaNative.Chat.Models
         {
             this.RefreshContext(false);
 
-            NativeContext.Write(Settings.ChatTemplate.StartHeader);
+            NativeContext.WriteTemplate(Settings.ChatTemplate.StartHeader);
 
             NativeContext.Evaluate();
 
@@ -159,7 +170,7 @@ namespace LlamaNative.Chat.Models
                 //Check for explicit stop token
                 if (Settings.ChatTemplate.StopTokenIds.Contains(token.Id))
                 {
-                    if (response.Count == 0 && continueLast)
+                    if (response.Count == 0)
                     {
                         logitRules.BlockToken(token);
                         continue;
@@ -170,7 +181,7 @@ namespace LlamaNative.Chat.Models
                 else if (s_value.Contains(s_end))
                 //Check for primary stop string, trim if needed.
                 {
-                    if (response.Count == 0 && continueLast)
+                    if (response.Count == 0)
                     {
                         logitRules.BlockToken(token);
                         continue;
@@ -224,7 +235,7 @@ namespace LlamaNative.Chat.Models
                 _running = false;
             }
 
-            return toReturn.Select(s => new ChatMessage(Settings.BotName, s));
+            return toReturn.Select(s => new ChatMessage(TokenMask.Bot, Settings.BotName, s));
         }
 
         public void RemoveAt(int index) => _messages.RemoveAt(index);
@@ -302,7 +313,10 @@ namespace LlamaNative.Chat.Models
         {
             NativeContext.Clear(false);
 
-            NativeContext.Write(this.ContextToString(continueLast));
+            foreach (MaskedString ms in this.ContextToMaskedString(continueLast))
+            {
+                NativeContext.Write(ms.Mask, ms.Value);
+            }
         }
 
         private void SelectToken(List<TokenSelection> response, Token token, SampleContext sampleContext)
