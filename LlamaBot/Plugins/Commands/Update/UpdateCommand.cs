@@ -11,8 +11,7 @@ namespace LlamaBot.Plugins.Commands.Update
         [Description("The new message content")]
         public string? Content { get; set; }
 
-        [Required]
-        [Description("The message id to update")]
+        [Description("The message id to update. Updates the last bot message if blank")]
         public ulong MessageId { get; set; }
     }
 }

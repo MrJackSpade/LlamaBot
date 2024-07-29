@@ -3,7 +3,7 @@
     "LlamaBot": {
       "commandName": "Project",
       "commandLineArgs": "\"Mistral-Large Blank\"",
-      "nativeDebugging": true
+      "nativeDebugging": false
     }
   }
 }

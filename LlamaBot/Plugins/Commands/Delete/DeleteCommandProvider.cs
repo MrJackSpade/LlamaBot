@@ -15,6 +15,8 @@ namespace LlamaBot.Plugins.Commands.Delete
 
         private IPluginService? _pluginService;
 
+        private ILlamaBotClient? _llamaBotClient;
+
         public string Command => "delete";
 
         public string Description => "Deletes a specific bot message";
@@ -25,8 +27,27 @@ namespace LlamaBot.Plugins.Commands.Delete
         {
             if (command.Channel is ISocketMessageChannel smc)
             {
-                IMessage message = await smc.GetMessageAsync(command.MessageId);
-                await message.DeleteAsync();
+                IMessage? message = null;
+
+                if (command.MessageId == 0)
+                {
+                    message = await _llamaBotClient.TryGetLastBotMessage(smc);
+
+                    if (message == null)
+                    {
+                        return CommandResult.Error("Last found message does not belong to bot. Please provide message id");
+                    }
+                }
+                else
+                {
+                    message = await smc.GetMessageAsync(command.MessageId);
+                }
+
+                if (message != null)
+                {
+                    await message.DeleteAsync();
+                }
+
                 await command.Command.DeleteOriginalResponseAsync();
                 return CommandResult.Success();
             }
@@ -38,6 +59,7 @@ namespace LlamaBot.Plugins.Commands.Delete
 
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
         {
+            _llamaBotClient = args.LlamaBotClient;
             _pluginService = args.PluginService;
             _discordClient = args.DiscordService;
             return InitializationResult.SuccessAsync();

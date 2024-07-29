@@ -6,6 +6,7 @@ using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
+using LlamaBot.Shared.Utils;
 
 namespace LlamaBot.Plugins.Commands.Update
 {
@@ -15,6 +16,8 @@ namespace LlamaBot.Plugins.Commands.Update
 
         private IPluginService? _pluginService;
 
+        private ILlamaBotClient? _llamaBotClient;
+
         public string Command => "update";
 
         public string Description => "Updates an existing message";
@@ -23,9 +26,24 @@ namespace LlamaBot.Plugins.Commands.Update
 
         public async Task<CommandResult> OnCommand(UpdateCommand command)
         {
+            Ensure.NotNull(_llamaBotClient);
+
+            IMessage? message = null;
+
             if (command.Channel is ISocketMessageChannel smc)
             {
-                IMessage message = await smc.GetMessageAsync(command.MessageId);
+                if (command.MessageId == 0)
+                {
+                    message = await _llamaBotClient.TryGetLastBotMessage(smc);
+
+                    if(message == null)
+                    {
+                        return CommandResult.Error("Last found message does not belong to bot. Please provide message id");
+                    } 
+                } else
+                {
+                    message = await smc.GetMessageAsync(command.MessageId);
+                }
 
                 if (message is IUserMessage um)
                 {
@@ -45,6 +63,7 @@ namespace LlamaBot.Plugins.Commands.Update
         {
             _pluginService = args.PluginService;
             _discordClient = args.DiscordService;
+            _llamaBotClient = args.LlamaBotClient;
             return InitializationResult.SuccessAsync();
         }
     }
