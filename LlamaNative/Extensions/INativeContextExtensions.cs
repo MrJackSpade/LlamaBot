@@ -161,12 +161,9 @@ namespace LlamaNative.Extensions
             {
                 Console.Write(inputText);
 
-                if (inputText.Length > 1)
-                {
-                    TokenCollection line_inp = handler.Tokenize(mask, inputText);
+                TokenCollection line_inp = handler.Tokenize(mask, inputText);
 
-                    handler.Write(line_inp);
-                }
+                handler.Write(line_inp);
             }
         }
     }

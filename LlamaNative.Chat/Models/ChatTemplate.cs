@@ -10,9 +10,9 @@ namespace LlamaNative.Chat.Models
 
         public string EndMessage { get; set; } = "\n";
 
-        public string HeaderPadding { get; set; } = string.Empty;
+        public string MessagePrefix { get; set; } = string.Empty;
 
-        public string MessagePadding { get; set; } = string.Empty;
+        public string MessageSuffix { get; set; } = string.Empty;
 
         public string NewHeaderPadding { get; set; } = string.Empty;
 
@@ -31,10 +31,6 @@ namespace LlamaNative.Chat.Models
             if (newHeader)
             {
                 sb.Append(NewHeaderPadding);
-            }
-            else
-            {
-                sb.Append(HeaderPadding);
             }
 
             return new MaskedString(sb.ToString(), TokenMask.Template);
@@ -55,7 +51,7 @@ namespace LlamaNative.Chat.Models
 
                 if(endMessage)
                 {
-                    content += EndMessage + MessagePadding;
+                    content += EndMessage + MessageSuffix;
                 }
 
                 yield return new MaskedString(content, message.ContentMask);
@@ -66,11 +62,11 @@ namespace LlamaNative.Chat.Models
 
             yield return this.ToHeader(message.User, false);
 
-            yield return new MaskedString(message.Content, message.ContentMask);
+            yield return new MaskedString(MessagePrefix + message.Content, message.ContentMask);
 
             if (endMessage)
             {
-                yield return new MaskedString(EndMessage + MessagePadding, TokenMask.Template);
+                yield return new MaskedString(EndMessage + MessageSuffix, TokenMask.Template);
             }
         }
 
