@@ -22,14 +22,6 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
-	  <None Remove="Characters\Llama3\Blank\Configuration.json" />
-	  <None Remove="Characters\Llama3\Blank\System.txt" />
-	  <None Remove="Characters\Magnum\Magnum Blank\Configuration.json" />
-	  <None Remove="Characters\Magnum\Magnum Blank\System.txt" />
-	  <None Remove="characters\mistral\Configuration.json" />
-	  <None Remove="Characters\Mistral\Mistral-Large\Configuration.json" />
-	</ItemGroup>
-	<ItemGroup>
 		<PackageReference Include="Discord.Net" Version="3.15.2" />
 		<PackageReference Include="Loxifi.StaticConfiguration" Version="0.8.0" />
 	</ItemGroup>
