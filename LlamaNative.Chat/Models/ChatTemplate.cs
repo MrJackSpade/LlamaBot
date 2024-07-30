@@ -49,11 +49,6 @@ namespace LlamaNative.Chat.Models
                 Ensure.NotNull(message.Content);
                 string content = message.Content;
 
-                if(endMessage)
-                {
-                    content += EndMessage + MessageSuffix;
-                }
-
                 yield return new MaskedString(content, message.ContentMask);
                 yield break;
             }
