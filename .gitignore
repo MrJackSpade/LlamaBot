@@ -20,3 +20,5 @@ LlamaBot.Plugins/obj/
 LlamaBot.Shared/obj/
 LlamaBot.Plugins/bin/
 LlamaBot.Shared/bin/
+/LlamaNative/Binaries/Cpu/libggml.so
+/LlamaNative/Binaries/Cpu/libllama.so

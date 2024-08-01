@@ -95,10 +95,15 @@
 		<Exec Condition="'$(OS)' != 'Windows_NT'" Command="find '$(ProjectDir)' -name '*.zip' -execdir unzip -o {} \;" />
 	</Target>
 	<ItemGroup>
-	  <None Remove="Binaries\CUDA\llama.dll.zip" />
-	  <None Remove="Binaries\CUDA\llama.ilk.zip" />
-	  <None Remove="Binaries\CUDA\llama.pdb.zip" />
-	  <None Remove="Binaries\CUDA\libllama.so.zip" />
-	  <None Remove="Binaries\CUDA\libggml.so.zip" />
+		<None Remove="Binaries\CUDA\llama.dll.zip" />
+		<None Remove="Binaries\CUDA\llama.ilk.zip" />
+		<None Remove="Binaries\CUDA\llama.pdb.zip" />
+		<None Remove="Binaries\CUDA\libllama.so.zip" />
+		<None Remove="Binaries\CUDA\libggml.so.zip" />
+		<None Remove="Binaries\Cpu\llama.dll.zip" />
+		<None Remove="Binaries\Cpu\llama.ilk.zip" />
+		<None Remove="Binaries\Cpu\llama.pdb.zip" />
+		<None Remove="Binaries\Cpu\libllama.so.zip" />
+		<None Remove="Binaries\Cpu\libggml.so.zip" />
 	</ItemGroup>
 </Project>
