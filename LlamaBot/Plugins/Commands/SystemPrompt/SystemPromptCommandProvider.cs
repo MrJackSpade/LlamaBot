@@ -39,7 +39,7 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
             }
             else
             {
-                _lamaBotClient.SystemPrompt = command.Prompt;
+                _lamaBotClient.SystemPrompt = command.Prompt.Replace("\\n", "\n");
                 responseString = "System Prompt Updated: " + command.Prompt;
             }
 
