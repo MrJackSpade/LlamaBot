@@ -106,4 +106,7 @@
 		<None Remove="Binaries\Cpu\libllama.so.zip" />
 		<None Remove="Binaries\Cpu\libggml.so.zip" />
 	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\LlamaNative.Utils\LlamaNative.Utils.csproj" />
+	</ItemGroup>
 </Project>
