@@ -13,16 +13,16 @@ namespace LlamaNative.Chat.Extensions
             return context.CalculateLength(chatMessage);
         }
 
-        public static void Insert(this IChatContext context, int index, TokenMask contentMask, string username, string message, string? externalId = null)
+        public static void Insert(this IChatContext context, int index, TokenMask contentMask, string username, string message)
         {
-            ChatMessage chatMessage = new(contentMask, username, message, externalId);
+            ChatMessage chatMessage = new(contentMask, username, message);
 
             context.Insert(index, chatMessage);
         }
 
-        public static void SendContent(this IChatContext context, TokenMask contentMask, string message, string? externalId = null)
+        public static void SendContent(this IChatContext context, TokenMask contentMask, string message)
         {
-            ChatMessage chatMessage = new(contentMask, null, message, externalId)
+            ChatMessage chatMessage = new(contentMask, null, message)
             {
                 ContentOnly = true
             };
@@ -30,9 +30,9 @@ namespace LlamaNative.Chat.Extensions
             context.SendMessage(chatMessage);
         }
 
-        public static void SendMessage(this IChatContext context, TokenMask contentMask, string username, string message, string? externalId = null)
+        public static void SendMessage(this IChatContext context, TokenMask contentMask, string username, string message)
         {
-            ChatMessage chatMessage = new(contentMask, username, message, externalId);
+            ChatMessage chatMessage = new(contentMask, username, message);
 
             context.SendMessage(chatMessage);
         }

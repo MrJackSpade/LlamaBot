@@ -131,7 +131,7 @@ namespace LlamaBot
                                                                 TokenMask.Bot :
                                                                 TokenMask.User;
 
-                    _chatContext.Insert(messageStart, contentMask, displayName, historicalMessage.Content, historicalMessage.Id);
+                    _chatContext.Insert(messageStart, contentMask, displayName, historicalMessage.Content);
 
                     if (_chatContext.AvailableBuffer < 1000)
                     {
@@ -246,14 +246,14 @@ namespace LlamaBot
                 }
             }
 
-            foreach (ChatMessage cm in _character.ChatMessages)
+            foreach (CharacterMessage cm in _character.ChatMessages)
             {
                 if(string.IsNullOrWhiteSpace(cm.Content))
                 {
                     throw new ArgumentNullException("A message with null content was found in the configuration");
                 }
 
-                _chatContext.SendMessage(cm);
+                _chatContext.SendMessage(cm, string.Equals(cm.User, _character.ChatSettings.BotName, StringComparison.OrdinalIgnoreCase));
             }
         }
     }

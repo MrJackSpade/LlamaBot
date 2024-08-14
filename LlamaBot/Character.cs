@@ -5,7 +5,7 @@ namespace LlamaBot
 {
     public class Character
     {
-        public ChatMessage[] ChatMessages { get; set; } = [];
+        public CharacterMessage[] ChatMessages { get; set; } = [];
 
         public ChatSettings? ChatSettings { get; set; }
 
