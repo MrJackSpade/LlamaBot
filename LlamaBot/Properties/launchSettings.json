@@ -3,7 +3,7 @@
     "LlamaBot": {
       "commandName": "Project",
       "commandLineArgs": "Entropy",
-      "nativeDebugging": false
+      "nativeDebugging": true
     }
   }
 }
