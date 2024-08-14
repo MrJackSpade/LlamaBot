@@ -1,130 +1,256 @@
-﻿using Discord.WebSocket;
-using LlamaBot.Discord;
-using LlamaBot.Plugins.Interfaces;
-using LlamaBot.Services;
-using LlamaBot.Shared.Interfaces;
-using LlamaBot.Shared.Loggers;
-using LlamaBot.Shared.Models;
-using LlamaNative.Utils;
-using Loxifi;
-using System.Reflection;
+﻿using LlamaNative;
+using LlamaNative.Chat.Extensions;
+using LlamaNative.Chat.Models;
+using LlamaNative.Interfaces;
+using LlamaNative.Interop.Settings;
+using LlamaNative.Interop.Structs;
+using LlamaNative.Models;
+using LlamaNative.Samplers.Settings;
+using LlamaNative.Sampling.Samplers.Temperature;
+using LlamaNative.Tokens.Models;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text;
 
 namespace LlamaBot
 {
     internal class Program
     {
-        private static readonly Configuration _configuration;
+        private const string KEY_FOLDER = "Keys";
 
-        private static readonly DiscordService _discordClient;
+        private const string MODEL_NAME = "D:\\Chie\\Models\\Meta-Llama-3.1-8B.gguf";
 
-        private static readonly ILogger _logger = new ConsoleLogger();
+        private const int RUNS = 5;
 
-        private static readonly RecursiveConfigurationReader<Character> _recursiveConfigurationReader = new("Characters");
+        private const decimal STEP = 0.1m;
 
-        private static readonly DateTime _startTime = DateTime.Now;
+        private const decimal MIN_TEMP = 0;
 
-        private static LlamaBotClient _llamaBotClient;
+        private const decimal MAX_TEMP = 1.2m;
 
-        private static IPluginService? _pluginService;
+        private const int CONTEXT = 4096;
 
-        private static RecursiveConfiguration<Character>? _recursiveConfiguration;
-
-        static Program()
+        public static async Task Main()
         {
-            _configuration = StaticConfiguration.Load<Configuration>();
-            _discordClient = new(_configuration.DiscordToken);
-        }
-
-        public static async Task MessageReceived(SocketMessage message)
-        {
-            if (message.Author.Id == _discordClient.CurrentUser.Id)
+            TemperatureSamplerSettings temperatureSamplerSettings = new()
             {
-                return;
+                PreserveWords = false
+            };
+
+            INativeContext context = LlamaClient.LoadContext(new ModelSettings()
+            {
+                ModelPath = MODEL_NAME,
+                GpuLayerCount = 33
+            },
+            new ContextSettings()
+            {
+                ContextSize = CONTEXT
+            },
+            new TemperatureSampler(temperatureSamplerSettings),
+            []);
+
+            int keyIndex = 1;
+
+            if (!Directory.Exists(KEY_FOLDER))
+            {
+                Directory.CreateDirectory(KEY_FOLDER);
+            }
+            else if (Directory.EnumerateFiles(KEY_FOLDER).Any())
+            {
+                keyIndex = Directory.EnumerateFiles(KEY_FOLDER).Select(s => int.Parse(Path.GetFileNameWithoutExtension(s))).Max() + 1;
             }
 
-            if (message.Channel is SocketTextChannel socketTextChannel)
+            ConcurrentQueue<Key> writeQueue = new();
+
+            ManualResetEvent writeComplete = new(true);
+            ManualResetEvent readComplete = new(false);
+
+            Thread writeThread = new(() =>
             {
-                if (!_configuration.ChannelIds.Contains(socketTextChannel.Id))
+                do
                 {
-                    return;
+                    readComplete.WaitOne();
+
+                    if (writeQueue.TryDequeue(out var key))
+                    {
+                        string toWrite = key.Serialize();
+
+                        string keysPath = Path.Combine(KEY_FOLDER, $"{key.Id}.json");
+
+                        File.WriteAllText(keysPath, toWrite);
+                    }
+
+                    writeComplete.Set();
+                } while (true);
+            });
+
+            writeThread.Start();
+
+            int expected_steps = (int)(CONTEXT * ((MAX_TEMP - MIN_TEMP) / STEP + 1)) * RUNS;
+
+            DateTime startTime = DateTime.Now;
+
+            for (int i = 0; i < RUNS; i++)
+            {
+                for (decimal temp = MIN_TEMP; temp <= MAX_TEMP; temp += STEP)
+                {
+                    temperatureSamplerSettings.Temperature = (float)temp;
+
+                    context.Clear(true);
+
+                    context.Write(new MaskedString("Once upon a time", TokenMask.Undefined));
+
+                    context.Evaluate();
+
+                    Console.Write($"----- RUN: {i} -- TEMP: {temp:0.00} ");
+
+                    int index = 0;
+
+                    while (context.AvailableBuffer > 0)
+                    {
+
+                        if (context.AvailableBuffer % 10 == 0)
+                        {
+                            DateTime currentTime = DateTime.Now;
+                            double ms = (currentTime - startTime).TotalMilliseconds;
+                            int completed = keyIndex;
+                            int remaining = expected_steps - completed;
+                            float ms_per_step = (float)(ms / completed);
+                            ulong ms_remaining = (ulong)(remaining * ms_per_step);
+                            ulong s_remaining = ms_remaining / 1000;
+                            DateTime endTime = DateTime.Now.AddSeconds(s_remaining);
+                            Debug.WriteLine($"ETA: {endTime:yyyy-MM-dd HH:mm:ss}");
+                        }
+
+                        Token token = context.SelectToken(null, out SampleContext sampleContext);
+
+                        writeComplete.WaitOne();
+
+                        context.Write(token);
+
+                        context.Evaluate();
+
+                        Console.Write(token.Value);
+
+                        Key key = new()
+                        {
+                            Id = keyIndex++,
+                            Index = index++,
+                            Run = i,
+                            Sampler = "T",
+                            SelectedToken = token,
+                            Temperature = temp,
+                        };
+
+                        foreach (TokenData t in sampleContext.OriginalCandidates)
+                        {
+                            if (t.P > 0.01f)
+                            {
+                                key.Values.Add(new KeyTokenData(t));
+                            }
+                        }
+
+                        writeQueue.Enqueue(key);
+
+                        readComplete.Set();
+                    }
                 }
             }
-            else if (message.Channel is SocketDMChannel socketDMChannel)
+
+            writeComplete.WaitOne();
+        }
+
+        private class Key
+        {
+            public int Id { get; set; }
+
+            public int Index { get; set; }
+
+            public int Run { get; set; }
+
+            public string Sampler { get; set; }
+
+            public Token SelectedToken { get; set; }
+
+            public decimal Temperature { get; set; }
+
+            public List<KeyTokenData> Values { get; set; } = [];
+
+            public static Key Deserialize(string data)
             {
-                if (!_configuration.ChannelIds.Contains(socketDMChannel.Users.ToArray()[1].Id))
+                var parts = data.Split('\0');
+                var key = new Key
                 {
-                    return;
+                    // Deserialize the basic properties
+                    Id = int.Parse(parts[0]),
+                    Index = int.Parse(parts[1]),
+                    Run = int.Parse(parts[2]),
+                    Sampler = parts[3]
+                };
+
+                var selectedToken = new Token(int.Parse(parts[4]), parts[5], TokenMask.Undefined);
+                key.SelectedToken = selectedToken;
+
+                key.Temperature = decimal.Parse(parts[6]);
+
+                // Deserialize the List<KeyTokenData>
+                for (int i = 7; i < parts.Length; i += 3)
+                {
+                    var keyTokenData = new KeyTokenData(new TokenData()
+                    {
+                        Id = int.Parse(parts[i]),
+                        Logit = float.Parse(parts[i + 1]),
+                        P = float.Parse(parts[i + 2])
+                    });
+
+                    key.Values.Add(keyTokenData);
                 }
-            }
-            else
-            {
-                return;
+
+                return key;
             }
 
-            if (string.IsNullOrWhiteSpace(message.Content))
+            public string Serialize()
             {
-                return;
-            }
+                var sb = new StringBuilder();
+                Key key = this;
 
-            _llamaBotClient.TryProcessMessageThread(message.Channel, false);
+                // Serialize the basic properties
+                sb.Append(key.Id).Append('\0');
+                sb.Append(key.Index).Append('\0');
+                sb.Append(key.Run).Append('\0');
+                sb.Append(key.Sampler).Append('\0');
+                sb.Append(key.SelectedToken.Id).Append('\0');
+                sb.Append(key.SelectedToken.Value).Append('\0');
+                sb.Append(key.Temperature);
+
+                // Serialize the List<KeyTokenData>
+                foreach (var value in key.Values)
+                {
+                    sb.Append('\0').Append(value.Id);
+                    sb.Append('\0').Append(value.Logit);
+                    sb.Append('\0').Append(value.P);
+                }
+
+                return sb.ToString();
+            }
         }
 
-        private static async Task InitializeDiscordClient()
+        private class KeyTokenData(TokenData t)
         {
-            Console.WriteLine($"Connecting to Discord with token [{_configuration.DiscordToken}]...");
+            /// <summary>
+            /// token id
+            /// </summary>
+            public int Id { get; set; } = t.Id;
 
-            await _discordClient.Connect();
+            /// <summary>
+            /// log-odds of the token
+            /// </summary>
+            public float Logit { get; set; } = t.Logit;
 
-            try
-            {
-                await _discordClient.SetUserName(_recursiveConfiguration.Configuration.ChatSettings.BotName);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Failed to set username: {e.Message}");
-            }
-
-            Console.WriteLine("Connected.");
-
-            _discordClient.MessageReceived += MessageReceived;
-        }
-
-        private static async Task Main(string[] args)
-        {
-            _recursiveConfiguration = _recursiveConfigurationReader.Read(args[0]);
-
-            _recursiveConfiguration.Resources.TryGetValue("System.txt", out string systemPrompt);
-
-            await InitializeDiscordClient();
-
-            _llamaBotClient = new LlamaBotClient(_recursiveConfiguration.Configuration, systemPrompt, _discordClient.CurrentUser.Id);
-
-            _pluginService = new PluginService(_logger, _discordClient, _llamaBotClient);
-
-            await _pluginService.LoadPlugins();
-
-            foreach (ICommandProvider commandProvider in _pluginService.CommandProviders)
-            {
-                Type parameterType = commandProvider.GetType()
-                                                    .GetInterface(typeof(ICommandProvider<>).Name)!
-                                                    .GetGenericArguments()[0];
-
-                MethodInfo invocationMethod = commandProvider.GetType().GetMethod(nameof(ICommandProvider<object>.OnCommand))!;
-
-                await _discordClient.AddCommand(commandProvider.Command,
-                                                 commandProvider.Description,
-                                                 parameterType,
-                                                 c =>
-                                                 {
-                                                     object result = invocationMethod.Invoke(commandProvider, [c])!;
-                                                     return (Task<CommandResult>)result;
-                                                 },
-                                                 commandProvider.SlashCommandOptions);
-            }
-
-            _discordClient.ReactionAdded += _pluginService.React;
-
-            await Task.Delay(-1);
+            /// <summary>
+            /// probability of the token
+            /// </summary>
+            public float P { get; set; } = t.P;
         }
     }
 }
