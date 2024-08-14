@@ -248,6 +248,11 @@ namespace LlamaBot
 
             foreach (ChatMessage cm in _character.ChatMessages)
             {
+                if(string.IsNullOrWhiteSpace(cm.Content))
+                {
+                    throw new ArgumentNullException("A message with null content was found in the configuration");
+                }
+
                 _chatContext.SendMessage(cm);
             }
         }
