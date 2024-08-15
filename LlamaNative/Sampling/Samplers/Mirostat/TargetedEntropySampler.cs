@@ -38,7 +38,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             // Calculate the next value needed to achieve the target average
             float nextValue = _settings.Target * QueueSize - sumExcludingFirst;
 
-            return nextValue;
+            return Math.Clamp(nextValue, _settings.MinTarget, _settings.MaxTarget);
         }
 
         protected int SelectToken(List<TokenData> candidates, SampleContext sampleContext, out bool topOnly)
@@ -98,7 +98,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             Span<TokenData> candidateSpan = sampleContext.OriginalCandidates.Data.Span;
 
-            List<TokenData> candidates = candidateSpan.ToList();
+            List<TokenData> candidates = candidateSpan.Where(c => c.P >= _settings.MinP).ToList();
 
             float target = this.CalculateNextTarget();
 

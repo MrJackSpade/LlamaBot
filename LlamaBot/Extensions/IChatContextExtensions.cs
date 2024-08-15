@@ -6,11 +6,13 @@ namespace LlamaBot.Extensions
 {
     public static class IChatContextExtensions
     {
-        public static void Insert(this IChatContext context, int index, TokenMask contentMask, string username, string message, ulong externalId)
+        public static void SendMessage(this IChatContext chatContext, CharacterMessage message, bool isBot)
         {
-            ChatMessage chatMessage = new(contentMask, username, message, $"{externalId}");
-
-            context.Insert(index, chatMessage);
+            chatContext.SendMessage(new ChatMessage(
+                    isBot ? TokenMask.Bot : TokenMask.User,
+                    message.User,
+                    message.Content
+                    ));
         }
     }
 }

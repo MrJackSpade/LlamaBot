@@ -5,9 +5,8 @@ namespace LlamaNative.Chat.Models
 {
     public class ChatMessage
     {
-        public ChatMessage(TokenMask contentMask, string? user, string? content, string? externalId = null)
+        public ChatMessage(TokenMask contentMask, string? user, string? content)
         {
-            ExternalId = externalId;
             Content = content;
             User = user;
             ContentMask = contentMask;
@@ -27,8 +26,6 @@ namespace LlamaNative.Chat.Models
         public TokenMask ContentMask { get; private set; }
 
         public bool ContentOnly { get; set; }
-
-        public string? ExternalId { get; set; }
 
         public string? User { get; set; }
     }
