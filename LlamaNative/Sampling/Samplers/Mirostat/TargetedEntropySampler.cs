@@ -84,6 +84,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         public int SampleNext(SampleContext sampleContext)
         {
+            SamplingApi.SoftMax(sampleContext.Candidates);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+
             int? ts = 0;
 
             for (int i = 0; i < sampleContext.Candidates.Data.Length; i++)
@@ -98,11 +101,11 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             Span<TokenData> candidateSpan = sampleContext.OriginalCandidates.Data.Span;
 
-            List<TokenData> candidates = candidateSpan.Where(c => c.P >= _settings.MinP).ToList();
+            List<TokenData> candidates = [.. candidateSpan.Where(c => c.P >= _settings.MinP)];
 
             float target = this.CalculateNextTarget();
 
-            candidates = candidates.OrderBy(c => Math.Abs(c.P - target)).ToList();
+            candidates = [.. candidates.OrderBy(c => Math.Abs(c.P - target))];
             
             int selectedToken = this.SelectToken(candidates, sampleContext, out bool topOnly);
 

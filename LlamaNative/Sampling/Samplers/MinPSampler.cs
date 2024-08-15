@@ -17,18 +17,30 @@ namespace LlamaNative.Sampling.Samplers
 
             Span<TokenData> newData = context.Candidates.Data.Span;
 
-            //Skip the dictionary if the tokens are still in their original order
-            if (context.Candidates.Sorted)
+            int highestId = -1;
+            float highestLogit = float.NegativeInfinity;
+
+            for (int i = 0; i < context.Candidates.Data.Length; i++)
             {
-                for (int i = 0; i < context.Candidates.Data.Length; i++)
+                TokenData newToken = newData[i];
+                mapping.Add(newToken.Id, i);
+
+                if(newToken.Logit > highestLogit)
                 {
-                    TokenData newToken = newData[i];
-                    mapping.Add(newToken.Id, i);
+                    highestLogit = newToken.Logit;
+                    highestId = newToken.Id;
                 }
             }
 
             foreach (TokenData token in context.OriginalCandidates)
             {
+                //Never sample away the highest probability token
+                //Or shit will break
+                if(token.Id == highestId)
+                {
+                    continue;
+                }
+
                 float minP = _settings.MinP;
 
                 if (_settings.MinPs.TryGetValue(token.Id, out float cminp))
@@ -48,9 +60,6 @@ namespace LlamaNative.Sampling.Samplers
         {
             SamplingApi.SoftMax(sampleContext.Candidates);
             this.ApplyOriginalMinP(sampleContext);
-            SamplingApi.SoftMax(sampleContext.Candidates);
-
-            SamplingApi.MinP(sampleContext.Candidates, _settings.MinP);
         }
     }
 }
