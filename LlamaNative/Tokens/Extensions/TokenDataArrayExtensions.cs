@@ -37,24 +37,19 @@ namespace LlamaNative.Tokens.Extensions
 
             int mod = existing.Logit > 0 ? 1 : -1;
 
-            span[index] = logitBiasType switch
+            float newLogit = logitBiasType switch
             {
-                LogitBiasType.Additive => new TokenData()
-                {
-                    Id = existing.Id,
-                    Logit = existing.Logit + probability,
-                    P = existing.P + probability
-                },
-                LogitBiasType.Multiplicative => new TokenData()
-                {
-                    Id = existing.Id,
-                    Logit = existing.Logit * probability * mod,
-                    P = existing.P * probability * mod
-                },
-                _ => throw new NotImplementedException(),
+                LogitBiasType.Additive => existing.Logit + probability,
+                LogitBiasType.Multiplicative => existing.Logit * probability * mod,
+                _ => throw new NotImplementedException()
             };
 
-            tokens.Ordered = false;
+            if (existing.Logit == newLogit)
+            {
+                return;
+            }
+
+            tokens.SetLogitAtIndex(index, newLogit);
         }
 
         public static void SetLogit(this TokenDataArray candidates, int tokenId, float logit)
@@ -77,11 +72,11 @@ namespace LlamaNative.Tokens.Extensions
         {
             Span<TokenData> span = tokens.Data.Span;
             TokenData existing = span[index];
+
             span[index] = new TokenData()
             {
                 Id = existing.Id,
-                Logit = logit,
-                P = logit
+                Logit = logit
             };
 
             tokens.Ordered = false;
