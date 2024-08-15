@@ -135,7 +135,6 @@ namespace LlamaNative.Interop.Apis
                 }
 
                 candidates.Ordered = true;
-                candidates.Sorted = true;
             }
 
             float maxLogit = candidateSpan[0].Logit;
