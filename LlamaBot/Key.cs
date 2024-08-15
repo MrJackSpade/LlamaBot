@@ -8,7 +8,7 @@ namespace LlamaBot
     {
         private class Key
         {
-            public int Id { get; set; }
+            public string Path { get; set; }
 
             public int Index { get; set; }
 
@@ -28,19 +28,18 @@ namespace LlamaBot
                 var key = new Key
                 {
                     // Deserialize the basic properties
-                    Id = int.Parse(parts[0]),
-                    Index = int.Parse(parts[1]),
-                    Run = int.Parse(parts[2]),
-                    Sampler = parts[3]
+                    Index = int.Parse(parts[0]),
+                    Run = int.Parse(parts[1]),
+                    Sampler = parts[2]
                 };
 
-                var selectedToken = new Token(int.Parse(parts[4]), parts[5], TokenMask.Undefined);
+                var selectedToken = new Token(int.Parse(parts[3]), parts[4], TokenMask.Undefined);
                 key.SelectedToken = selectedToken;
 
-                key.Temperature = decimal.Parse(parts[6]);
+                key.Temperature = decimal.Parse(parts[5]);
 
                 // Deserialize the List<KeyTokenData>
-                for (int i = 7; i < parts.Length; i += 3)
+                for (int i = 6; i < parts.Length; i += 3)
                 {
                     var keyTokenData = new KeyTokenData(new TokenData()
                     {
@@ -61,7 +60,6 @@ namespace LlamaBot
                 Key key = this;
 
                 // Serialize the basic properties
-                sb.Append(key.Id).Append('\0');
                 sb.Append(key.Index).Append('\0');
                 sb.Append(key.Run).Append('\0');
                 sb.Append(key.Sampler).Append('\0');

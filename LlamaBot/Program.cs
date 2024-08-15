@@ -97,9 +97,7 @@ namespace LlamaBot
                         {
                             string toWrite = key.Serialize();
 
-                            string keysPath = Path.Combine(KEY_FOLDER, $"{key.Id}.json");
-
-                            File.WriteAllText(keysPath, toWrite);
+                            File.WriteAllText(key.Path, toWrite);
                         }
 
                         writeComplete.Set();
@@ -112,10 +110,21 @@ namespace LlamaBot
 
                 DateTime startTime = DateTime.Now;
 
-                for (int i = 0; i < RUNS; i++)
+                for (int run = 0; run < RUNS; run++)
                 {
                     for (decimal temp = MIN_TEMP; temp <= MAX_TEMP; temp += STEP)
                     {
+                        string rootPath = Path.Combine(KEY_FOLDER, $"{run}", $"{temp:0.00}");
+
+                        if (!Directory.Exists(rootPath))
+                        {
+                            Directory.CreateDirectory(rootPath);
+                        } else
+                        {
+                            Console.WriteLine($"Directory [{rootPath}] exists. Skipping...");
+                            continue;
+                        }
+
                         temperatureSamplerSettings.Temperature = (float)temp;
 
                         context.Clear(true);
@@ -124,7 +133,10 @@ namespace LlamaBot
 
                         context.Evaluate();
 
-                        Console.Write($"----- RUN: {i} -- TEMP: {temp:0.00} ");
+                        Console.WriteLine();
+                        Console.WriteLine();
+                        Console.WriteLine($"----- RUN: {run} -- TEMP: {temp:0.00} ");
+                        Console.WriteLine();
 
                         int index = 0;
 
@@ -156,9 +168,9 @@ namespace LlamaBot
 
                             Key key = new()
                             {
-                                Id = keyIndex++,
+                                Path = Path.Combine(rootPath, $"{index:00000}.dat"),
                                 Index = index++,
-                                Run = i,
+                                Run = run,
                                 Sampler = "T",
                                 SelectedToken = token,
                                 Temperature = temp,
