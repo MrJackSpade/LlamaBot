@@ -4,6 +4,7 @@ using LlamaNative.Models;
 using LlamaNative.Samplers.Settings;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Tokens.Extensions;
+using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Sampling.Samplers
 {
@@ -11,47 +12,81 @@ namespace LlamaNative.Sampling.Samplers
     {
         private readonly MinPSamplerSettings _settings = temperatureSamplerSettings;
 
-        public void ApplyOriginalMinP(SampleContext context)
+        private float GetMinP(int id)
         {
-            Dictionary<int, int> mapping = [];
+            float minP = _settings.MinP;
 
-            Span<TokenData> newData = context.Candidates.Data.Span;
-
-            int highestId = -1;
-            float highestLogit = float.NegativeInfinity;
-
-            for (int i = 0; i < context.Candidates.Data.Length; i++)
+            if (_settings.MinPs.TryGetValue(id, out float cminp))
             {
-                TokenData newToken = newData[i];
-                mapping.Add(newToken.Id, i);
-
-                if(newToken.Logit > highestLogit)
-                {
-                    highestLogit = newToken.Logit;
-                    highestId = newToken.Id;
-                }
+                minP = Math.Max(minP, cminp);
             }
 
+            return minP;
+        }
+
+        public void ApplyOriginalMinP(SampleContext context)
+        {
+
+            bool[] trimIds = new bool[context.OriginalCandidates.Size];
+
+            //The highest prob token
+            TokenData dontTrim = context.OriginalCandidates[0];
+
+            //Figure out what from the original set, falls below the min
             foreach (TokenData token in context.OriginalCandidates)
             {
-                //Never sample away the highest probability token
-                //Or shit will break
-                if(token.Id == highestId)
+                if (dontTrim.Logit < token.Logit)
                 {
-                    continue;
+                    dontTrim = token;
                 }
 
-                float minP = _settings.MinP;
-
-                if (_settings.MinPs.TryGetValue(token.Id, out float cminp))
-                {
-                    minP = Math.Max(minP, cminp);
-                }
+                float minP = this.GetMinP(token.Id);
 
                 if (token.P < minP)
                 {
-                    int newIndex = mapping[token.Id];
-                    context.Candidates.SetLogitAtIndex(newIndex, float.NegativeInfinity);
+                    trimIds[token.Id] = true;
+                }
+            }
+
+            trimIds[dontTrim.Id] = false;
+
+            //Actually trim
+            Span<TokenData> span = context.Candidates.Data.Span;
+
+            int s = 0;
+            int e = 0;
+
+            do
+            {
+                TokenData token = span[e];
+
+                if (!trimIds[token.Id])
+                {
+                    if (s != e)
+                    {
+                        span[s] = span[e];
+                    }
+
+                    s++;
+                }
+
+                e++;
+
+            } while (e < span.Length);
+
+            context.Candidates.Size = (ulong)s;
+
+            for(int i = 0; i < trimIds.Length; i++)
+            {
+                if (trimIds[i])
+                {
+                    span[s] = new TokenData()
+                    {
+                        Id = i,
+                        Logit = float.NegativeInfinity
+                    };
+
+                    s++;
                 }
             }
         }
@@ -59,6 +94,7 @@ namespace LlamaNative.Sampling.Samplers
         public void SampleNext(SampleContext sampleContext)
         {
             SamplingApi.SoftMax(sampleContext.Candidates);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
             this.ApplyOriginalMinP(sampleContext);
         }
     }
