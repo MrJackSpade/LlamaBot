@@ -74,15 +74,19 @@ namespace LlamaNative.Sampling.Samplers
 
             } while (e < span.Length);
 
-            for(int i = 0; i < trimIds.Length; i++)
+            context.Candidates.Size = (ulong)s;
+
+            for (int i = 0; i < trimIds.Length; i++)
             {
                 if (trimIds[i])
                 {
-                    span[i] = new TokenData()
+                    span[s] = new TokenData()
                     {
                         Id = i,
                         Logit = float.NegativeInfinity
                     };
+
+                    s++;
                 }
             }
         }
@@ -90,6 +94,7 @@ namespace LlamaNative.Sampling.Samplers
         public void SampleNext(SampleContext sampleContext)
         {
             SamplingApi.SoftMax(sampleContext.Candidates);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
             this.ApplyOriginalMinP(sampleContext);
         }
     }
