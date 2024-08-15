@@ -26,7 +26,7 @@ namespace LlamaBot
 
         private const decimal STEP = 0.1m;
 
-        private const float MIN_P = 0.03f;
+        private const float MIN_P = 0.01f;
 
         private const decimal MIN_TEMP = 0;
 
