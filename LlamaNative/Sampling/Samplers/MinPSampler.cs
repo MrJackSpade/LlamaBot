@@ -17,10 +17,14 @@ namespace LlamaNative.Sampling.Samplers
 
             Span<TokenData> newData = context.Candidates.Data.Span;
 
-            for (int i = 0; i < context.Candidates.Data.Length; i++)
+            //Skip the dictionary if the tokens are still in their original order
+            if (context.Candidates.Sorted)
             {
-                TokenData newToken = newData[i];
-                mapping.Add(newToken.Id, i);
+                for (int i = 0; i < context.Candidates.Data.Length; i++)
+                {
+                    TokenData newToken = newData[i];
+                    mapping.Add(newToken.Id, i);
+                }
             }
 
             foreach (TokenData token in context.OriginalCandidates)
@@ -34,7 +38,7 @@ namespace LlamaNative.Sampling.Samplers
 
                 if (token.P < minP)
                 {
-                    int newIndex = mapping[token.Id];
+                    int newIndex = context.Candidates.Sorted ? mapping[token.Id] : token.Id;
                     context.Candidates.SetLogitAtIndex(newIndex, float.NegativeInfinity);
                 }
             }

@@ -130,18 +130,6 @@ namespace Llama.Core
             TokenDataArray candidates = new(logits);
             TokenDataArray originalCandidates = new(logits);
 
-            SamplingApi.SuppressNonEnglish(this.ModelHandle, candidates);
-
-            SamplingApi.SoftMax(candidates);
-            SamplingApi.SoftMax(originalCandidates);
-
-            if (candidates.Data.Span[0].Logit == 0)
-            {
-                Debugger.Break();
-            }
-
-            Dictionary<Token, float> no_penalize = logits.Extract(NoPenalize());
-
             sampleContext = new()
             {
                 Candidates = candidates,
@@ -160,8 +148,6 @@ namespace Llama.Core
             }
 
             logitRules.ApplyPenalty(sampleContext.Candidates);
-
-            sampleContext.Candidates.Update(no_penalize);
 
             logitRules.ApplyBias(sampleContext.Candidates);
 
@@ -187,12 +173,6 @@ namespace Llama.Core
             }
 
             this._buffer[this._buffer.Pointer++] = token;
-        }
-
-        private static TokenCollection NoPenalize()
-        {
-            TokenCollection collection = new();
-            return collection;
         }
     }
 }

@@ -54,7 +54,7 @@ namespace LlamaNative.Tokens.Extensions
                 _ => throw new NotImplementedException(),
             };
 
-            tokens.Sorted = false;
+            tokens.Ordered = false;
         }
 
         public static void SetLogit(this TokenDataArray candidates, int tokenId, float logit)
@@ -70,7 +70,7 @@ namespace LlamaNative.Tokens.Extensions
                 P = logit
             };
 
-            candidates.Sorted = false;
+            candidates.Ordered = false;
         }
 
         public static void SetLogitAtIndex(this TokenDataArray tokens, int index, float logit)
@@ -84,7 +84,7 @@ namespace LlamaNative.Tokens.Extensions
                 P = logit
             };
 
-            tokens.Sorted = false;
+            tokens.Ordered = false;
         }
 
         public static void SetPenalty(this TokenDataArray tokens, int tokenId, float probability)
@@ -108,7 +108,7 @@ namespace LlamaNative.Tokens.Extensions
                 P = newValue
             };
 
-            tokens.Sorted = false;
+            tokens.Ordered = false;
         }
 
         public static void SetProbability(this TokenDataArray tokens, int tokenId, float probability)
@@ -124,7 +124,7 @@ namespace LlamaNative.Tokens.Extensions
                 P = probability
             };
 
-            tokens.Sorted = false;
+            tokens.Ordered = false;
         }
 
         public static void Update(this TokenDataArray tokens, IEnumerable<KeyValuePair<Token, float>> list)
