@@ -8,6 +8,7 @@ using LlamaNative.Logit.Collections;
 using LlamaNative.Logit.Models;
 using LlamaNative.Models;
 using LlamaNative.Samplers.Settings;
+using LlamaNative.Sampling.Samplers;
 using LlamaNative.Sampling.Samplers.Temperature;
 using LlamaNative.Tokens.Models;
 using System.Collections.Concurrent;
@@ -24,6 +25,8 @@ namespace LlamaBot
         private const int RUNS = 5;
 
         private const decimal STEP = 0.1m;
+
+        private const float MIN_P = 0.03f;
 
         private const decimal MIN_TEMP = 0;
 
@@ -48,7 +51,7 @@ namespace LlamaBot
 
                 TemperatureSamplerSettings temperatureSamplerSettings = new()
                 {
-                    PreserveWords = false
+                    PreserveWords = false,                
                 };
 
                 INativeContext context = LlamaClient.LoadContext(new ModelSettings()
@@ -63,7 +66,10 @@ namespace LlamaBot
                     ContextSize = CONTEXT
                 },
                 new TemperatureSampler(temperatureSamplerSettings),
-                []);
+                [
+                    new MinPSampler(new MinPSamplerSettings() {
+                    MinP = MIN_P
+                })]);
 
                 int keyIndex = 1;
 
