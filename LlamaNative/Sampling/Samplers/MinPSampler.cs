@@ -50,7 +50,7 @@ namespace LlamaNative.Sampling.Samplers
 
                 if (token.P < minP)
                 {
-                    int newIndex = context.Candidates.Sorted ? mapping[token.Id] : token.Id;
+                    int newIndex = mapping[token.Id];
                     context.Candidates.SetLogitAtIndex(newIndex, float.NegativeInfinity);
                 }
             }
