@@ -9,14 +9,14 @@ namespace LlamaNative.Tokens.Models
         {
             Data = data;
             Size = size;
-            Sorted = sorted;
+            Ordered = sorted;
         }
 
         public TokenDataArray(TokenData[] data, bool sorted = false)
         {
             Data = data;
             Size = (ulong)data.Length;
-            Sorted = sorted;
+            Ordered = sorted;
         }
 
         public TokenDataArray(Span<float> logits)
@@ -30,14 +30,24 @@ namespace LlamaNative.Tokens.Models
 
             Data = candidates.ToArray();
             Size = (ulong)Data.Length;
-            Sorted = false;
+            Ordered = false;
         }
 
         public Memory<TokenData> Data { get; set; }
 
         public ulong Size { get; set; }
 
-        public bool Sorted { get; set; }
+        /// <summary>
+        /// True if the tokens have been ordered by descending logit values
+        /// False if the tokens need to be ordered
+        /// </summary>
+        public bool Ordered { get; set; }
+
+        /// <summary>
+        /// True if the tokens have ever been arranged
+        /// False if the tokens are in their original indexed order
+        /// </summary>
+        public bool Sorted { get;set; }
 
         public TokenData this[ulong index] => Data.Span[(int)index];
 

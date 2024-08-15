@@ -44,7 +44,7 @@ namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
 
             Parallel.ForEach(ranges, range => ProcessCandidates(candidates, test_array, minGroupLength, candidate_ids, range.Start.Value, range.End.Value, scalePerGroup, scalePerLength));
 
-            candidates.Sorted = false;
+            candidates.Ordered = false;
         }
 
         private static IEnumerable<Range> GetRanges(int chunks, int total)

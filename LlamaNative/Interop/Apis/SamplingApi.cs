@@ -10,23 +10,6 @@ namespace LlamaNative.Interop.Apis
     {
         private static readonly ConcurrentDictionary<nint, ConcurrentDictionary<int, string>> _tokenToPieceCache = new();
 
-        public static bool ContainsNonEnglishCharacters(string input)
-        {
-            // Iterate through each character in the string
-            foreach (char c in input)
-            {
-                // Check if the character is outside the basic Latin and Latin-1 Supplement range
-                if (c is (< '\u0000' or > '\u007F') and (< '\u00A0' or > '\u00FF'))
-                {
-                    // If the character is outside these ranges, it's a non-English character
-                    return true;
-                }
-            }
-
-            // If no non-English characters were found, return false
-            return false;
-        }
-
         public static void MinP(TokenDataArray candidates, float min)
         {
             for (int i = 0; i < candidates.Data.Length; i++)
@@ -39,7 +22,7 @@ namespace LlamaNative.Interop.Apis
                 }
             }
 
-            candidates.Sorted = false;
+            candidates.Ordered = false;
         }
 
         public static void MinP(TokenDataArray candidates, int tokenId, float min)
@@ -53,7 +36,7 @@ namespace LlamaNative.Interop.Apis
                     if (data.P < min)
                     {
                         candidates.Data.Span[i].Logit = float.NegativeInfinity;
-                        candidates.Sorted = false;
+                        candidates.Ordered = false;
                     }
 
                     return;
@@ -121,7 +104,7 @@ namespace LlamaNative.Interop.Apis
                 candidates.Data.Span[i].Logit -= penalty;
             }
 
-            candidates.Sorted = false;
+            candidates.Ordered = false;
         }
 
         /// <summary>
@@ -139,7 +122,7 @@ namespace LlamaNative.Interop.Apis
             Span<TokenData> candidateSpan = candidates.Data.Span;
 
             // Sort the logits in descending order
-            if (!candidates.Sorted)
+            if (!candidates.Ordered)
             {
                 // Using LINQ to sort, then copy back to the MemorySpan
                 TokenData[] sortedData = candidates.Data.ToArray();
@@ -151,6 +134,7 @@ namespace LlamaNative.Interop.Apis
                     candidateSpan[i] = sortedData[i];
                 }
 
+                candidates.Ordered = true;
                 candidates.Sorted = true;
             }
 
@@ -195,46 +179,6 @@ namespace LlamaNative.Interop.Apis
             }
         }
 
-        public static void SuppressNewline(SafeModelHandle handle, TokenDataArray candidates)
-        {
-            Parallel.For(
-                0,
-                candidates.Data.Length,
-                i =>
-                {
-                    TokenData token = candidates.Data.Span[i];
-
-                    bool isValid = TryTokenToPiece(handle, token.Id, out string result) && (!result.Contains('\n') || result == "\n");
-
-                    if (!isValid)
-                    {
-                        candidates.Data.Span[i].Logit = float.NegativeInfinity;
-                    }
-                });
-
-            candidates.Sorted = false;
-        }
-
-        public static void SuppressNonEnglish(SafeModelHandle handle, TokenDataArray candidates)
-        {
-            Parallel.For(
-                0,
-                candidates.Data.Length,
-                i =>
-            {
-                TokenData token = candidates.Data.Span[i];
-
-                bool isValid = TryTokenToPiece(handle, token.Id, out string result) && !ContainsNonEnglishCharacters(result);
-
-                if (!isValid)
-                {
-                    candidates.Data.Span[i].Logit = float.NegativeInfinity;
-                }
-            });
-
-            candidates.Sorted = false;
-        }
-
         /// <summary>
         /// Tail Free Sampling described in https://www.trentonbricken.com/Tail-Free-Sampling/.
         /// </summary>
@@ -249,7 +193,7 @@ namespace LlamaNative.Interop.Apis
                 return;
             }
 
-            SoftMax(candidates); // Assuming LlamaSampleSoftMax is defined elsewhere
+            SoftMax(candidates);
 
             List<float> firstDerivatives = [];
             for (int i = 0; i < (int)(candidates.Size - 1); i++)
@@ -289,7 +233,7 @@ namespace LlamaNative.Interop.Apis
                 candidates.Data.Span[i].Logit = float.NegativeInfinity;
             }
 
-            candidates.Sorted = false;
+            candidates.Ordered = false;
         }
 
         public static void Temperature(TokenDataArray candidates, float temp)
@@ -299,14 +243,14 @@ namespace LlamaNative.Interop.Apis
                 candidates.Data.Span[i].Logit = candidates.Data.Span[i].Logit / temp;
             }
 
-            candidates.Sorted = false;
+            candidates.Ordered = false;
         }
 
         public static void Temperature(TokenDataArray candidates, int index, float temp)
         {
             candidates.Data.Span[index].Logit = candidates.Data.Span[index].Logit / temp;
 
-            candidates.Sorted = false;
+            candidates.Ordered = false;
         }
 
         /// <summary>
@@ -322,7 +266,7 @@ namespace LlamaNative.Interop.Apis
             {
                 data = new nint(handle.Pointer),
                 size = candidates.Size,
-                sorted = candidates.Sorted
+                sorted = candidates.Ordered
             };
 
             return LlamaCppApi.SampleToken(ctx, new nint(&st));
@@ -357,7 +301,7 @@ namespace LlamaNative.Interop.Apis
             {
                 data = new nint(handle.Pointer),
                 size = candidates.Size,
-                sorted = candidates.Sorted
+                sorted = candidates.Ordered
             };
             int res;
             fixed (float* pmu = &mu)
@@ -384,7 +328,7 @@ namespace LlamaNative.Interop.Apis
             {
                 data = new nint(handle.Pointer),
                 size = candidates.Size,
-                sorted = candidates.Sorted
+                sorted = candidates.Ordered
             };
             int res;
             fixed (float* pmu = &mu)
@@ -428,13 +372,13 @@ namespace LlamaNative.Interop.Apis
             {
                 data = new nint(handle.Pointer),
                 size = candidates.Size,
-                sorted = candidates.Sorted
+                sorted = candidates.Ordered
             };
 
             LlamaCppApi.SampleTopP(ctx, new nint(&st), p, min_keep);
 
             candidates.Size = st.size;
-            candidates.Sorted = st.sorted;
+            candidates.Ordered = st.sorted;
         }
 
         /// <summary>
@@ -451,13 +395,13 @@ namespace LlamaNative.Interop.Apis
             {
                 data = new nint(handle.Pointer),
                 size = candidates.Size,
-                sorted = candidates.Sorted
+                sorted = candidates.Ordered
             };
 
             LlamaCppApi.SampleTypical(ctx, new nint(&st), p, min_keep);
 
             candidates.Size = st.size;
-            candidates.Sorted = st.sorted;
+            candidates.Ordered = st.sorted;
         }
 
         // Assumptions:
@@ -505,7 +449,7 @@ namespace LlamaNative.Interop.Apis
             }
         }
 
-        private static bool TryTokenToPiece(SafeModelHandle handle, int tokenId, out string? result)
+        public static bool TryTokenToPiece(SafeModelHandle handle, int tokenId, out string? result)
         {
             if (!_tokenToPieceCache.TryGetValue(handle.Handle, out ConcurrentDictionary<int, string>? modelTokens))
             {
