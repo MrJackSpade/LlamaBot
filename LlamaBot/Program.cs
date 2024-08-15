@@ -19,7 +19,7 @@ namespace LlamaBot
     {
         private const string KEY_FOLDER = "Keys";
 
-        private const string MODEL_NAME = "D:\\Chie\\Models\\Meta-Llama-3.1-8B.gguf";
+        private const string MODEL_NAME = "/home/mrjackspade/Meta-Llama-3.1-8B-Q4_K_M.gguf";
 
         private const int RUNS = 5;
 
@@ -30,6 +30,10 @@ namespace LlamaBot
         private const decimal MAX_TEMP = 1.2m;
 
         private const int CONTEXT = 4096;
+
+	private const int NGPU = 0;
+
+	private const bool SWAP = false;
 
         public static async Task Main()
         {
@@ -50,9 +54,9 @@ namespace LlamaBot
                 INativeContext context = LlamaClient.LoadContext(new ModelSettings()
                 {
                     ModelPath = MODEL_NAME,
-                    GpuLayerCount = 33,
-                    UseMemoryLock = false,
-                    UseMemoryMap = true
+                    GpuLayerCount = NGPU,
+                    UseMemoryLock = !SWAP,
+                    UseMemoryMap = SWAP
                 },
                 new ContextSettings()
                 {
