@@ -212,17 +212,7 @@ namespace LlamaNative.Chat.Models
 
                 string thisChunk = string.Join("", message.Select(s => s.SelectedToken.Value));
 
-                if (Settings?.SplitSettings?.DoubleNewlineSplit ?? false)
-                {
-                    foreach (string split in thisChunk.Split("\n\n"))
-                    {
-                        toReturn.Add(split);
-                    }
-                }
-                else
-                {
-                    toReturn.Add(thisChunk);
-                }
+                toReturn.Add(thisChunk);                
             }
 
             if (!_running)

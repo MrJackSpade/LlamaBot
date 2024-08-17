@@ -127,11 +127,21 @@ namespace LlamaBot
 
                     string displayName = this.GetDisplayName(historicalMessage.Author);
 
+                    List<string> messageContent = [historicalMessage.Content];
+
+                    if(_chatSettings.SplitSettings?.DoubleNewlineSplit ?? false)
+                    {
+                        messageContent = historicalMessage.Content.Split("\n").Select(s => s.Trim()).ToList();
+                    }
+
                     TokenMask contentMask = historicalMessage.Author.Id == _botId ? 
                                                                 TokenMask.Bot :
                                                                 TokenMask.User;
 
-                    _chatContext.Insert(messageStart, contentMask, displayName, historicalMessage.Content);
+                    foreach (string s in messageContent)
+                    {
+                        _chatContext.Insert(messageStart, contentMask, displayName, s);
+                    }
 
                     if (_chatContext.AvailableBuffer < 1000)
                     {
