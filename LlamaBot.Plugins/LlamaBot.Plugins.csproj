@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LlamaBot.Shared\LlamaBot.Shared.csproj" />
+    <ProjectReference Include="..\LlamaNative.Chat\LlamaNative.Chat.csproj" />
   </ItemGroup>
 
 </Project>

@@ -66,7 +66,7 @@ namespace LlamaBot
                 return;
             }
 
-            _llamaBotClient.TryProcessMessageThread(message.Channel, false);
+            _llamaBotClient.TryProcessMessageAsync(message.Channel);
         }
 
         private static async Task InitializeDiscordClient()

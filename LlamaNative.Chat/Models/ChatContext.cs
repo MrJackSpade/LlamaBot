@@ -139,18 +139,20 @@ namespace LlamaNative.Chat.Models
             return response.ToString();
         }
 
-        public IEnumerable<ChatMessage> ReadResponse(bool continueLast)
+        public IEnumerable<ChatMessage> ReadResponse(ReadResponseSettings responseSettings)
         {
             LogitRuleCollection logitRules = [];
             List<TokenSelection> response = [];
 
             _running |= true;
+            
+            string respondingUser = responseSettings.RespondingUser ?? Settings.BotName;
 
-            this.RefreshContext(continueLast);
+            this.RefreshContext(responseSettings.ContinueLast);
 
-            if (!continueLast)
+            if (!responseSettings.ContinueLast)
             {
-                NativeContext.Write(Settings.ChatTemplate.ToHeader(Settings.BotName, true));
+                NativeContext.Write(Settings.ChatTemplate.ToHeader(respondingUser, true));
             }
 
             NativeContext.Evaluate();
@@ -202,7 +204,7 @@ namespace LlamaNative.Chat.Models
                 }
             } while (true);
 
-            List<List<TokenSelection>> messageParts = this.RecursiveSplit(response).ToList();
+            List<List<TokenSelection>> messageParts = RecursiveSplit(response, responseSettings.ChatSplitSettings).ToList();
 
             List<string> toReturn = [];
 
@@ -225,7 +227,7 @@ namespace LlamaNative.Chat.Models
                 _running = false;
             }
 
-            return toReturn.Select(s => new ChatMessage(TokenMask.Bot, Settings.BotName, s));
+            return toReturn.Select(s => new ChatMessage(TokenMask.Bot, respondingUser, s));
         }
 
         public void RemoveAt(int index) => _messages.RemoveAt(index);
@@ -256,19 +258,19 @@ namespace LlamaNative.Chat.Models
         /// </summary>
         /// <param name="tokenSelections"></param>
         /// <returns></returns>
-        private IEnumerable<List<TokenSelection>> RecursiveSplit(List<TokenSelection> tokenSelections)
+        private static IEnumerable<List<TokenSelection>> RecursiveSplit(List<TokenSelection> tokenSelections, ChatSplitSettings? splitSettings)
         {
-            int splitId = Settings.SplitSettings?.MessageSplitId ?? -1;
-            int messageMin = Settings.SplitSettings?.MessageMinTokens ?? -1;
+            int splitId = splitSettings?.MessageSplitId ?? -1;
+            int messageMin = splitSettings?.MessageMinTokens ?? -1;
             int messageCurrent = string.Join("", tokenSelections.Select(s => s.SelectedToken.Value)).Length;
 
-            if (Settings.SplitSettings is null || splitId < 0 || messageMin < 0)
+            if (splitSettings is null || splitId < 0 || messageMin < 0)
             {
                 yield return tokenSelections;
                 yield break;
             }
 
-            if (messageCurrent < Settings.SplitSettings.MessageMaxCharacters)
+            if (messageCurrent < splitSettings.MessageMaxCharacters)
             {
                 yield return tokenSelections;
                 yield break;
@@ -288,12 +290,12 @@ namespace LlamaNative.Chat.Models
 
             List<TokenSelection> splitB = tokenSelections.Skip(splitIndex).ToList();
 
-            foreach (List<TokenSelection> cma in this.RecursiveSplit(splitA))
+            foreach (List<TokenSelection> cma in RecursiveSplit(splitA, splitSettings))
             {
                 yield return cma;
             }
 
-            foreach (List<TokenSelection> cmb in this.RecursiveSplit(splitB))
+            foreach (List<TokenSelection> cmb in RecursiveSplit(splitB, splitSettings))
             {
                 yield return cmb;
             }
