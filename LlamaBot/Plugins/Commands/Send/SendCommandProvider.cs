@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using LlamaBot.Plugins.Commands.Continue;
 using LlamaBot.Plugins.Commands.Generate;
+using LlamaBot.Plugins.Commands.Send;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
@@ -12,19 +13,20 @@ using LlamaNative.Chat.Models;
 
 namespace LlamaBot.Plugins.Commands.Regenerate
 {
-    internal class GenerateCommandProvider : ICommandProvider<GenerateCommand>
+    internal class SendCommandProvider : ICommandProvider<SendCommand>
     {
         private IDiscordService? _discordClient;
         private ILlamaBotClient? _llamaBotClient;
         private IPluginService? _pluginService;
 
-        public string Command => "Generate";
+        public string Command => "send";
 
-        public string Description => "Generates a message with a specific username";
+        public string Description => "Sends a message with a specific username";
 
         public SlashCommandOption[] SlashCommandOptions => [];
+        private const char ZERO_WIDTH = (char)8203;
 
-        public async Task<CommandResult> OnCommand(GenerateCommand command)
+        public async Task<CommandResult> OnCommand(SendCommand command)
         {
             Ensure.NotNull(_llamaBotClient);
 
@@ -32,10 +34,7 @@ namespace LlamaBot.Plugins.Commands.Regenerate
             {
                 await command.Command.DeleteOriginalResponseAsync();
 
-                _llamaBotClient.TryProcessMessageAsync(smc, new ReadResponseSettings()
-                {
-                    RespondingUser = command.UserName
-                });
+                await smc.SendMessageAsync($"{ZERO_WIDTH}**{command.UserName}:**{ZERO_WIDTH} {command.Content}");
 
                 return CommandResult.Success();
             }
