@@ -1,7 +1,4 @@
-﻿using Discord;
-using Discord.WebSocket;
-using LlamaBot.Plugins.Commands.Continue;
-using LlamaBot.Plugins.Commands.Generate;
+﻿using Discord.WebSocket;
 using LlamaBot.Plugins.Commands.Send;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
@@ -9,14 +6,17 @@ using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 using LlamaBot.Shared.Utils;
-using LlamaNative.Chat.Models;
 
 namespace LlamaBot.Plugins.Commands.Regenerate
 {
     internal class SendCommandProvider : ICommandProvider<SendCommand>
     {
+        private const char ZERO_WIDTH = (char)8203;
+
         private IDiscordService? _discordClient;
+
         private ILlamaBotClient? _llamaBotClient;
+
         private IPluginService? _pluginService;
 
         public string Command => "send";
@@ -24,7 +24,6 @@ namespace LlamaBot.Plugins.Commands.Regenerate
         public string Description => "Sends a message with a specific username";
 
         public SlashCommandOption[] SlashCommandOptions => [];
-        private const char ZERO_WIDTH = (char)8203;
 
         public async Task<CommandResult> OnCommand(SendCommand command)
         {

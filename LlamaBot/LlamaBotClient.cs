@@ -63,6 +63,8 @@ namespace LlamaBot
             }
         }
 
+        public string BotName => _chatSettings.BotName;
+
         public string SystemPrompt { get; set; } = string.Empty;
 
         public void Clear(bool v)
@@ -82,6 +84,18 @@ namespace LlamaBot
             {
                 RespondingUser = user,
             }).First().Content;
+        }
+
+        public AutoRespond GetAutoRespond(ulong channelId)
+        {
+            if (!_metaData.AutoResponds.TryGetValue(channelId, out var response))
+            {
+                return response;
+            }
+            else
+            {
+                return new AutoRespond();
+            }
         }
 
         public ParsedMessage ParseMessage(IMessage message)
@@ -170,6 +184,24 @@ namespace LlamaBot
             {
                 await prependMessage.DeleteAsync();
             }
+        }
+
+        public void SetAutoRespond(ulong channelId, string userName, bool disabled)
+        {
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                _metaData.AutoResponds.Remove(channelId);
+            }
+            else
+            {
+                _metaData.AutoResponds[channelId] = new AutoRespond()
+                {
+                    Disabled = disabled,
+                    UserName = userName,
+                };
+            }
+
+            StaticConfiguration.Save(_metaData);
         }
 
         public void SetClearDate(ulong channelId, DateTime triggered)

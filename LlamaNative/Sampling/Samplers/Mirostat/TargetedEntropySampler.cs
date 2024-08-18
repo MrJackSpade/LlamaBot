@@ -41,6 +41,54 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             return Math.Clamp(nextValue, _settings.MinTarget, _settings.MaxTarget);
         }
 
+        public int SampleNext(SampleContext sampleContext)
+        {
+            SamplingApi.SoftMax(sampleContext.Candidates);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+
+            int? ts = 0;
+
+            for (int i = 0; i < sampleContext.Candidates.Data.Length; i++)
+            {
+                TokenData newToken = sampleContext.Candidates.Data.Span[i];
+
+                if (newToken.P > 0.001f)
+                {
+                    ts++;
+                }
+            }
+
+            Span<TokenData> candidateSpan = sampleContext.OriginalCandidates.Data.Span;
+
+            List<TokenData> candidates = [.. candidateSpan.Where(c => c.P >= _settings.MinP)];
+
+            float target = this.CalculateNextTarget();
+
+            candidates = [.. candidates.OrderBy(c => Math.Abs(c.P - target))];
+
+            int selectedToken = this.SelectToken(candidates, sampleContext, out bool topOnly);
+
+            StringBuilder? candidateBuilder = new();
+
+            WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
+
+            if (!topOnly || _settings.FactorPreservedWords)
+            {
+                this.Push(sampleContext.GetOriginalData(selectedToken));
+            }
+
+            Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
+
+            TokenData originalP = sampleContext.GetOriginalData(selectedToken);
+
+            if (originalP.P < _settings.MinP)
+            {
+                Debug.WriteLine("Token below min-p selected");
+            }
+
+            return selectedToken;
+        }
+
         protected int SelectToken(List<TokenData> candidates, SampleContext sampleContext, out bool topOnly)
         {
             SamplingApi.SoftMax(sampleContext.OriginalCandidates);
@@ -75,56 +123,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 selectedToken = topToken.Id;
             }
             else
-            {   
-                selectedToken = candidates.First().Id;               
-            }
-
-            return selectedToken;
-        }
-
-        public int SampleNext(SampleContext sampleContext)
-        {
-            SamplingApi.SoftMax(sampleContext.Candidates);
-            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
-
-            int? ts = 0;
-
-            for (int i = 0; i < sampleContext.Candidates.Data.Length; i++)
             {
-                TokenData newToken = sampleContext.Candidates.Data.Span[i];
-
-                if (newToken.P > 0.001f)
-                {
-                    ts++;
-                }
-            }
-
-            Span<TokenData> candidateSpan = sampleContext.OriginalCandidates.Data.Span;
-
-            List<TokenData> candidates = [.. candidateSpan.Where(c => c.P >= _settings.MinP)];
-
-            float target = this.CalculateNextTarget();
-
-            candidates = [.. candidates.OrderBy(c => Math.Abs(c.P - target))];
-            
-            int selectedToken = this.SelectToken(candidates, sampleContext, out bool topOnly);
-
-            StringBuilder? candidateBuilder = new();
-
-            WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
-
-            if (!topOnly || _settings.FactorPreservedWords)
-            {
-                this.Push(sampleContext.GetOriginalData(selectedToken));
-            }
-
-            Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
-
-            TokenData originalP = sampleContext.GetOriginalData(selectedToken);
-
-            if (originalP.P < _settings.MinP)
-            {
-                Debug.WriteLine("Token below min-p selected");
+                selectedToken = candidates.First().Id;
             }
 
             return selectedToken;

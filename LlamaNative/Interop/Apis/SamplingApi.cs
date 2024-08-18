@@ -380,6 +380,31 @@ namespace LlamaNative.Interop.Apis
             candidates.Ordered = st.sorted;
         }
 
+        public static bool TryTokenToPiece(SafeModelHandle handle, int tokenId, out string? result)
+        {
+            if (!_tokenToPieceCache.TryGetValue(handle.Handle, out ConcurrentDictionary<int, string>? modelTokens))
+            {
+                modelTokens = new ConcurrentDictionary<int, string>();
+                _tokenToPieceCache[handle.Handle] = modelTokens;
+            }
+
+            if (!modelTokens.TryGetValue(tokenId, out result))
+            {
+                try
+                {
+                    result = handle.TokenToPiece(tokenId);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.Message);
+                }
+
+                modelTokens.TryAdd(tokenId, result);
+            }
+
+            return result != null;
+        }
+
         /// <summary>
         /// Locally Typical Sampling implementation described in the paper https://arxiv.org/abs/2202.00666.
         /// </summary>
@@ -446,31 +471,6 @@ namespace LlamaNative.Interop.Apis
                     secondDerivatives[i] = equalValue;
                 }
             }
-        }
-
-        public static bool TryTokenToPiece(SafeModelHandle handle, int tokenId, out string? result)
-        {
-            if (!_tokenToPieceCache.TryGetValue(handle.Handle, out ConcurrentDictionary<int, string>? modelTokens))
-            {
-                modelTokens = new ConcurrentDictionary<int, string>();
-                _tokenToPieceCache[handle.Handle] = modelTokens;
-            }
-
-            if (!modelTokens.TryGetValue(tokenId, out result))
-            {
-                try
-                {
-                    result = handle.TokenToPiece(tokenId);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.Message);
-                }
-
-                modelTokens.TryAdd(tokenId, result);
-            }
-
-            return result != null;
         }
 
         private class FoundTokenData

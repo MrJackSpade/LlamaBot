@@ -13,9 +13,9 @@ namespace LlamaBot.Plugins.Commands.Delete
     {
         private IDiscordService? _discordClient;
 
-        private IPluginService? _pluginService;
-
         private ILlamaBotClient? _llamaBotClient;
+
+        private IPluginService? _pluginService;
 
         public string Command => "delete";
 

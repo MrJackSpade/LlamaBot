@@ -40,7 +40,7 @@ namespace LlamaNative.Sampling.Extensions
                 availableEnumerable = availableEnumerable.Where(t => include.Contains(t.Id));
             }
 
-            if(tokenMask != TokenMask.Undefined)
+            if (tokenMask != TokenMask.Undefined)
             {
                 availableEnumerable = availableEnumerable.Where(t => t.Mask.HasFlag(tokenMask));
             }

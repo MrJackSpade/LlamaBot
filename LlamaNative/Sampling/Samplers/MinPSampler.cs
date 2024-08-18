@@ -3,8 +3,6 @@ using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Samplers.Settings;
 using LlamaNative.Sampling.Interfaces;
-using LlamaNative.Tokens.Extensions;
-using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Sampling.Samplers
 {
@@ -12,21 +10,8 @@ namespace LlamaNative.Sampling.Samplers
     {
         private readonly MinPSamplerSettings _settings = temperatureSamplerSettings;
 
-        private float GetMinP(int id)
-        {
-            float minP = _settings.MinP;
-
-            if (_settings.MinPs.TryGetValue(id, out float cminp))
-            {
-                minP = Math.Max(minP, cminp);
-            }
-
-            return minP;
-        }
-
         public void ApplyOriginalMinP(SampleContext context)
         {
-
             bool[] trimIds = new bool[context.OriginalCandidates.Size];
 
             //The highest prob token
@@ -71,7 +56,6 @@ namespace LlamaNative.Sampling.Samplers
                 }
 
                 e++;
-
             } while (e < span.Length);
 
             context.Candidates.Size = (ulong)s;
@@ -96,6 +80,18 @@ namespace LlamaNative.Sampling.Samplers
             SamplingApi.SoftMax(sampleContext.Candidates);
             SamplingApi.SoftMax(sampleContext.OriginalCandidates);
             this.ApplyOriginalMinP(sampleContext);
+        }
+
+        private float GetMinP(int id)
+        {
+            float minP = _settings.MinP;
+
+            if (_settings.MinPs.TryGetValue(id, out float cminp))
+            {
+                minP = Math.Max(minP, cminp);
+            }
+
+            return minP;
         }
     }
 }

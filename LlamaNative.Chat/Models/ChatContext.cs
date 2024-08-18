@@ -61,18 +61,6 @@ namespace LlamaNative.Chat.Models
             }
         }
 
-        public string ContextToString(bool continueLast)
-        {
-            StringBuilder sb = new();
-
-            foreach (MaskedString ms in this.ContextToMaskedString(continueLast))
-            {
-                sb.Append(ms.Value);
-            }
-
-            return sb.ToString();
-        }
-
         public IEnumerable<MaskedString> ContextToMaskedString(bool continueLast)
         {
             StringBuilder sb = new();
@@ -102,6 +90,18 @@ namespace LlamaNative.Chat.Models
                     yield return ms;
                 }
             }
+        }
+
+        public string ContextToString(bool continueLast)
+        {
+            StringBuilder sb = new();
+
+            foreach (MaskedString ms in this.ContextToMaskedString(continueLast))
+            {
+                sb.Append(ms.Value);
+            }
+
+            return sb.ToString();
         }
 
         public void Insert(int index, ChatMessage message)
@@ -145,7 +145,7 @@ namespace LlamaNative.Chat.Models
             List<TokenSelection> response = [];
 
             _running |= true;
-            
+
             string respondingUser = responseSettings.RespondingUser ?? Settings.BotName;
 
             this.RefreshContext(responseSettings.ContinueLast);
@@ -214,7 +214,7 @@ namespace LlamaNative.Chat.Models
 
                 string thisChunk = string.Join("", message.Select(s => s.SelectedToken.Value));
 
-                toReturn.Add(thisChunk);                
+                toReturn.Add(thisChunk);
             }
 
             if (!_running)

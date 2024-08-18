@@ -160,91 +160,6 @@ namespace LlamaNative.Apis
             }
         }
 
-        internal static Token[] GetEvaluated(SafeContextHandle context, SafeModelHandle model)
-        {
-            KvCell[] cells = GetKvCells(context);
-
-            Token[] evaluated = new Token[cells.Length];
-
-            Dictionary<int, List<CellDefinition>> cellDict = [];
-
-            {
-                int i = 0;
-                foreach (KvCell cell in cells)
-                {
-                    if (cell.Pos == -1)
-                    {
-                        continue;
-                    }
-
-                    if (!cellDict.TryGetValue(cell.Pos, out List<CellDefinition>? cellColl))
-                    {
-                        cellColl = [];
-                        cellDict[cell.Pos] = cellColl;
-                    }
-
-                    cellColl.Add(new CellDefinition()
-                    {
-                        Index = i,
-                        Cell = cell,
-                    });
-
-                    i++;
-                }
-            }
-
-            foreach (int key in cellDict.Keys)
-            {
-                if (cellDict[key].Count < 2)
-                {
-                    cellDict.Remove(key);
-                }
-            }
-
-            if (cellDict.Count > 0)
-            {
-                Debugger.Break();
-            }
-
-            foreach (KvCell cell in cells)
-            {
-                Token token;
-
-                if (cell.Pos < 0)
-                {
-                    continue;
-                }
-
-                if (cell.Value == -1)
-                {
-                    token = Token.Null;
-                }
-                else
-                {
-                    token = new Token(cell.Value, model.TokenToPiece(cell.Value), TokenMask.Undefined);
-                }
-
-                if (evaluated[cell.Pos] != null)
-                {
-                    //throw new InvalidOperationException("Can not double assign token");
-                }
-                else
-                {
-                    evaluated[cell.Pos] = token;
-                }
-            }
-
-            for (int i = 0; i < evaluated.Length; i++)
-            {
-                if (evaluated[i] == null)
-                {
-                    evaluated[i] = Token.Null;
-                }
-            }
-
-            return evaluated;
-        }
-
         public static KvCache GetKvCache(SafeContextHandle context)
         {
             nint kvCachePtr = LlamaCppApi.GetKvCache(context);
@@ -373,29 +288,6 @@ namespace LlamaNative.Apis
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
-        internal static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
-        {
-            int cnt = Encoding.Unicode.GetByteCount(text + 1);
-
-            int[] res = new int[cnt + (add_bos ? 1 : 0)];
-
-            int n = LlamaCppApi.Tokenize(ctx, text, res, res.Length, add_bos, parseSpecial);
-
-            if (n < 0)
-            {
-                throw new LlamaCppRuntimeError("Error happened during tokenization. It's possibly caused by wrong encoding. Please try to specify the encoding.");
-            }
-
-            res = res.Take(n).ToArray();
-
-            if (useLegacy && res[0] == 29871)
-            {
-                res = res.Skip(1).ToArray();
-            }
-
-            return res;
-        }
-
         public static string TokenToPiece(this SafeModelHandle ctx, int token, bool special = true)
         {
             // Assuming a buffer size of 256, adjust as needed.
@@ -421,6 +313,114 @@ namespace LlamaNative.Apis
             string toReturn = System.Text.Encoding.UTF8.GetString(buffer, 0, result);
 
             return toReturn;
+        }
+
+        internal static Token[] GetEvaluated(SafeContextHandle context, SafeModelHandle model)
+        {
+            KvCell[] cells = GetKvCells(context);
+
+            Token[] evaluated = new Token[cells.Length];
+
+            Dictionary<int, List<CellDefinition>> cellDict = [];
+
+            {
+                int i = 0;
+                foreach (KvCell cell in cells)
+                {
+                    if (cell.Pos == -1)
+                    {
+                        continue;
+                    }
+
+                    if (!cellDict.TryGetValue(cell.Pos, out List<CellDefinition>? cellColl))
+                    {
+                        cellColl = [];
+                        cellDict[cell.Pos] = cellColl;
+                    }
+
+                    cellColl.Add(new CellDefinition()
+                    {
+                        Index = i,
+                        Cell = cell,
+                    });
+
+                    i++;
+                }
+            }
+
+            foreach (int key in cellDict.Keys)
+            {
+                if (cellDict[key].Count < 2)
+                {
+                    cellDict.Remove(key);
+                }
+            }
+
+            if (cellDict.Count > 0)
+            {
+                Debugger.Break();
+            }
+
+            foreach (KvCell cell in cells)
+            {
+                Token token;
+
+                if (cell.Pos < 0)
+                {
+                    continue;
+                }
+
+                if (cell.Value == -1)
+                {
+                    token = Token.Null;
+                }
+                else
+                {
+                    token = new Token(cell.Value, model.TokenToPiece(cell.Value), TokenMask.Undefined);
+                }
+
+                if (evaluated[cell.Pos] != null)
+                {
+                    //throw new InvalidOperationException("Can not double assign token");
+                }
+                else
+                {
+                    evaluated[cell.Pos] = token;
+                }
+            }
+
+            for (int i = 0; i < evaluated.Length; i++)
+            {
+                if (evaluated[i] == null)
+                {
+                    evaluated[i] = Token.Null;
+                }
+            }
+
+            return evaluated;
+        }
+
+        internal static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
+        {
+            int cnt = Encoding.Unicode.GetByteCount(text + 1);
+
+            int[] res = new int[cnt + (add_bos ? 1 : 0)];
+
+            int n = LlamaCppApi.Tokenize(ctx, text, res, res.Length, add_bos, parseSpecial);
+
+            if (n < 0)
+            {
+                throw new LlamaCppRuntimeError("Error happened during tokenization. It's possibly caused by wrong encoding. Please try to specify the encoding.");
+            }
+
+            res = res.Take(n).ToArray();
+
+            if (useLegacy && res[0] == 29871)
+            {
+                res = res.Skip(1).ToArray();
+            }
+
+            return res;
         }
 
         private static void Log(string method, params object[] args)

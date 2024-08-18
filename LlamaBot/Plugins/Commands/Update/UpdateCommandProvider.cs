@@ -14,9 +14,9 @@ namespace LlamaBot.Plugins.Commands.Update
     {
         private IDiscordService? _discordClient;
 
-        private IPluginService? _pluginService;
-
         private ILlamaBotClient? _llamaBotClient;
+
+        private IPluginService? _pluginService;
 
         public string Command => "update";
 
@@ -36,11 +36,12 @@ namespace LlamaBot.Plugins.Commands.Update
                 {
                     message = await _llamaBotClient.TryGetLastBotMessage(smc);
 
-                    if(message == null)
+                    if (message == null)
                     {
                         return CommandResult.Error("Last found message does not belong to bot. Please provide message id");
-                    } 
-                } else
+                    }
+                }
+                else
                 {
                     message = await smc.GetMessageAsync(command.MessageId);
                 }
