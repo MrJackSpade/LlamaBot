@@ -88,7 +88,7 @@ namespace LlamaBot
 
         public AutoRespond GetAutoRespond(ulong channelId)
         {
-            if (!_metaData.AutoResponds.TryGetValue(channelId, out var response))
+            if (_metaData.AutoResponds.TryGetValue(channelId, out var response))
             {
                 return response;
             }

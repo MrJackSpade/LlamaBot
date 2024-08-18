@@ -5,6 +5,7 @@ using LlamaBot.Services;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Loggers;
 using LlamaBot.Shared.Models;
+using LlamaNative.Chat.Models;
 using LlamaNative.Utils;
 using Loxifi;
 using System.Reflection;
@@ -37,9 +38,26 @@ namespace LlamaBot
 
         public static async Task MessageReceived(SocketMessage message)
         {
+            ReadResponseSettings? readResponseSettings = null;
+
             if (message.Author.Id == _discordClient.CurrentUser.Id)
             {
                 return;
+            }
+
+            AutoRespond autoRespond = _llamaBotClient.GetAutoRespond(message.Channel.Id);
+
+            if (autoRespond.Disabled)
+            {
+                return;
+            }
+            else if (!string.IsNullOrWhiteSpace(autoRespond.UserName))
+            {
+                readResponseSettings = new ReadResponseSettings()
+                {
+                    RespondingUser = autoRespond.UserName
+                };
+
             }
 
             if (message.Channel is SocketTextChannel socketTextChannel)
@@ -66,7 +84,7 @@ namespace LlamaBot
                 return;
             }
 
-            _llamaBotClient.TryProcessMessageAsync(message.Channel);
+            _llamaBotClient.TryProcessMessageAsync(message.Channel, readResponseSettings);
         }
 
         private static async Task InitializeDiscordClient()

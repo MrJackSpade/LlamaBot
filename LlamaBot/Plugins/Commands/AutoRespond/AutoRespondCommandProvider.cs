@@ -17,11 +17,13 @@ namespace LlamaBot.Plugins.Commands.ClearContext
 
         public SlashCommandOption[] SlashCommandOptions => [];
 
-        public Task<CommandResult> OnCommand(AutoRespondCommand command)
+        public async Task<CommandResult> OnCommand(AutoRespondCommand command)
         {
             Ensure.NotNull(_llamaBotClient);
 
             ulong channelId = command.Channel.Id;
+
+            await command.Command.DeleteOriginalResponseAsync();
 
             if (command.UserName is null)
             {
@@ -29,20 +31,22 @@ namespace LlamaBot.Plugins.Commands.ClearContext
 
                 if (string.IsNullOrWhiteSpace(autoRespond.UserName))
                 {
-                    return CommandResult.SuccessAsync($"Default: {_llamaBotClient.BotName}");
+                    return CommandResult.Success($"Default: {_llamaBotClient.BotName}");
                 }
 
                 if (autoRespond.Disabled)
                 {
-                    return CommandResult.SuccessAsync("Disabled");
+                    return CommandResult.Success("Disabled");
                 }
 
-                return CommandResult.SuccessAsync(autoRespond.UserName);
+                return CommandResult.Success(autoRespond.UserName);
             }
 
             _llamaBotClient.SetAutoRespond(channelId, command.UserName, command.Disabled);
 
-            return CommandResult.SuccessAsync();
+            
+
+            return CommandResult.Success();
         }
 
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
