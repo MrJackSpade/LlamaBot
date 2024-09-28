@@ -32,6 +32,8 @@ namespace LlamaNative.Interop.Settings
 
         public GgmlType TypeK { get; set; } = GgmlType.GGML_TYPE_F16;
 
+        public GgmlType TypeV { get; set; } = GgmlType.GGML_TYPE_F16;
+
         public bool Perplexity { get; set; }
 
         /// <summary>

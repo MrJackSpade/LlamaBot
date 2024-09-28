@@ -13,6 +13,8 @@ namespace LlamaNative.Chat
 
         public ChatTemplate ChatTemplate { get; set; } = new ChatTemplate();
 
+        public bool ConditionalResponse { get; set; }
+
         public ContextSettings ContextSettings { get; set; } = new ContextSettings();
 
         public ModelSettings ModelSettings { get; set; }

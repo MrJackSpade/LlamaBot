@@ -5,6 +5,7 @@ using LlamaNative.Interop.Settings;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Tokens.Models;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -196,7 +197,7 @@ namespace LlamaNative.Apis
             lparams.NCtx = contextSettings.ContextSize ?? lparams.NCtx;
             lparams.NBatch = contextSettings.BatchSize;
             lparams.Seed = contextSettings.Seed;
-            lparams.TypeV = GgmlType.GGML_TYPE_F16;
+            lparams.TypeV = contextSettings.TypeV;
             lparams.TypeK = contextSettings.TypeK;
             lparams.LogitsAll = contextSettings.Perplexity;
             lparams.Embeddings = contextSettings.GenerateEmbedding;
@@ -212,6 +213,11 @@ namespace LlamaNative.Apis
             lparams.OffloadKQV = contextSettings.OffloadKQV;
             lparams.FlashAttn = contextSettings.FlashAttention;
             lparams.YarnOrigCtx = contextSettings.YarnOrigCtx ?? contextSettings.ContextSize ?? lparams.NCtx;
+
+            if (lparams.TypeV != GgmlType.GGML_TYPE_F16 && !lparams.FlashAttn) 
+            {
+                throw new ArgumentException("V cache quantization requires flash_attn");
+            }
 
             nint ctx_ptr = LlamaCppApi.NewContextWithModel(model, lparams);
 

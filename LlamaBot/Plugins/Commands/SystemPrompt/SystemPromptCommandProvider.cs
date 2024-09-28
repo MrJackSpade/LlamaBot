@@ -11,7 +11,7 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
     {
         private IDiscordService? _discordClient;
 
-        private ILlamaBotClient? _lamaBotClient;
+        private ILlamaBotClient? _llamaBotClient;
 
         private IPluginService? _pluginService;
 
@@ -35,11 +35,11 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
 
             if (command.Prompt is null)
             {
-                responseString = _lamaBotClient.SystemPrompt;
+                responseString = _llamaBotClient.SystemPrompt;
             }
             else
             {
-                _lamaBotClient.SystemPrompt = command.Prompt.Replace("\\n", "\n");
+                _llamaBotClient.SystemPrompt = command.Prompt.Replace("\\n", "\n");
                 responseString = "System Prompt Updated: " + command.Prompt;
             }
 
@@ -55,7 +55,7 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
         {
             _pluginService = args.PluginService;
             _discordClient = args.DiscordService;
-            _lamaBotClient = args.LlamaBotClient;
+            _llamaBotClient = args.LlamaBotClient;
             return InitializationResult.SuccessAsync();
         }
     }

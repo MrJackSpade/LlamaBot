@@ -58,9 +58,17 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 }
             }
 
-            Span<TokenData> candidateSpan = sampleContext.OriginalCandidates.Data.Span;
+            Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
 
-            List<TokenData> candidates = [.. candidateSpan.Where(c => c.P >= _settings.MinP)];
+            List<TokenData> candidates = [.. candidateSpan.Where(c => 
+                c.P >= _settings.MinP &&
+                sampleContext.GetOriginalData(c.Id).P >= _settings.MinP
+            )];
+
+            if (candidates.Count == 0)
+            {
+                candidates.Add(candidateSpan[0]);
+            }
 
             float target = this.CalculateNextTarget();
 

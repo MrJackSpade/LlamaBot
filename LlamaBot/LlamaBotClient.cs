@@ -5,6 +5,7 @@ using LlamaBot.Extensions;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Utils;
 using LlamaNative.Chat;
+using LlamaNative.Chat.Exceptions;
 using LlamaNative.Chat.Extensions;
 using LlamaNative.Chat.Interfaces;
 using LlamaNative.Chat.Models;
@@ -30,6 +31,8 @@ namespace LlamaBot
         private readonly ChatSettings _chatSettings;
 
         private readonly MetaData _metaData = StaticConfiguration.Load<MetaData>();
+
+        private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
         private Thread _processMessageThread;
 
@@ -67,6 +70,18 @@ namespace LlamaBot
 
         public string SystemPrompt { get; set; } = string.Empty;
 
+        public string BuildMessage(string author, string content)
+        {
+            string header = string.Empty;
+
+            if (author != _chatSettings.BotName)
+            {
+                header += $"{ZERO_WIDTH}**{author}:**{ZERO_WIDTH}";
+            }
+
+            return header + content;
+        }
+
         public void Clear(bool v)
         {
             _chatContext?.Clear(v);
@@ -88,7 +103,7 @@ namespace LlamaBot
 
         public AutoRespond GetAutoRespond(ulong channelId)
         {
-            if (_metaData.AutoResponds.TryGetValue(channelId, out var response))
+            if (_metaData.AutoResponds.TryGetValue(channelId, out AutoRespond? response))
             {
                 return response;
             }
@@ -138,51 +153,82 @@ namespace LlamaBot
 
         public async Task ProcessMessage(ISocketMessageChannel channel, ReadResponseSettings responseSettings)
         {
-            Ensure.NotNull(_chatContext);
-
-            await this.PrepareContext(channel);
-
-            IMessage? prependMessage = null;
-
-            if (responseSettings.ContinueLast)
+            if (!_processingSemaphore.Wait(0))
             {
-                prependMessage = await this.TryGetLastBotMessage(channel);
+                throw new AlreadyProcessingException();
             }
 
-            using IDisposable typingState = channel.EnterTypingState();
-
-            foreach (ChatMessage cm in _chatContext.ReadResponse(responseSettings))
+            try
             {
-                string content = prependMessage?.Content ?? string.Empty;
+                Ensure.NotNull(_chatContext);
 
-                if (cm.User != _chatSettings.BotName)
+                await this.PrepareContext(channel);
+
+                IMessage? prependMessage = null;
+                string prependMessageContent = string.Empty;
+
+                if (responseSettings.ContinueLast)
                 {
-                    content += $"{ZERO_WIDTH}**{cm.User}:**{ZERO_WIDTH}";
-                }
+                    prependMessage = await this.TryGetLastBotMessage(channel);
 
-                content += cm.Content;
-
-                content = content.Trim();
-
-                if (string.IsNullOrEmpty(content))
-                {
-                    await channel.SendMessageAsync("[Empty Message]");
-                }
-                else
-                {
-                    while (content.Length > 0)
+                    if (prependMessage != null)
                     {
-                        int chunkSize = Math.Min(1950, content.Length);
-                        string chunk = content[..chunkSize];
-                        await channel.SendMessageAsync(chunk);
-                        content = content[chunkSize..];
+                        prependMessageContent = this.ParseMessage(prependMessage).Content;
                     }
                 }
-            }
 
-            if (prependMessage != null)
+                if (_chatSettings.ConditionalResponse &&
+                    string.IsNullOrWhiteSpace(responseSettings.RespondingUser) &&
+                    !responseSettings.ContinueLast)
+                {
+                    string nextUser = _chatContext.PredictNextUser().Trim();
+
+                    if (nextUser != _chatSettings.BotName && !string.IsNullOrEmpty(nextUser))
+                    {
+                        return;
+                    }
+                }
+
+                using IDisposable typingState = channel.EnterTypingState();
+
+                foreach (ChatMessage cm in _chatContext.ReadResponse(responseSettings))
+                {
+                    string cmContent = cm.Content;
+
+                    if (!string.IsNullOrWhiteSpace(prependMessageContent))
+                    {
+                        cmContent = prependMessageContent + cmContent;
+                        prependMessageContent = string.Empty;
+                    }
+
+                    string content = this.BuildMessage(cm.User, cmContent);
+
+                    content = content.Trim();
+
+                    if (string.IsNullOrEmpty(content))
+                    {
+                        await channel.SendMessageAsync("[Empty Message]");
+                    }
+                    else
+                    {
+                        while (content.Length > 0)
+                        {
+                            int chunkSize = Math.Min(1950, content.Length);
+                            string chunk = content[..chunkSize];
+                            await channel.SendMessageAsync(chunk);
+                            content = content[chunkSize..];
+                        }
+                    }
+                }
+
+                if (prependMessage != null)
+                {
+                    await prependMessage.DeleteAsync();
+                }
+            }
+            finally
             {
-                await prependMessage.DeleteAsync();
+                _processingSemaphore.Release();
             }
         }
 
@@ -245,7 +291,15 @@ namespace LlamaBot
 
             if (_processMessageThread is null || _processMessageThread.ThreadState != ThreadState.Running)
             {
-                _processMessageThread = new Thread(async () => await this.ProcessMessage(smc, readResponseSettings));
+                _processMessageThread = new Thread(async () =>
+                {
+                    try
+                    {
+                        await this.ProcessMessage(smc, readResponseSettings);
+                    }
+                    catch (AlreadyProcessingException) { }
+                });
+
                 _processMessageThread.Start();
             }
         }
@@ -291,7 +345,7 @@ namespace LlamaBot
                                                         TokenMask.Bot :
                                                         TokenMask.User;
 
-            foreach (var s in messageContent)
+            foreach (string s in messageContent)
             {
                 yield return new ChatMessage(contentMask, message.Author, s);
             }
@@ -367,7 +421,7 @@ namespace LlamaBot
                         toSend.AddRange(this.HandleHistoricalMessage(historicalMessage));
                     }
 
-                    foreach (var s in toSend)
+                    foreach (ChatMessage s in toSend)
                     {
                         _chatContext.Insert(messageStart, s);
                     }
@@ -384,13 +438,6 @@ namespace LlamaBot
                     break;
                 }
             }
-        }
-
-        public class ParsedMessage
-        {
-            public string Author { get; set; }
-
-            public string Content { get; set; }
         }
     }
 }

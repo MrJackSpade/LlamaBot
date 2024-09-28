@@ -7,6 +7,7 @@ using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 using LlamaBot.Shared.Utils;
+using LlamaNative.Chat.Models;
 
 namespace LlamaBot.Plugins.Commands.Update
 {
@@ -48,7 +49,16 @@ namespace LlamaBot.Plugins.Commands.Update
 
                 if (message is IUserMessage um)
                 {
-                    await um.ModifyAsync(m => m.Content = command.Content);
+                    ParsedMessage parsed = _llamaBotClient.ParseMessage(message);
+
+                    string? newContent = command.Content;
+
+                    if(parsed.Author != _llamaBotClient.BotName)
+                    {
+                        newContent = _llamaBotClient.BuildMessage(parsed.Author, $" {command.Content?.Trim()}");
+                    }
+
+                    await um.ModifyAsync(m => m.Content = newContent);
                 }
 
                 await command.Command.DeleteOriginalResponseAsync();

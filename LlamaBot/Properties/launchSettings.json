@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "Entropy",
+      "commandLineArgs": "UserResponse",
       "nativeDebugging": false
     }
   }

@@ -20,7 +20,7 @@ namespace LlamaNative.Chat.Interfaces
 
         string PredictNextUser();
 
-        IEnumerable<ChatMessage> ReadResponse(ReadResponseSettings responseSettings);
+        List<ChatMessage> ReadResponse(ReadResponseSettings responseSettings);
 
         void RemoveAt(int index);
 

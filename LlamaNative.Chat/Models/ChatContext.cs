@@ -1,4 +1,5 @@
-﻿using LlamaNative.Chat.Extensions;
+﻿using LlamaNative.Chat.Exceptions;
+using LlamaNative.Chat.Extensions;
 using LlamaNative.Chat.Interfaces;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
@@ -114,120 +115,156 @@ namespace LlamaNative.Chat.Models
 
         public string PredictNextUser()
         {
-            this.RefreshContext(false);
 
-            NativeContext.WriteTemplate(Settings.ChatTemplate.StartHeader);
-
-            NativeContext.Evaluate();
-
-            TokenCollection response = new();
-
-            do
+            if (!_processingSemaphore.Wait(0))
             {
-                Token token = NativeContext.SelectToken();
+                throw new AlreadyProcessingException();
+            }
 
-                if (token.Value.Contains(Settings.ChatTemplate.EndHeader))
+            try
+            {
+                this.RefreshContext(false);
+
+                if (!string.IsNullOrWhiteSpace(Settings.ChatTemplate.StartHeader))
                 {
-                    break;
+                    NativeContext.WriteTemplate(Settings.ChatTemplate.StartHeader);
                 }
 
-                response.Append(token);
-                NativeContext.Write(token);
                 NativeContext.Evaluate();
-            } while (true);
 
-            return response.ToString();
+                TokenCollection response = new();
+
+                do
+                {
+                    Token token = NativeContext.SelectToken();
+
+                    if (token.Value.Contains(Settings.ChatTemplate.EndHeader))
+                    {
+                        break;
+                    }
+
+                    if( response.Count > 10)
+                    {
+                        return string.Empty;
+                    }
+
+                    response.Append(token);
+                    NativeContext.Write(token);
+                    NativeContext.Evaluate();
+                } while (true);
+
+                return response.ToString();
+            }
+            finally
+            {
+                _processingSemaphore.Release();
+            }
         }
 
-        public IEnumerable<ChatMessage> ReadResponse(ReadResponseSettings responseSettings)
+        private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
+
+        public List<ChatMessage> ReadResponse(ReadResponseSettings responseSettings)
         {
-            LogitRuleCollection logitRules = [];
-            List<TokenSelection> response = [];
-
-            _running |= true;
-
-            string respondingUser = responseSettings.RespondingUser ?? Settings.BotName;
-
-            this.RefreshContext(responseSettings.ContinueLast);
-
-            if (!responseSettings.ContinueLast)
+            if (!_processingSemaphore.Wait(0))
             {
-                NativeContext.Write(Settings.ChatTemplate.ToHeader(respondingUser, true));
+                throw new AlreadyProcessingException();
             }
 
-            NativeContext.Evaluate();
-
-            do
+            try
             {
-                if (!_running)
+                LogitRuleCollection logitRules = [];
+
+                List<TokenSelection> response = [];
+
+                _running |= true;
+
+                string respondingUser = responseSettings.RespondingUser ?? Settings.BotName;
+
+                this.RefreshContext(responseSettings.ContinueLast);
+
+                if (!responseSettings.ContinueLast)
                 {
-                    break;
+                    NativeContext.Write(Settings.ChatTemplate.ToHeader(respondingUser, true));
                 }
 
-                Token token = NativeContext.SelectToken(logitRules, out SampleContext sampleContext);
+                NativeContext.Evaluate();
 
-                string s_end = Settings.ChatTemplate.EndMessage;
-                string s_value = token.Value ?? string.Empty;
-
-                //Check for explicit stop token
-                if (Settings.ChatTemplate.StopTokenIds.Contains(token.Id))
+                do
                 {
-                    if (response.Count == 0)
+                    if (!_running)
                     {
-                        logitRules.BlockToken(token);
-                        continue;
+                        break;
                     }
 
-                    break;
-                }
-                else if (s_value.Contains(s_end))
-                //Check for primary stop string, trim if needed.
-                {
-                    if (response.Count == 0)
-                    {
-                        logitRules.BlockToken(token);
-                        continue;
-                    }
+                    Token token = NativeContext.SelectToken(logitRules, out SampleContext sampleContext);
 
-                    foreach (Token c_token in NativeContext.RemoveString(token, s_end))
+                    string s_end = Settings.ChatTemplate.EndMessage;
+                    string s_value = token.Value ?? string.Empty;
+
+                    //Check for explicit stop token
+                    if (Settings.ChatTemplate.StopTokenIds.Contains(token.Id))
+                    {
+                        if (response.Count == 0)
+                        {
+                            logitRules.BlockToken(token);
+                            continue;
+                        }
+
+                        break;
+                    }
+                    else if (s_value.Contains(s_end))
+                    //Check for primary stop string, trim if needed.
+                    {
+                        if (response.Count == 0)
+                        {
+                            logitRules.BlockToken(token);
+                            continue;
+                        }
+
+                        foreach (Token c_token in NativeContext.RemoveString(token, s_end))
+                        {
+                            this.SelectToken(response, token, sampleContext);
+                        }
+
+                        break;
+                    }
+                    //else we just use this token and continue generating
+                    else
                     {
                         this.SelectToken(response, token, sampleContext);
+                        logitRules.Remove(LogitRuleLifetime.Token);
                     }
+                } while (true);
 
-                    break;
+                List<List<TokenSelection>> messageParts = RecursiveSplit(response, responseSettings.ChatSplitSettings).ToList();
+
+                List<string> toReturn = [];
+
+                for (int i = 0; i < messageParts.Count; i++)
+                {
+                    List<TokenSelection> message = messageParts[i];
+
+                    string thisChunk = string.Join("", message.Select(s => s.SelectedToken.Value));
+
+                    toReturn.Add(thisChunk);
                 }
-                //else we just use this token and continue generating
+
+                if (!_running)
+                {
+                    //If interrupted, append interrupt.
+                    toReturn[^1] = toReturn[^1] + "-";
+                }
                 else
                 {
-                    this.SelectToken(response, token, sampleContext);
-                    logitRules.Remove(LogitRuleLifetime.Token);
+                    _running = false;
                 }
-            } while (true);
 
-            List<List<TokenSelection>> messageParts = RecursiveSplit(response, responseSettings.ChatSplitSettings).ToList();
-
-            List<string> toReturn = [];
-
-            for (int i = 0; i < messageParts.Count; i++)
-            {
-                List<TokenSelection> message = messageParts[i];
-
-                string thisChunk = string.Join("", message.Select(s => s.SelectedToken.Value));
-
-                toReturn.Add(thisChunk);
+                return toReturn.Select(s => new ChatMessage(TokenMask.Bot, respondingUser, s)).ToList();
             }
-
-            if (!_running)
+            finally
             {
-                //If interrupted, append interrupt.
-                toReturn[^1] = toReturn[^1] + "-";
+                _processingSemaphore.Release();
             }
-            else
-            {
-                _running = false;
-            }
-
-            return toReturn.Select(s => new ChatMessage(TokenMask.Bot, respondingUser, s));
         }
 
         public void RemoveAt(int index) => _messages.RemoveAt(index);

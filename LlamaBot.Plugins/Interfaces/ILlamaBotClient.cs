@@ -10,11 +10,14 @@ namespace LlamaBot.Plugins.Interfaces
 
         string SystemPrompt { get; set; }
 
+        string? BuildMessage(string author, string? content);
         void Clear(bool v);
 
         Task<string> GenerateMessageBody(ISocketMessageChannel smc, string displayName);
 
         AutoRespond GetAutoRespond(ulong channelId);
+
+        ParsedMessage ParseMessage(IMessage checkMessage);
 
         void SetAutoRespond(ulong channelId, string username, bool disabled);
 

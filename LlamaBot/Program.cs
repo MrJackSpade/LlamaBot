@@ -45,6 +45,11 @@ namespace LlamaBot
                 return;
             }
 
+            if(_llamaBotClient is null)
+            {
+                return;
+            }
+
             AutoRespond autoRespond = _llamaBotClient.GetAutoRespond(message.Channel.Id);
 
             if (autoRespond.Disabled)
