@@ -10,14 +10,6 @@ namespace LlamaNative.Extensions
 {
     public static class INativeContextExtensions
     {
-        public static void Ensure(this INativeContext context)
-        {
-            //if (context.Buffer[0].Id != Token.Bos)
-            //{
-            //    throw new Exception("First buffer token is not BOS");
-            //}
-        }
-
         public static float[] GetEmbeddings(this INativeContext handler) => handler.Handle.GetEmbeddings();
 
         public static Span<float> GetLogits(this INativeContext handler)
@@ -105,8 +97,6 @@ namespace LlamaNative.Extensions
             context.Clear(false);
 
             context.Write(toSet);
-
-            context.Ensure();
         }
 
         public static TokenCollection Tokenize(this INativeContext context, TokenMask tokenMask, string value, bool addBos = false)

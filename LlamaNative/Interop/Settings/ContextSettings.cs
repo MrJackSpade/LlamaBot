@@ -24,7 +24,7 @@ namespace LlamaNative.Interop.Settings
         /// </summary>
         public uint? ContextSize { get; set; }
 
-        public LogitRuleCollection LogitRules { get; set; } = [];
+        public Dictionary<int, string> LogitBias { get; set; } = [];
 
         public string LoraAdapter { get; set; } = string.Empty;
 

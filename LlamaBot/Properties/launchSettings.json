@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "UserResponse",
+      "commandLineArgs": "Mistral-Large",
       "nativeDebugging": false
     }
   }

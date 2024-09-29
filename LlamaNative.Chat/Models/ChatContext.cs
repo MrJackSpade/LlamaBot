@@ -10,6 +10,7 @@ using LlamaNative.Models;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Extensions;
 using LlamaNative.Tokens.Models;
+using LlamaNative.Utils;
 using System.Text;
 
 namespace LlamaNative.Chat.Models
@@ -80,7 +81,7 @@ namespace LlamaNative.Chat.Models
 
             for (int i = 0; i < messages.Count; i++)
             {
-                var message = messages[i];
+                ChatMessage message = messages[i];
 
                 //We don't want to append message ending characters if we're the last message and
                 //we're intending on continuing the last generation
@@ -143,7 +144,7 @@ namespace LlamaNative.Chat.Models
                         break;
                     }
 
-                    if( response.Count > 10)
+                    if (response.Count > 10)
                     {
                         return string.Empty;
                     }
@@ -170,12 +171,17 @@ namespace LlamaNative.Chat.Models
                 throw new AlreadyProcessingException();
             }
 
+            LogitRuleCollection logitRules = [];
+
+            List<TokenSelection> response = [];
+
+            foreach(KeyValuePair<int, string> keyValuePair in Settings.ContextSettings.LogitBias)
+            {
+                logitRules.Add(new LogitBias(keyValuePair.Key, FloatUtils.Parse(keyValuePair.Value), LogitRuleLifetime.Inferrence, LogitBiasType.Multiplicative));
+            }
+
             try
             {
-                LogitRuleCollection logitRules = [];
-
-                List<TokenSelection> response = [];
-
                 _running |= true;
 
                 string respondingUser = responseSettings.RespondingUser ?? Settings.BotName;
@@ -267,7 +273,10 @@ namespace LlamaNative.Chat.Models
             }
         }
 
-        public void RemoveAt(int index) => _messages.RemoveAt(index);
+        public void RemoveAt(int index)
+        {
+            _messages.RemoveAt(index);
+        }
 
         public void SendMessage(ChatMessage message)
         {

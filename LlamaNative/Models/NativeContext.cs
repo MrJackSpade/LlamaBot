@@ -113,8 +113,6 @@ namespace Llama.Core
                 throw new NotImplementedException();
             }
 
-            this.Ensure();
-
             _synchronizer.Sync(_kvCache, _buffer);
         }
 
