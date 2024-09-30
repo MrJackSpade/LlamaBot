@@ -61,6 +61,7 @@ namespace LlamaNative.Sampling.Samplers.Repetition
             foreach (int banToken in banTokens)
             {
                 context.Candidates.SetLogit(banToken, float.NegativeInfinity);
+                context.OriginalCandidates.SetLogit(banToken, float.NegativeInfinity);
             }
         }
     }
