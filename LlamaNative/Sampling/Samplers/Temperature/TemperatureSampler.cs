@@ -1,7 +1,7 @@
 ﻿using LlamaNative.Models;
-using LlamaNative.Samplers.Settings;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Samplers.Mirostat;
+using LlamaNative.Sampling.Settings;
 
 namespace LlamaNative.Sampling.Samplers.Temperature
 {

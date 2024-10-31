@@ -22,8 +22,14 @@
             };
         }
 
-        public void SetStart(float value) => _startValue = value;
+        public void SetStart(float value)
+        {
+            _startValue = value;
+        }
 
-        public override string ToString() => $"[Clamp] {RuleType}";
+        public override string ToString()
+        {
+            return $"[Clamp] {RuleType}";
+        }
     }
 }

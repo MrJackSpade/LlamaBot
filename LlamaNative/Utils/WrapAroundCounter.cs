@@ -1,4 +1,4 @@
-﻿namespace Llama.Core.Utils
+﻿namespace LlamaNative.Utils
 {
     internal class WrapAroundCounter
     {
@@ -20,7 +20,10 @@
 
         public uint Value { get; private set; }
 
-        public static implicit operator uint(WrapAroundCounter c) => c.Value;
+        public static implicit operator uint(WrapAroundCounter c)
+        {
+            return c.Value;
+        }
 
         public void Increment()
         {

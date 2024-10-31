@@ -1,6 +1,4 @@
-﻿using LlamaNative.Samplers.Settings;
-
-namespace Llama.Data.Models.Settings
+﻿namespace LlamaNative.Sampling.Settings
 {
     public class TargetedEntropySamplerSettings : BaseDynamicSamplerSettings
     {

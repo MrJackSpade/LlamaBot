@@ -10,6 +10,9 @@ namespace LlamaNative.Sampling.Samplers.Temperature
         {
         }
 
-        public int SampleNext(SampleContext sampleContext) => SamplingApi.TokenGreedy(sampleContext.Candidates);
+        public int SampleNext(SampleContext sampleContext)
+        {
+            return SamplingApi.TokenGreedy(sampleContext.Candidates);
+        }
     }
 }

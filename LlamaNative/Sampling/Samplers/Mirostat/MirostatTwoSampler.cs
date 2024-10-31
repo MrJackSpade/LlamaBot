@@ -1,7 +1,7 @@
-﻿using Llama.Core.Samplers.Mirostat;
-using LlamaNative.Interop.Apis;
+﻿using LlamaNative.Interop.Apis;
 using LlamaNative.Models;
 using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Settings;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {

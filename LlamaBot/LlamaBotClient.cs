@@ -3,7 +3,6 @@ using Discord.Rest;
 using Discord.WebSocket;
 using LlamaBot.Extensions;
 using LlamaBot.Plugins.Interfaces;
-using LlamaBot.Shared.Utils;
 using LlamaNative.Chat;
 using LlamaNative.Chat.Exceptions;
 using LlamaNative.Chat.Extensions;
@@ -13,6 +12,7 @@ using LlamaNative.Sampling.Models;
 using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Settings;
 using LlamaNative.Tokens.Models;
+using LlamaNative.Utils;
 using Loxifi;
 using ThreadState = System.Threading.ThreadState;
 
@@ -398,6 +398,8 @@ namespace LlamaBot
                 stop = savedStop;
             }
 
+            DateTime? lastMessageTime = null;
+
             await foreach (IReadOnlyCollection<IMessage>? historicalMessages in channel.GetMessagesAsync(1000))
             {
                 bool done = false;
@@ -421,16 +423,37 @@ namespace LlamaBot
                         toSend.AddRange(this.HandleHistoricalMessage(historicalMessage));
                     }
 
+                    DateTime thisMessageTime = historicalMessage.CreatedAt.DateTime;
+
+                    if (lastMessageTime.HasValue)
+                    {
+                        TimeSpan timediff = lastMessageTime.Value - thisMessageTime;
+                        if (timediff > TimeSpan.FromHours(1))
+                        {
+                            string displayString = timediff.ToDisplayString();
+                            ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"{displayString} ({lastMessageTime:yyyy-MM-dd hh:mmtt})");
+                            _chatContext.Insert(messageStart, timeIndicator);
+                        }
+                    }
+
                     foreach (ChatMessage s in toSend)
                     {
                         _chatContext.Insert(messageStart, s);
                     }
+
+                    lastMessageTime = thisMessageTime;
 
                     if (_chatContext.AvailableBuffer < 1000)
                     {
                         done = true;
                         break;
                     }
+                }
+
+                if(lastMessageTime is null)
+                {
+                    ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $" CURRENT TIME ({lastMessageTime:yyyy-MM-dd hh:mmtt})");
+                    _chatContext.Insert(messageStart, timeIndicator);
                 }
 
                 if (done)

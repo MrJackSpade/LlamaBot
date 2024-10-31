@@ -56,7 +56,7 @@ namespace LlamaNative.Interop.Apis
         public static void RepetitionPenalties(TokenDataArray candidates, int[] lastTokens, float penaltyRepeat, float penaltyFreq, float penaltyPresent, float slopeRepeat = 0)
         {
             // Early return condition
-            if (lastTokens.Length == 0 || penaltyRepeat == 1.0f && penaltyFreq == 0.0f && penaltyPresent == 0.0f)
+            if (lastTokens.Length == 0 || (penaltyRepeat == 1.0f && penaltyFreq == 0.0f && penaltyPresent == 0.0f))
             {
                 return;
             }
@@ -99,7 +99,7 @@ namespace LlamaNative.Interop.Apis
                     }
                 }
 
-                float penalty = ftd.Count * penaltyFreq + (ftd.Count > 0 ? 1f : 0f) * penaltyPresent;
+                float penalty = (ftd.Count * penaltyFreq) + ((ftd.Count > 0 ? 1f : 0f) * penaltyPresent);
 
                 candidates.Data.Span[i].Logit -= penalty;
             }
@@ -447,7 +447,7 @@ namespace LlamaNative.Interop.Apis
 
                 // Adjust the penaltyRepeat to approach 1 as ftd.LastIndex approaches 0
                 // This creates a linear interpolation between penaltyRepeat and 1, controlled by slope
-                float adjustedPenalty = (1 - normalizedIndex) * slope * (1 - penaltyRepeat) + penaltyRepeat;
+                float adjustedPenalty = ((1 - normalizedIndex) * slope * (1 - penaltyRepeat)) + penaltyRepeat;
 
                 return adjustedPenalty;
             }

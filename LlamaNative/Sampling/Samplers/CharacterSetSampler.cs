@@ -19,7 +19,7 @@ namespace LlamaNative.Sampling.Samplers
     {
         public CharacterSetSamplerSettings _settings;
 
-        private readonly Dictionary<IntPtr, int[]> _suppressCache = new();
+        private readonly Dictionary<IntPtr, int[]> _suppressCache = [];
 
         public CharacterSetSampler(CharacterSetSamplerSettings settings)
         {

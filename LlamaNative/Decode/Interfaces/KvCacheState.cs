@@ -2,7 +2,7 @@
 
 using System.Collections;
 
-namespace LlamaNative.Decode.Decode
+namespace LlamaNative.Decode.Interfaces
 {
     public class KvCacheState<T> : IEnumerable<T>
     {

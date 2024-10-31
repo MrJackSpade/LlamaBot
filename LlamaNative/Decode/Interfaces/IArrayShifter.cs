@@ -1,6 +1,6 @@
 ﻿using LlamaNative.Decode.Models;
 
-namespace LlamaNative.Decode.Decode
+namespace LlamaNative.Decode.Interfaces
 {
     public interface IArrayShifter<T>
     {

@@ -13,11 +13,20 @@ namespace LlamaNative.Tokens.Models
 
         public string? Value { get; private set; } = value;
 
-        public static bool operator !=(Token x, Token y) => !(x == y);
+        public static bool operator !=(Token x, Token y)
+        {
+            return !(x == y);
+        }
 
-        public static bool operator ==(Token x, Token y) => x?.Id == y?.Id;
+        public static bool operator ==(Token x, Token y)
+        {
+            return x?.Id == y?.Id;
+        }
 
-        public override bool Equals(object? obj) => obj is Token o && this == o;
+        public override bool Equals(object? obj)
+        {
+            return obj is Token o && this == o;
+        }
 
         public string? GetEscapedValue()
         {
@@ -30,8 +39,14 @@ namespace LlamaNative.Tokens.Models
             return toReturn;
         }
 
-        public override int GetHashCode() => Id;
+        public override int GetHashCode()
+        {
+            return Id;
+        }
 
-        public override string? ToString() => Value;
+        public override string? ToString()
+        {
+            return Value;
+        }
     }
 }

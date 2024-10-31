@@ -1,4 +1,4 @@
-﻿namespace LlamaNative.Samplers.Settings
+﻿namespace LlamaNative.Sampling.Settings
 {
     public class RepetitionBlockingSamplerSettings
     {

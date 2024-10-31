@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace LlamaNative.Tokens.Models
+﻿namespace LlamaNative.Tokens.Models
 {
     [Flags]
     public enum TokenMask

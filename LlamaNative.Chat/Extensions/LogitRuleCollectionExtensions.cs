@@ -1,11 +1,6 @@
 ﻿using LlamaNative.Logit.Collections;
 using LlamaNative.Logit.Models;
 using LlamaNative.Tokens.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LlamaNative.Chat.Extensions
 {

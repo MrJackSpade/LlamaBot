@@ -2,10 +2,10 @@
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Models;
-using LlamaBot.Shared.Utils;
-using LlamaNative.Chat.Models;
+using LlamaNative.Utils;
+using AutoRespondModel = LlamaNative.Chat.Models.AutoRespond;
 
-namespace LlamaBot.Plugins.Commands.ClearContext
+namespace LlamaBot.Plugins.Commands.AutoRespond
 {
     internal class AutoRespondCommandProvider : ICommandProvider<AutoRespondCommand>
     {
@@ -27,7 +27,7 @@ namespace LlamaBot.Plugins.Commands.ClearContext
 
             if (command.UserName is null)
             {
-                AutoRespond autoRespond = _llamaBotClient.GetAutoRespond(channelId);
+                AutoRespondModel autoRespond = _llamaBotClient.GetAutoRespond(channelId);
 
                 if (string.IsNullOrWhiteSpace(autoRespond.UserName))
                 {
@@ -43,8 +43,6 @@ namespace LlamaBot.Plugins.Commands.ClearContext
             }
 
             _llamaBotClient.SetAutoRespond(channelId, command.UserName, command.Disabled);
-
-            
 
             return CommandResult.Success();
         }

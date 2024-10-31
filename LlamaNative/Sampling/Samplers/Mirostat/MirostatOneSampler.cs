@@ -1,9 +1,9 @@
-﻿using Llama.Core.Samplers.Mirostat;
-using LlamaNative.Apis;
+﻿using LlamaNative.Apis;
 using LlamaNative.Interop.Apis;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Settings;
 using System.Diagnostics;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat

@@ -3,9 +3,9 @@ using Discord.WebSocket;
 using LlamaBot.Discord.Attributes;
 using LlamaBot.Discord.Exceptions;
 using LlamaBot.Discord.Extensions;
-using LlamaBot.Models.Events;
+using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Shared.Models;
-using LlamaBot.Shared.Utils;
+using LlamaNative.Utils;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Reflection;
@@ -27,7 +27,7 @@ namespace LlamaBot.Discord
 
         public DiscordService(string? discordToken)
         {
-            discordToken = Ensure.NotNullOrWhiteSpace(discordToken);
+            Ensure.NotNullOrWhiteSpace(discordToken);
 
             _discordToken = discordToken;
 

@@ -1,11 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
-using LlamaBot.Plugins.Commands.Continue;
 using LlamaBot.Plugins.Commands.Generate;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
-using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 using LlamaNative.Chat.Models;
 
@@ -48,7 +46,8 @@ namespace LlamaBot.Plugins.Commands.Regenerate
                     if (parsed.Author == regenerateUser)
                     {
                         messages.Add(checkMessage);
-                    } else
+                    }
+                    else
                     {
                         break;
                     }

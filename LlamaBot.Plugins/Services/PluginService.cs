@@ -1,5 +1,4 @@
-﻿using LlamaBot.Models.Events;
-using LlamaBot.Plugins.EventArgs;
+﻿using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Exceptions;
 using LlamaBot.Plugins.Interfaces;
@@ -8,7 +7,7 @@ using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 using System.Reflection;
 
-namespace LlamaBot.Services
+namespace LlamaBot.Plugins.Services
 {
     public class PluginService : IPluginService
     {
@@ -99,7 +98,7 @@ namespace LlamaBot.Services
 
         public async Task React(ReactionEventArgs args)
         {
-            foreach (IReactionHandler reactionHandler in this._reactionHandlers)
+            foreach (IReactionHandler reactionHandler in _reactionHandlers)
             {
                 if (reactionHandler.HandledReactions.Contains(args.SocketReaction.Emote.Name))
                 {

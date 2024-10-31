@@ -1,4 +1,4 @@
-﻿namespace Llama.Data.Models
+﻿namespace LlamaNative.Models
 {
     public class SpecialTokens
     {

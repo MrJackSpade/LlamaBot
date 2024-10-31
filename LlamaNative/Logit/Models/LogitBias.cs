@@ -19,6 +19,9 @@
 
         public float Value { get; set; }
 
-        public override string ToString() => $"[Bias] {Value}";
+        public override string ToString()
+        {
+            return $"[Bias] {Value}";
+        }
     }
 }

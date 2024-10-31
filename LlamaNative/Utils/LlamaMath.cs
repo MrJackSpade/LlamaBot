@@ -1,4 +1,4 @@
-﻿namespace Llama.Core.Utils
+﻿namespace LlamaNative.Utils
 {
     public static class LlamaMath
     {

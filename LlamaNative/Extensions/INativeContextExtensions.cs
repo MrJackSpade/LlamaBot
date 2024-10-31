@@ -10,7 +10,10 @@ namespace LlamaNative.Extensions
 {
     public static class INativeContextExtensions
     {
-        public static float[] GetEmbeddings(this INativeContext handler) => handler.Handle.GetEmbeddings();
+        public static float[] GetEmbeddings(this INativeContext handler)
+        {
+            return handler.Handle.GetEmbeddings();
+        }
 
         public static Span<float> GetLogits(this INativeContext handler)
         {
@@ -21,7 +24,10 @@ namespace LlamaNative.Extensions
             return logits;
         }
 
-        public static Token GetToken(this INativeContext handler, TokenMask mask, int id) => new(id, NativeApi.TokenToPiece(handler.ModelHandle, id), mask);
+        public static Token GetToken(this INativeContext handler, TokenMask mask, int id)
+        {
+            return new(id, NativeApi.TokenToPiece(handler.ModelHandle, id), mask);
+        }
 
         public static Token Predict(this INativeContext handler, LogitRuleCollection logitRules)
         {
@@ -50,7 +56,7 @@ namespace LlamaNative.Extensions
                     TokenCollection clipped_tokens = handler.Tokenize(token.Mask, clipped_value);
 
                     //then add it to the response.
-                    foreach (var clipped_token in clipped_tokens)
+                    foreach (Token clipped_token in clipped_tokens)
                     {
                         yield return clipped_token;
                     }
@@ -123,9 +129,15 @@ namespace LlamaNative.Extensions
             return tokens;
         }
 
-        public static int VocabCount(this INativeContext handler) => NativeApi.NVocab(handler.ModelHandle);
+        public static int VocabCount(this INativeContext handler)
+        {
+            return NativeApi.NVocab(handler.ModelHandle);
+        }
 
-        public static void Write(this INativeContext handler, TokenMask mask, params string[] inputText) => ProcessInputText(handler, mask, inputText);
+        public static void Write(this INativeContext handler, TokenMask mask, params string[] inputText)
+        {
+            ProcessInputText(handler, mask, inputText);
+        }
 
         public static void Write(this INativeContext context, IEnumerable<Token> tokens)
         {
@@ -137,13 +149,25 @@ namespace LlamaNative.Extensions
             }
         }
 
-        public static void WriteBot(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, TokenMask.Bot, inputText);
+        public static void WriteBot(this INativeContext handler, params string[] inputText)
+        {
+            ProcessInputText(handler, TokenMask.Bot, inputText);
+        }
 
-        public static void WritePrompt(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, TokenMask.Prompt, inputText);
+        public static void WritePrompt(this INativeContext handler, params string[] inputText)
+        {
+            ProcessInputText(handler, TokenMask.Prompt, inputText);
+        }
 
-        public static void WriteTemplate(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, TokenMask.Template, inputText);
+        public static void WriteTemplate(this INativeContext handler, params string[] inputText)
+        {
+            ProcessInputText(handler, TokenMask.Template, inputText);
+        }
 
-        public static void WriteUser(this INativeContext handler, params string[] inputText) => ProcessInputText(handler, TokenMask.User, inputText);
+        public static void WriteUser(this INativeContext handler, params string[] inputText)
+        {
+            ProcessInputText(handler, TokenMask.User, inputText);
+        }
 
         private static void ProcessInputText(this INativeContext handler, TokenMask mask, params string[] inputTexts)
         {

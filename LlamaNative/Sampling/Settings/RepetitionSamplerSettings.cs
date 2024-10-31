@@ -1,6 +1,6 @@
 ﻿using LlamaNative.Tokens.Models;
 
-namespace LlamaNative.Samplers.Settings
+namespace LlamaNative.Sampling.Settings
 {
     public class RepetitionSamplerSettings
     {

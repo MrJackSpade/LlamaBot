@@ -1,7 +1,7 @@
 ﻿using Discord.WebSocket;
 using System.ComponentModel;
 
-namespace LlamaBot.Plugins.Commands.ClearContext
+namespace LlamaBot.Plugins.Commands.AutoRespond
 {
     internal class AutoRespondCommand(SocketSlashCommand command) : GenericCommand(command)
     {

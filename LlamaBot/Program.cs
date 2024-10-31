@@ -1,7 +1,7 @@
 ﻿using Discord.WebSocket;
 using LlamaBot.Discord;
 using LlamaBot.Plugins.Interfaces;
-using LlamaBot.Services;
+using LlamaBot.Plugins.Services;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Loggers;
 using LlamaBot.Shared.Models;
@@ -45,7 +45,7 @@ namespace LlamaBot
                 return;
             }
 
-            if(_llamaBotClient is null)
+            if (_llamaBotClient is null)
             {
                 return;
             }

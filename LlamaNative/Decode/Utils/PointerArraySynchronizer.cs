@@ -1,5 +1,5 @@
 ﻿using LlamaNative.Decode.Collections;
-using LlamaNative.Decode.Decode;
+using LlamaNative.Decode.Interfaces;
 using LlamaNative.Decode.Models;
 using System.Diagnostics;
 

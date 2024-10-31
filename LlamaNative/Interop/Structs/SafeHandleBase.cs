@@ -9,32 +9,35 @@ namespace LlamaNative.Interop.Structs
         protected SafeHandleBase(Action<IntPtr> free)
             : base(IntPtr.Zero, ownsHandle: true)
         {
-            this._free = free;
+            _free = free;
         }
 
         protected SafeHandleBase(IntPtr handle, Action<IntPtr> free)
             : base(IntPtr.Zero, ownsHandle: true)
         {
             this.SetHandle(handle);
-            this._free = free;
+            _free = free;
         }
 
         protected SafeHandleBase(IntPtr handle, bool ownsHandle, Action<IntPtr> free)
             : base(IntPtr.Zero, ownsHandle)
         {
-            this._free = free;
+            _free = free;
             this.SetHandle(handle);
         }
 
-        public IntPtr Handle => this.handle;
+        public IntPtr Handle => handle;
 
-        public override bool IsInvalid => this.handle == IntPtr.Zero;
+        public override bool IsInvalid => handle == IntPtr.Zero;
 
-        public override string ToString() => $"0x{this.handle:x16}";
-
-        protected override sealed bool ReleaseHandle()
+        public override string ToString()
         {
-            this._free(this.handle);
+            return $"0x{handle:x16}";
+        }
+
+        protected sealed override bool ReleaseHandle()
+        {
+            _free(handle);
             this.SetHandle(IntPtr.Zero);
             return true;
         }

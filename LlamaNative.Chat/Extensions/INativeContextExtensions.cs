@@ -1,11 +1,6 @@
 ﻿using LlamaNative.Chat.Models;
-using LlamaNative.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using LlamaNative.Extensions;
-using System.Threading.Tasks;
+using LlamaNative.Interfaces;
 
 namespace LlamaNative.Chat.Extensions
 {

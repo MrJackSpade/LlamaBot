@@ -16,6 +16,9 @@
 
         public float Value { get; set; }
 
-        public override string ToString() => $"[Penalty] {Value}";
+        public override string ToString()
+        {
+            return $"[Penalty] {Value}";
+        }
     }
 }

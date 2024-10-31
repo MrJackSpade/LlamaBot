@@ -25,7 +25,10 @@ namespace LlamaNative.Logit.Collections
             }
         }
 
-        public void Add(LogitRule rule) => _keyValuePairs.Add(rule.Key, rule);
+        public void Add(LogitRule rule)
+        {
+            _keyValuePairs.Add(rule.Key, rule);
+        }
 
         public void AddOrUpdate(IEnumerable<LogitRule> rules)
         {
@@ -35,15 +38,30 @@ namespace LlamaNative.Logit.Collections
             }
         }
 
-        public void AddOrUpdate(LogitRule rule) => _keyValuePairs.AddOrUpdate(rule.Key, rule);
+        public void AddOrUpdate(LogitRule rule)
+        {
+            _keyValuePairs.AddOrUpdate(rule.Key, rule);
+        }
 
-        public LogitRuleCollection Clone() => new(this);
+        public LogitRuleCollection Clone()
+        {
+            return new(this);
+        }
 
-        public IEnumerator<LogitRule> GetEnumerator() => _keyValuePairs.Values.GetEnumerator();
+        public IEnumerator<LogitRule> GetEnumerator()
+        {
+            return _keyValuePairs.Values.GetEnumerator();
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => _keyValuePairs.Values.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _keyValuePairs.Values.GetEnumerator();
+        }
 
-        public IEnumerable<T> OfType<T>() where T : LogitRule => _keyValuePairs.Values.OfType<T>();
+        public IEnumerable<T> OfType<T>() where T : LogitRule
+        {
+            return _keyValuePairs.Values.OfType<T>();
+        }
 
         public void Remove(LogitRuleLifetime lifetime)
         {
@@ -63,6 +81,9 @@ namespace LlamaNative.Logit.Collections
             }
         }
 
-        public void Remove(string key) => _keyValuePairs.Remove(key);
+        public void Remove(string key)
+        {
+            _keyValuePairs.Remove(key);
+        }
     }
 }

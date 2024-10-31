@@ -7,7 +7,7 @@ namespace LlamaNative.Models
     {
         public TokenSelection(Token selectedToken)
         {
-            this.SelectedToken = selectedToken;
+            SelectedToken = selectedToken;
         }
 
         public Token SelectedToken { get; set; }

@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace LlamaNative.Utils.Extensions
 {
     public static partial class JsonExtensions
     {
-        public static TNode? CopyNode<TNode>(this TNode? node) where TNode : JsonNode => node?.Deserialize<TNode>();
+        public static TNode? CopyNode<TNode>(this TNode? node) where TNode : JsonNode
+        {
+            return node?.Deserialize<TNode>();
+        }
 
         public static JsonNode? MoveNode(this JsonArray array, int id, JsonObject newParent, string name)
         {
@@ -25,6 +23,9 @@ namespace LlamaNative.Utils.Extensions
             return newParent[name] = node;
         }
 
-        public static TNode ThrowOnNull<TNode>(this TNode? value) where TNode : JsonNode => value ?? throw new JsonException("Null JSON value");
+        public static TNode ThrowOnNull<TNode>(this TNode? value) where TNode : JsonNode
+        {
+            return value ?? throw new JsonException("Null JSON value");
+        }
     }
 }

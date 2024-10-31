@@ -14,7 +14,10 @@ namespace LlamaNative.Tokens.Extensions
             }
         }
 
-        public static async Task Append(this ITokenCollection target, Task<Token> token) => target.Append(await token);
+        public static async Task Append(this ITokenCollection target, Task<Token> token)
+        {
+            target.Append(await token);
+        }
 
         public static async Task Append(this ITokenCollection target, IAsyncEnumerable<Token> tokens)
         {

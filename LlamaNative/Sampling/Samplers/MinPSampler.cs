@@ -1,8 +1,8 @@
 ﻿using LlamaNative.Interop.Apis;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
-using LlamaNative.Samplers.Settings;
 using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Settings;
 
 namespace LlamaNative.Sampling.Samplers
 {

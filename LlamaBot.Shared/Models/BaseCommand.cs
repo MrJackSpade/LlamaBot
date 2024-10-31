@@ -10,10 +10,10 @@ namespace LlamaBot.Shared.Models
             Command = command;
         }
 
-        public IChannel Channel => this.Command.Channel;
+        public IChannel Channel => Command.Channel;
 
         public SocketSlashCommand Command { get; }
 
-        public SocketUser? User => this.Command.User;
+        public SocketUser? User => Command.User;
     }
 }

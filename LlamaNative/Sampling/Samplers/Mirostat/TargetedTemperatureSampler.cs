@@ -1,9 +1,9 @@
-﻿using Llama.Data.Models.Settings;
-using LlamaNative.Interop.Apis;
+﻿using LlamaNative.Interop.Apis;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Settings;
 using LlamaNative.Tokens.Extensions;
 using System.Diagnostics;
 using System.Text;
@@ -73,7 +73,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             float sumExcludingFirst = SelectionHistory.Skip(1).Sum(l => l.P);
 
             // Calculate the next value needed to achieve the target average
-            float nextValue = _settings.Target * QueueSize - sumExcludingFirst;
+            float nextValue = (_settings.Target * QueueSize) - sumExcludingFirst;
 
             return nextValue;
         }

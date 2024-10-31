@@ -1,5 +1,5 @@
-﻿using LlamaBot.Shared.Utils;
-using LlamaNative.Tokens.Models;
+﻿using LlamaNative.Tokens.Models;
+using LlamaNative.Utils;
 using System.Text;
 
 namespace LlamaNative.Chat.Models

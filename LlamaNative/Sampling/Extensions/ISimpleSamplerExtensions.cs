@@ -8,10 +8,16 @@ namespace LlamaNative.Sampling.Extensions
     public static class ISimpleSamplerExtensions
     {
         [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, TokenMask tokenMask, int tryTake) => new(collection, tokenMask, tryTake, [], []);
+        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, TokenMask tokenMask, int tryTake)
+        {
+            return new(collection, tokenMask, tryTake, [], []);
+        }
 
         [SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, TokenMask tokenMask, int tryTake, HashSet<int> include, HashSet<int> exclude) => new(collection, tokenMask, tryTake, include, exclude);
+        public static LastTokens GetLastTokens(this ISimpleSampler sampler, IReadOnlyTokenCollection collection, TokenMask tokenMask, int tryTake, HashSet<int> include, HashSet<int> exclude)
+        {
+            return new(collection, tokenMask, tryTake, include, exclude);
+        }
     }
 
     public class LastTokens

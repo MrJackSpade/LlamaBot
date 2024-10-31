@@ -26,6 +26,10 @@
 	  <None Remove="Characters\Mistral\Entropy\System.txt" />
 	  <None Remove="Characters\Mistral\Mystery\Configuration.json" />
 	  <None Remove="characters\mistral\mystery\System.txt" />
+	  <None Remove="Characters\Qwen\Configuration.json" />
+	  <None Remove="Characters\Qwen\Qwen2.5-Instruct\Configuration.json" />
+	  <None Remove="Characters\Qwen\Qwen2.5-Instruct\System.txt" />
+	  <None Remove="Characters\Qwen\System.txt" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Discord.Net" Version="3.15.2" />

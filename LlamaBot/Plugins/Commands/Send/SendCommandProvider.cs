@@ -1,13 +1,12 @@
 ﻿using Discord.WebSocket;
-using LlamaBot.Plugins.Commands.Send;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
-using LlamaBot.Shared.Utils;
+using LlamaNative.Utils;
 
-namespace LlamaBot.Plugins.Commands.Regenerate
+namespace LlamaBot.Plugins.Commands.Send
 {
     internal class SendCommandProvider : ICommandProvider<SendCommand>
     {

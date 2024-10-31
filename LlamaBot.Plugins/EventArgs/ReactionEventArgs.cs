@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 
-namespace LlamaBot.Models.Events
+namespace LlamaBot.Plugins.EventArgs
 {
     public class ReactionEventArgs(Cacheable<IUserMessage, ulong> userMessage, Cacheable<IMessageChannel, ulong> messageChannel, SocketReaction socketReaction)
     {

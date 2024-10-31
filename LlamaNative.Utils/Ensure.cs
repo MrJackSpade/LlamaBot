@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace LlamaBot.Shared.Utils
+namespace LlamaNative.Utils
 {
     public static class Ensure
     {

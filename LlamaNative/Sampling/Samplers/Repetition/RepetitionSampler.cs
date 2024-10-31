@@ -1,8 +1,8 @@
 ﻿using LlamaNative.Interop.Apis;
 using LlamaNative.Models;
-using LlamaNative.Samplers.Settings;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Settings;
 using LlamaNative.Tokens.Collections;
 
 namespace LlamaNative.Sampling.Samplers.Repetition

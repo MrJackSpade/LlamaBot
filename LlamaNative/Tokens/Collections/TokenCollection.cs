@@ -62,9 +62,15 @@ namespace LlamaNative.Tokens.Collections
             return toReturn;
         }
 
-        public virtual void Append(Token token) => _tokens.Add(token);
+        public virtual void Append(Token token)
+        {
+            _tokens.Add(token);
+        }
 
-        public virtual void Clear() => _tokens.Clear();
+        public virtual void Clear()
+        {
+            _tokens.Clear();
+        }
 
         public bool EndsWith(int[] ids)
         {
@@ -88,9 +94,15 @@ namespace LlamaNative.Tokens.Collections
             return true;
         }
 
-        public IEnumerator<Token> GetEnumerator() => ((IEnumerable<Token>)_tokens).GetEnumerator();
+        public IEnumerator<Token> GetEnumerator()
+        {
+            return ((IEnumerable<Token>)_tokens).GetEnumerator();
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_tokens).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)_tokens).GetEnumerator();
+        }
 
         public void Shift(Token token)
         {
@@ -98,9 +110,15 @@ namespace LlamaNative.Tokens.Collections
             _tokens.Add(token);
         }
 
-        public string ToEscapedString() => string.Join("", _tokens.Select(t => t.GetEscapedValue()));
+        public string ToEscapedString()
+        {
+            return string.Join("", _tokens.Select(t => t.GetEscapedValue()));
+        }
 
-        public override string ToString() => string.Join("", _tokens.Select(t => t.Value));
+        public override string ToString()
+        {
+            return string.Join("", _tokens.Select(t => t.Value));
+        }
 
         public virtual TokenCollection Trim(int id = -1)
         {

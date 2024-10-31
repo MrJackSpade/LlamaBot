@@ -1,8 +1,8 @@
 ﻿using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
-using LlamaNative.Samplers.Settings;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Settings;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Models;
 
@@ -55,7 +55,7 @@ namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
             for (int i = 0; i < chunks; i++)
             {
                 int s = i * l;
-                int e = i * l + l;
+                int e = (i * l) + l;
 
                 if (i < chunks - 1)
                 {

@@ -8,6 +8,9 @@ namespace LlamaNative.Models
 
         public int Vocab { get; private set; } = vocab;
 
-        public void Dispose() => ((IDisposable)Handle).Dispose();
+        public void Dispose()
+        {
+            ((IDisposable)Handle).Dispose();
+        }
     }
 }

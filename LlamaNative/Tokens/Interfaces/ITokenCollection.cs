@@ -1,5 +1,4 @@
-﻿using Llama.Data.Models;
-using LlamaNative.Tokens.Models;
+﻿using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Tokens.Interfaces
 {

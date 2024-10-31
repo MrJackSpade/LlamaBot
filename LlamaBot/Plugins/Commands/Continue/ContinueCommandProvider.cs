@@ -4,8 +4,8 @@ using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
-using LlamaBot.Shared.Utils;
 using LlamaNative.Chat.Models;
+using LlamaNative.Utils;
 
 namespace LlamaBot.Plugins.Commands.Continue
 {

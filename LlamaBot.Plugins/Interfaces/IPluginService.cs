@@ -1,9 +1,8 @@
-﻿using LlamaBot.Models.Events;
-using LlamaBot.Plugins.Interfaces;
+﻿using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Shared.Models;
 using System.Reflection;
 
-namespace LlamaBot.Shared.Interfaces
+namespace LlamaBot.Plugins.Interfaces
 {
     public interface IPluginService
     {

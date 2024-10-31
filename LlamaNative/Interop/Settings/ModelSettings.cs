@@ -1,6 +1,4 @@
-﻿using Llama.Data.Models;
-
-namespace LlamaNative.Interop.Settings
+﻿namespace LlamaNative.Interop.Settings
 {
     public class ModelSettings
     {

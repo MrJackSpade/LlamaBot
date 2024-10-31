@@ -1,23 +1,19 @@
 ﻿using LlamaNative.Decode.Collections;
-using LlamaNative.Decode.Decode;
+using LlamaNative.Decode.Interfaces;
 using LlamaNative.Decode.Utils;
 using LlamaNative.Exceptions;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
-using LlamaNative.Interop.Apis;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Logit.Collections;
 using LlamaNative.Logit.Extensions;
 using LlamaNative.Logit.Models;
-using LlamaNative.Models;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Tokens.Collections;
-using LlamaNative.Tokens.Extensions;
 using LlamaNative.Tokens.Interfaces;
 using LlamaNative.Tokens.Models;
-using System.Diagnostics;
 
-namespace Llama.Core
+namespace LlamaNative.Models
 {
     public class NativeContext : INativeContext
     {
@@ -44,13 +40,13 @@ namespace Llama.Core
 
             simpleSamplers ??= [];
 
-            this._embeddingStack = new float[settings.NCtx, 8192];
+            _embeddingStack = new float[settings.NCtx, 8192];
 
             for (int x = 0; x < settings.NCtx; x++)
             {
                 for (int y = 0; y < 8192; y++)
                 {
-                    this._embeddingStack[x, y] = float.NaN;
+                    _embeddingStack[x, y] = float.NaN;
                 }
             }
 
@@ -59,18 +55,18 @@ namespace Llama.Core
                 Token.Null
                 );
 
-            this.Handle = handle;
-            this._simpleSamplers = simpleSamplers.ToList();
-            this._tokenSelector = tokenSelector;
-            this._settings = settings;
-            this.Size = this._settings.NCtx;
+            Handle = handle;
+            _simpleSamplers = simpleSamplers.ToList();
+            _tokenSelector = tokenSelector;
+            _settings = settings;
+            Size = _settings.NCtx;
 
-            this._buffer = new PointerArray<Token>(this.Size);
-            this._buffer.Fill(Token.Null);
+            _buffer = new PointerArray<Token>(Size);
+            _buffer.Fill(Token.Null);
 
-            this._kvCache = new KvCacheState<Token>(this.Size, Token.Null);
+            _kvCache = new KvCacheState<Token>(Size, Token.Null);
 
-            this.ModelHandle = modelHandle;
+            ModelHandle = modelHandle;
 
             if (!Directory.Exists("Logits"))
             {
@@ -82,11 +78,11 @@ namespace Llama.Core
         {
         }
 
-        public uint AvailableBuffer => this.Size - this._buffer.Pointer;
+        public uint AvailableBuffer => Size - _buffer.Pointer;
 
-        public IReadOnlyTokenCollection Buffer => new TokenCollection(this._buffer);
+        public IReadOnlyTokenCollection Buffer => new TokenCollection(_buffer);
 
-        public IReadOnlyTokenCollection Evaluated => new TokenCollection(this._kvCache).Trim();
+        public IReadOnlyTokenCollection Evaluated => new TokenCollection(_kvCache).Trim();
 
         public SafeContextHandle Handle { get; private set; }
 
@@ -96,15 +92,18 @@ namespace Llama.Core
 
         public void Clear(bool includeCache)
         {
-            this._buffer.Clear();
+            _buffer.Clear();
 
             if (includeCache)
             {
-                this._kvCache = new KvCacheState<Token>(this.Size, Token.Null);
+                _kvCache = new KvCacheState<Token>(Size, Token.Null);
             }
         }
 
-        public void Dispose() => this.Handle.Dispose();
+        public void Dispose()
+        {
+            Handle.Dispose();
+        }
 
         public void Evaluate(int count = -1)
         {
@@ -140,7 +139,7 @@ namespace Llama.Core
             logitRules.StartClamp(sampleContext.Candidates);
 
             //TODO: Fix cheap hack
-            foreach (ISimpleSampler simpleSampler in this._simpleSamplers)
+            foreach (ISimpleSampler simpleSampler in _simpleSamplers)
             {
                 simpleSampler.SampleNext(sampleContext);
             }
@@ -151,7 +150,7 @@ namespace Llama.Core
 
             logitRules.ApplyClamp(sampleContext.Candidates);
 
-            int tokenId = this._tokenSelector.SampleNext(sampleContext);
+            int tokenId = _tokenSelector.SampleNext(sampleContext);
 
             Token toReturn = this.GetToken(TokenMask.Bot, tokenId);
 
@@ -160,17 +159,17 @@ namespace Llama.Core
 
         public void SetBufferPointer(uint startIndex)
         {
-            this._buffer.Pointer = startIndex;
+            _buffer.Pointer = startIndex;
         }
 
         public void Write(Token token)
         {
-            if (this.AvailableBuffer == 0)
+            if (AvailableBuffer == 0)
             {
                 throw new OutOfContextException();
             }
 
-            this._buffer[this._buffer.Pointer++] = token;
+            _buffer[_buffer.Pointer++] = token;
         }
     }
 }

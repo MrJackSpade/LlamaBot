@@ -1,4 +1,4 @@
-﻿namespace Llama.Core.Samplers.Mirostat
+﻿namespace LlamaNative.Sampling.Settings
 {
     public class MirostatSamplerSettings
     {
@@ -15,7 +15,7 @@
         /// <summary>
         /// Tau * 2
         /// </summary>
-        public float InitialMu => this.Tau * 2.0f;
+        public float InitialMu => Tau * 2.0f;
 
         /// <summary>
         /// If true, Mirostat will only use TOPK sampling for new words

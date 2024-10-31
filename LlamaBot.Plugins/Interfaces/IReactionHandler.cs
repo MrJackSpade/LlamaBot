@@ -1,5 +1,4 @@
-﻿using LlamaBot.Models.Events;
-using LlamaBot.Plugins.Interfaces;
+﻿using LlamaBot.Plugins.EventArgs;
 
 namespace LlamaBot.Plugins.Interfaces
 {
