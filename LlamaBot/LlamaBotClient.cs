@@ -399,6 +399,7 @@ namespace LlamaBot
             }
 
             DateTime? lastMessageTime = null;
+            bool addedMessageTime = false;
 
             await foreach (IReadOnlyCollection<IMessage>? historicalMessages in channel.GetMessagesAsync(1000))
             {
@@ -423,15 +424,16 @@ namespace LlamaBot
                         toSend.AddRange(this.HandleHistoricalMessage(historicalMessage));
                     }
 
-                    DateTime thisMessageTime = historicalMessage.CreatedAt.DateTime;
+                    DateTime thisMessageTime = historicalMessage.CreatedAt.DateTime.ToLocalTime();
 
                     if (lastMessageTime.HasValue)
                     {
                         TimeSpan timediff = lastMessageTime.Value - thisMessageTime;
                         if (timediff > TimeSpan.FromHours(1))
                         {
+                            addedMessageTime = true;
                             string displayString = timediff.ToDisplayString();
-                            ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"{displayString} ({lastMessageTime:yyyy-MM-dd hh:mmtt})");
+                            ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"{displayString} ({lastMessageTime.ToDisplayString()})");
                             _chatContext.Insert(messageStart, timeIndicator);
                         }
                     }
@@ -450,9 +452,9 @@ namespace LlamaBot
                     }
                 }
 
-                if(lastMessageTime is null)
+                if(!addedMessageTime)
                 {
-                    ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $" CURRENT TIME ({lastMessageTime:yyyy-MM-dd hh:mmtt})");
+                    ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"CURRENT TIME ({lastMessageTime.ToDisplayString()})");
                     _chatContext.Insert(messageStart, timeIndicator);
                 }
 
