@@ -1,4 +1,6 @@
-﻿using LlamaBot.Plugins.Commands.ClearContext;
+﻿using Discord;
+using LlamaBot.Extensions;
+using LlamaBot.Plugins.Commands.ClearContext;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
@@ -25,21 +27,29 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
         {
             if (command.ClearContext)
             {
-                await _pluginService.Command(new ClearContextCommand(command.Command)
+                await _pluginService!.Command(new ClearContextCommand(command.Command)
                 {
                     IncludeCache = true,
                 });
             }
 
+            ulong channelId = command.Channel.GetChannelId();
+
             string responseString;
 
             if (command.Prompt is null)
             {
-                responseString = _llamaBotClient.SystemPrompt;
+                if (!_llamaBotClient!.SystemPrompts.TryGetValue(channelId, out string? value))
+                {
+                    responseString = _llamaBotClient.DefaultSystemPrompt;
+                } else
+                {
+                    responseString = value;
+                }
             }
             else
             {
-                _llamaBotClient.SystemPrompt = command.Prompt.Replace("\\n", "\n");
+                _llamaBotClient!.SystemPrompts[channelId] = command.Prompt.Replace("\\n", "\n");
                 responseString = "System Prompt Updated: " + command.Prompt;
             }
 

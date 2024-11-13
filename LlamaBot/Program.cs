@@ -67,16 +67,22 @@ namespace LlamaBot
 
             if (message.Channel is SocketTextChannel socketTextChannel)
             {
-                if (!_configuration.ChannelIds.Contains(socketTextChannel.Id))
+                if (_configuration.ChannelIds is not null)
                 {
-                    return;
+                    if (!_configuration.ChannelIds.Contains(socketTextChannel.Id))
+                    {
+                        return;
+                    }
                 }
             }
             else if (message.Channel is SocketDMChannel socketDMChannel)
             {
-                if (!_configuration.ChannelIds.Contains(socketDMChannel.Users.ToArray()[1].Id))
+                if (_configuration.UserIds is not null)
                 {
-                    return;
+                    if (!_configuration.UserIds.Contains(socketDMChannel.Users.ToArray()[1].Id))
+                    {
+                        return;
+                    }
                 }
             }
             else

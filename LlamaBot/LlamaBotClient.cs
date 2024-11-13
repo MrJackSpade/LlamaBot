@@ -36,6 +36,12 @@ namespace LlamaBot
 
         private Thread _processMessageThread;
 
+        public string BotName => _chatSettings.BotName;
+
+        public string DefaultSystemPrompt { get; } = string.Empty;
+
+        public Dictionary<ulong, string> SystemPrompts { get; set; } = [];
+
         public LlamaBotClient(Character character, string? systemPrompt, ulong botId)
         {
             Ensure.NotNull(character);
@@ -45,7 +51,7 @@ namespace LlamaBot
 
             if (!string.IsNullOrWhiteSpace(systemPrompt))
             {
-                SystemPrompt = systemPrompt;
+                DefaultSystemPrompt = systemPrompt;
             }
 
             _chatSettings = character.ChatSettings;
@@ -65,10 +71,6 @@ namespace LlamaBot
                     ));
             }
         }
-
-        public string BotName => _chatSettings.BotName;
-
-        public string SystemPrompt { get; set; } = string.Empty;
 
         public string BuildMessage(string author, string content)
         {
@@ -351,20 +353,27 @@ namespace LlamaBot
             }
         }
 
-        private void InsertContextHeaders()
+        private void InsertContextHeaders(ulong channelId)
         {
             Ensure.NotNull(_chatContext);
             Ensure.NotNull(_character);
 
-            if (!string.IsNullOrWhiteSpace(SystemPrompt))
+            string applicableSystemPrompt = DefaultSystemPrompt;
+
+            if (SystemPrompts.TryGetValue(channelId, out string? channelPrompt))
+            {
+                applicableSystemPrompt = channelPrompt;
+            }
+
+            if (!string.IsNullOrWhiteSpace(applicableSystemPrompt))
             {
                 if (_chatSettings.SystemPromptUser is null)
                 {
-                    _chatContext.SendContent(TokenMask.Prompt, SystemPrompt);
+                    _chatContext.SendContent(TokenMask.Prompt, applicableSystemPrompt);
                 }
                 else
                 {
-                    _chatContext.SendMessage(TokenMask.Prompt, _chatSettings.SystemPromptUser, SystemPrompt);
+                    _chatContext.SendMessage(TokenMask.Prompt, _chatSettings.SystemPromptUser, applicableSystemPrompt);
                 }
             }
 
@@ -387,7 +396,7 @@ namespace LlamaBot
 
             _chatContext.Clear(false);
 
-            this.InsertContextHeaders();
+            this.InsertContextHeaders(channel.GetChannelId());
 
             int messageStart = _chatContext.MessageCount;
 
@@ -433,7 +442,7 @@ namespace LlamaBot
                         {
                             addedMessageTime = true;
                             string displayString = timediff.ToDisplayString();
-                            ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"{displayString} ({lastMessageTime.ToDisplayString()})");
+                            ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"No messages for {displayString} ({lastMessageTime.ToDisplayString()})");
                             _chatContext.Insert(messageStart, timeIndicator);
                         }
                     }
@@ -452,7 +461,7 @@ namespace LlamaBot
                     }
                 }
 
-                if(!addedMessageTime)
+                if (!addedMessageTime)
                 {
                     ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"CURRENT TIME ({lastMessageTime.ToDisplayString()})");
                     _chatContext.Insert(messageStart, timeIndicator);

@@ -8,9 +8,12 @@ namespace LlamaBot.Plugins.Interfaces
     {
         string BotName { get; }
 
-        string SystemPrompt { get; set; }
+        string DefaultSystemPrompt { get; }
+
+        Dictionary<ulong, string> SystemPrompts { get; set; }
 
         string? BuildMessage(string author, string? content);
+
         void Clear(bool v);
 
         Task<string> GenerateMessageBody(ISocketMessageChannel smc, string displayName);
