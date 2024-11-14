@@ -58,6 +58,8 @@ namespace LlamaNative.Chat
 
                     newSet.Pop = popTokens[0];
                 }
+
+                samplerSets.Add(newSet);
             }
 
             INativeContext context = LlamaClient.LoadContext(model,
