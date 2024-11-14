@@ -52,6 +52,19 @@ namespace LlamaNative.Serialization
                 return sampler;
             }
 
+            foreach (ConstructorInfo ci in t.GetConstructors())
+            {
+                if(ci.DeclaringType != t)
+                {
+                    continue;
+                }
+
+                if (ci.GetParameters().Length == 0)
+                {
+                    return Activator.CreateInstance(t)!;
+                }
+            }
+
             throw new NotImplementedException($"Valid constructor not found for {t.FullName}");
         }
 
