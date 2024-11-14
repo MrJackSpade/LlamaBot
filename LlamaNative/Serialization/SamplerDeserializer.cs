@@ -21,6 +21,7 @@ namespace LlamaNative.Serialization
             RegisterSelector<TargetedTemperatureSampler>();
             RegisterSelector<TargetedEntropySampler>();
             RegisterSelector<TemperatureSampler>();
+            RegisterSelector<GreedySampler>();
 
             RegisterSimple<RepetitionSampler>();
             RegisterSimple<ComplexPresenceSampler>();
@@ -51,7 +52,7 @@ namespace LlamaNative.Serialization
                 return sampler;
             }
 
-            throw new NotImplementedException();
+            throw new NotImplementedException($"Valid constructor not found for {t.FullName}");
         }
 
         public static ITokenSelector InstantiateSelector(this SamplerSetting samplerSetting)
@@ -61,7 +62,7 @@ namespace LlamaNative.Serialization
                 return (ITokenSelector)samplerSetting.Construct(selectorType);
             }
 
-            throw new NotImplementedException();
+            throw new NotImplementedException($"ITokenSelector not found in {nameof(SamplerDeserializer)}.{nameof(_tokenSelectors)}");
         }
 
         public static T InstantiateSettings<T>(this SamplerSetting samplerSetting)
