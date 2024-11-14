@@ -26,12 +26,8 @@ namespace LlamaNative.Chat
 
         public List<SamplerSetConfiguration> SamplerSets { get; set; } = [];
 
-        public List<SamplerSetting> SimpleSamplers { get; set; } = [];
-
         public ChatSplitSettings? SplitSettings { get; set; }
 
         public string SystemPromptUser { get; set; } = "System";
-
-        public SamplerSetting TokenSelector { get; set; } = new SamplerSetting(nameof(TemperatureSampler));
     }
 }

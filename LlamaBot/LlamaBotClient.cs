@@ -60,7 +60,10 @@ namespace LlamaBot
 
             if (_chatSettings.ResponseStartBlock > 0)
             {
-                _chatSettings.SimpleSamplers.Add(
+                SamplerSetConfiguration defaultSet = _chatSettings.SamplerSets.GetDefault() 
+                                                     ?? throw new ArgumentException("No default sampler set found");
+
+                defaultSet.SimpleSamplers.Add(
                     new SamplerSetting(
                         nameof(SubsequenceBlockingSampler),
                         new SubsequenceBlockingSamplerSettings()

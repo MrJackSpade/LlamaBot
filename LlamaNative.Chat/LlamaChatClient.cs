@@ -17,21 +17,17 @@ namespace LlamaNative.Chat
 
             List<SamplerSet> samplerSets = new();
 
-            if(settings.TokenSelector is not null)
+            if(samplerSets.Count == 0)
             {
-                SamplerSet newSet = new() { TokenSelector = SamplerDeserializer.InstantiateSelector(settings.TokenSelector) };
-
-                foreach (SamplerSetting samplerSetting in settings.SimpleSamplers)
-                {
-                    newSet.SimpleSamplers.Add(SamplerDeserializer.InstantiateSimple(samplerSetting));
-                }
-
-                samplerSets.Add(newSet);
+                throw new ArgumentException("Samplers and logit bias must be migrated to SamplerSets");
             }
 
             foreach(SamplerSetConfiguration samplerSet in settings.SamplerSets)
             {
-                SamplerSet newSet = new() { TokenSelector = SamplerDeserializer.InstantiateSelector(samplerSet.TokenSelector) };
+                SamplerSet newSet = new() { 
+                    TokenSelector = SamplerDeserializer.InstantiateSelector(samplerSet.TokenSelector),
+                    LogitBias = samplerSet.LogitBias
+                };
 
                 foreach (SamplerSetting samplerSetting in samplerSet.SimpleSamplers)
                 {

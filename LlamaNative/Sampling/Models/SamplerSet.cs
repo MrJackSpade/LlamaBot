@@ -7,12 +7,14 @@ namespace LlamaNative.Sampling.Models
     /// </summary>
     public class SamplerSet
     {
+        public Dictionary<int, string> LogitBias { get; set; } = [];
+
         public int Pop { get; set; } = -1;
 
         public int Push { get; set; } = -1;
 
         public IList<ISimpleSampler> SimpleSamplers { get; set; } = new List<ISimpleSampler>();
 
-        public required ITokenSelector TokenSelector { get; set; }
+        public ITokenSelector TokenSelector { get; set; }
     }
 }

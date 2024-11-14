@@ -50,6 +50,8 @@ namespace LlamaNative.Models
 
         private ITokenSelector ActiveTokenSelector => ActiveSamplerSet.TokenSelector;
 
+        private Dictionary<int, string> ActiveLogitBias => ActiveSamplerSet.LogitBias;
+
         public NativeContext(SafeContextHandle handle, SafeModelHandle modelHandle, ContextParams settings, List<SamplerSet> samplerSets)
         {
             ArgumentNullException.ThrowIfNull(handle);
@@ -122,6 +124,8 @@ namespace LlamaNative.Models
             logitRules ??= [];
 
             Span<float> logits = this.GetLogits();
+
+            logits.Update(ActiveLogitBias);
 
             // Apply params.logit_bias map
             logits.Add(logitRules.OfType<LogitBias>());

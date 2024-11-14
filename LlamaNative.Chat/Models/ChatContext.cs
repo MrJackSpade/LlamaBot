@@ -175,11 +175,6 @@ namespace LlamaNative.Chat.Models
 
             List<TokenSelection> response = [];
 
-            foreach (KeyValuePair<int, string> keyValuePair in Settings.ContextSettings.LogitBias)
-            {
-                logitRules.Add(new LogitBias(keyValuePair.Key, FloatUtils.Parse(keyValuePair.Value), LogitRuleLifetime.Inferrence, LogitBiasType.Multiplicative));
-            }
-
             try
             {
                 _running |= true;
