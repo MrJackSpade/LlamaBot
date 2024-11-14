@@ -24,6 +24,8 @@ namespace LlamaNative.Chat
         /// </summary>
         public int ResponseStartBlock { get; set; }
 
+        public List<SamplerSetConfiguration> SamplerSets { get; set; } = [];
+
         public List<SamplerSetting> SimpleSamplers { get; set; } = [];
 
         public ChatSplitSettings? SplitSettings { get; set; }

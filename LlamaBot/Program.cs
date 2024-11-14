@@ -133,7 +133,7 @@ namespace LlamaBot
         {
             _recursiveConfiguration = _recursiveConfigurationReader.Read(args[0]);
 
-            _recursiveConfiguration.Resources.TryGetValue("System.txt", out string systemPrompt);
+            _recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemPrompt);
 
             await InitializeDiscordClient();
 

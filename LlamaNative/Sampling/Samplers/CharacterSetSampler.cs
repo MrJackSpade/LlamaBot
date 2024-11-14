@@ -55,7 +55,7 @@ namespace LlamaNative.Sampling.Samplers
             }
         }
 
-        private CharacterSet GetCharacterSet(string input)
+        private static CharacterSet GetCharacterSet(string input)
         {
             // Iterate through each character in the string
             foreach (char c in input)
@@ -74,7 +74,7 @@ namespace LlamaNative.Sampling.Samplers
 
         private int[] GetOrCreateCache(SafeModelHandle model)
         {
-            if (!_suppressCache.TryGetValue(model.Handle, out int[] toSuppress))
+            if (!_suppressCache.TryGetValue(model.Handle, out int[]? toSuppress))
             {
                 List<int> temp = [];
 
@@ -82,11 +82,11 @@ namespace LlamaNative.Sampling.Samplers
 
                 for (int i = 0; i < nvocab; i++)
                 {
-                    bool isValid = SamplingApi.TryTokenToPiece(model, i, out string result);
+                    bool isValid = SamplingApi.TryTokenToPiece(model, i, out string? result);
 
                     if (isValid)
                     {
-                        CharacterSet characterSet = this.GetCharacterSet(result);
+                        CharacterSet characterSet = GetCharacterSet(result);
 
                         if (_settings.WhiteList.Length > 0)
                         {

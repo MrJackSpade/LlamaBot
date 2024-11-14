@@ -405,7 +405,7 @@ namespace LlamaNative.Apis
             return evaluated;
         }
 
-        internal static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
+        public static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
         {
             int cnt = Encoding.Unicode.GetByteCount(text + 1);
 

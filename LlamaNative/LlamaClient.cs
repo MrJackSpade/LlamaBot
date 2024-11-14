@@ -4,6 +4,7 @@ using LlamaNative.Interop.Settings;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Sampling.Interfaces;
+using LlamaNative.Sampling.Models;
 using LlamaNative.Sampling.Samplers.Temperature;
 using LlamaNative.Sampling.Settings;
 
@@ -11,29 +12,23 @@ namespace LlamaNative
 {
     public static class LlamaClient
     {
-        public static INativeContext LoadContext(
-            ModelSettings modelSettings,
-            ContextSettings contextSettings,
-            params ISimpleSampler[] simpleSamplers)
+        public static Model LoadModel(ModelSettings modelSettings)
         {
-            return LoadContext(modelSettings, contextSettings, new TemperatureSampler(new TemperatureSamplerSettings()), simpleSamplers);
+            return NativeApi.LoadModel(modelSettings);
         }
 
         public static INativeContext LoadContext(
-            ModelSettings modelSettings,
+            Model loadedModel,
             ContextSettings contextSettings,
-            ITokenSelector tokenSelector,
-            params ISimpleSampler[] simpleSamplers
+            List<SamplerSet> samplerSets
         )
         {
-            Model loadedModel = NativeApi.LoadModel(modelSettings);
             SafeContextHandle loadedContext = NativeApi.LoadContext(loadedModel.Handle, contextSettings, out ContextParams lparams);
 
             return new NativeContext(loadedContext,
                                      loadedModel.Handle,
                                      lparams,
-                                     tokenSelector,
-                                     simpleSamplers);
+                                     samplerSets);
         }
     }
 }

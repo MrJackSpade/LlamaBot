@@ -22,10 +22,14 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
+	  <Compile Remove="Characters\Qwen\NewFolder\**" />
 	  <Compile Remove="Discord\Commands\**" />
 	  <Compile Remove="Discord\Model\**" />
+	  <Content Remove="Characters\Qwen\NewFolder\**" />
+	  <EmbeddedResource Remove="Characters\Qwen\NewFolder\**" />
 	  <EmbeddedResource Remove="Discord\Commands\**" />
 	  <EmbeddedResource Remove="Discord\Model\**" />
+	  <None Remove="Characters\Qwen\NewFolder\**" />
 	  <None Remove="Discord\Commands\**" />
 	  <None Remove="Discord\Model\**" />
 	</ItemGroup>
