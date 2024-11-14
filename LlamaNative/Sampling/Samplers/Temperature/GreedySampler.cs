@@ -1,6 +1,8 @@
-﻿using LlamaNative.Interop.Apis;
+﻿using LlamaNative.Apis;
+using LlamaNative.Interop.Apis;
 using LlamaNative.Models;
 using LlamaNative.Sampling.Interfaces;
+using System.Diagnostics;
 
 namespace LlamaNative.Sampling.Samplers.Temperature
 {
@@ -12,7 +14,11 @@ namespace LlamaNative.Sampling.Samplers.Temperature
 
         public int SampleNext(SampleContext sampleContext)
         {
-            return SamplingApi.TokenGreedy(sampleContext.Candidates);
+            int toReturn = SamplingApi.TokenGreedy(sampleContext.Candidates);
+
+            Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [G] ({toReturn}) [{NativeApi.TokenToPiece(sampleContext.ModelHandle, toReturn)}]");
+
+            return toReturn;
         }
     }
 }
