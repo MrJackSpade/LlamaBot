@@ -15,14 +15,14 @@ namespace LlamaNative.Chat
         {
             Model model = LlamaClient.LoadModel(settings.ModelSettings);
 
-            List<SamplerSet> samplerSets = new();
-
-            if(samplerSets.Count == 0)
+            if(settings.SamplerSets.Count == 0)
             {
                 throw new ArgumentException("Samplers and logit bias must be migrated to SamplerSets");
             }
 
-            foreach(SamplerSetConfiguration samplerSet in settings.SamplerSets)
+            List<SamplerSet> samplerSets = new();
+
+            foreach (SamplerSetConfiguration samplerSet in settings.SamplerSets)
             {
                 SamplerSet newSet = new() { 
                     TokenSelector = SamplerDeserializer.InstantiateSelector(samplerSet.TokenSelector),
