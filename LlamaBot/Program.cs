@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using LlamaBot.Discord;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Plugins.Services;
@@ -65,27 +66,7 @@ namespace LlamaBot
 
             }
 
-            if (message.Channel is SocketTextChannel socketTextChannel)
-            {
-                if (_configuration.ChannelIds is not null)
-                {
-                    if (!_configuration.ChannelIds.Contains(socketTextChannel.Id))
-                    {
-                        return;
-                    }
-                }
-            }
-            else if (message.Channel is SocketDMChannel socketDMChannel)
-            {
-                if (_configuration.UserIds is not null)
-                {
-                    if (!_configuration.UserIds.Contains(socketDMChannel.Users.ToArray()[1].Id))
-                    {
-                        return;
-                    }
-                }
-            }
-            else
+            if (!IsValidSource(message.Channel))
             {
                 return;
             }
@@ -96,6 +77,36 @@ namespace LlamaBot
             }
 
             _llamaBotClient.TryProcessMessageAsync(message.Channel, readResponseSettings);
+        }
+
+        private static bool IsValidSource(IChannel channel)
+        {
+            if (channel is SocketTextChannel socketTextChannel)
+            {
+                if (_configuration.ChannelIds is not null)
+                {
+                    if (!_configuration.ChannelIds.Contains(socketTextChannel.Id))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (channel is SocketDMChannel socketDMChannel)
+            {
+                if (_configuration.UserIds is not null)
+                {
+                    if (!_configuration.UserIds.Contains(socketDMChannel.Users.ToArray()[1].Id))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private static async Task InitializeDiscordClient()
@@ -145,6 +156,11 @@ namespace LlamaBot
                                                  parameterType,
                                                  c =>
                                                  {
+                                                     if (!IsValidSource(c.Channel))
+                                                     {
+                                                         return Task.FromResult(CommandResult.Error("Bot not registered in this channel"));
+                                                     }
+
                                                      object result = invocationMethod.Invoke(commandProvider, [c])!;
                                                      return (Task<CommandResult>)result;
                                                  },

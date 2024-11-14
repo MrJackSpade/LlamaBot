@@ -442,7 +442,7 @@ namespace LlamaBot
                         {
                             addedMessageTime = true;
                             string displayString = timediff.ToDisplayString();
-                            ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"No messages for {displayString} ({lastMessageTime.ToDisplayString()})");
+                            ChatMessage timeIndicator = new(TokenMask.Template, _chatSettings.SystemPromptUser, $"No messages for {displayString} ({lastMessageTime.ToDisplayString()})");
                             _chatContext.Insert(messageStart, timeIndicator);
                         }
                     }
@@ -463,7 +463,7 @@ namespace LlamaBot
 
                 if (!addedMessageTime)
                 {
-                    ChatMessage timeIndicator = new(TokenMask.Template, "SYSTEM", $"CURRENT TIME ({lastMessageTime.ToDisplayString()})");
+                    ChatMessage timeIndicator = new(TokenMask.Template, _chatSettings.SystemPromptUser, $"CURRENT TIME ({lastMessageTime.ToDisplayString()})");
                     _chatContext.Insert(messageStart, timeIndicator);
                 }
 
