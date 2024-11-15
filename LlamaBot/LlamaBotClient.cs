@@ -343,7 +343,11 @@ namespace LlamaBot
 
             if (_chatSettings.SplitSettings?.DoubleNewlineSplit ?? false)
             {
-                messageContent = message.Content.Split("\n").Select(s => s.Trim()).ToList();
+                messageContent = message.Content.Split("\n\n")
+                                                .Select(s => s.Trim())
+                                                .Where(s => !string.IsNullOrWhiteSpace(s))
+                                                .Reverse()
+                                                .ToList();
             }
 
             TokenMask contentMask = historicalMessage.Author.Id == _botId ?

@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "Arli",
+      "commandLineArgs": "Magnum4",
       "nativeDebugging": false
     }
   }

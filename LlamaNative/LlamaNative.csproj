@@ -107,6 +107,7 @@
 		<None Remove="Binaries\Cpu\libggml.so.zip" />
 	</ItemGroup>
 	<ItemGroup>
+	  <ProjectReference Include="..\LlamaBot.Shared\LlamaBot.Shared.csproj" />
 	  <ProjectReference Include="..\LlamaNative.Utils\LlamaNative.Utils.csproj" />
 	</ItemGroup>
 </Project>

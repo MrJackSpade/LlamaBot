@@ -34,6 +34,8 @@
 	  <None Remove="Discord\Model\**" />
 	</ItemGroup>
 	<ItemGroup>
+	  <None Remove="Characters\Magnum\Magnum4\Configuration.json" />
+	  <None Remove="Characters\Magnum\Magnum4\System.txt" />
 	  <None Remove="Characters\Mistral\Entropy\Configuration.json" />
 	  <None Remove="Characters\Mistral\Entropy\System.txt" />
 	  <None Remove="Characters\Mistral\Mystery\Configuration.json" />
