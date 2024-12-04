@@ -15,6 +15,13 @@ namespace LlamaNative.Chat
         {
             Model model = LlamaClient.LoadModel(settings.ModelSettings);
 
+            Model? draftModel = null;
+
+            if(settings.DraftModelSettings is not null)
+            {
+                draftModel = LlamaClient.LoadModel(settings.DraftModelSettings);
+            }
+
             if(settings.SamplerSets.Count == 0)
             {
                 throw new ArgumentException("Samplers and logit bias must be migrated to SamplerSets");
@@ -58,9 +65,20 @@ namespace LlamaNative.Chat
                 samplerSets.Add(newSet);
             }
 
-            INativeContext context = LlamaClient.LoadContext(model,
-                                                             settings.ContextSettings,
-                                                             samplerSets);
+            INativeContext context;
+
+            if (draftModel is null)
+            {
+                context = LlamaClient.LoadContext(model,
+                                                  settings.ContextSettings,
+                                                  samplerSets);
+            } else
+            {
+                context = LlamaClient.LoadContext(model,
+                                                  draftModel,
+                                                  settings.ContextSettings,
+                                                  samplerSets);
+            }
 
             return new ChatContext(settings, context);
         }

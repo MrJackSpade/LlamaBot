@@ -10,23 +10,18 @@ namespace LlamaNative.Extensions
 {
     public static class INativeContextExtensions
     {
-        public static float[] GetEmbeddings(this INativeContext handler)
-        {
-            return handler.ContextHandle.GetEmbeddings();
-        }
-
         public static Span<float> GetLogits(this INativeContext handler)
         {
             int n_vocab = handler.VocabCount();
 
-            Span<float> logits = NativeApi.GetLogits(handler.ContextHandle, n_vocab);
+            Span<float> logits = NativeApi.GetLogits(handler.ModelState.ContextHandle, n_vocab);
 
             return logits;
         }
 
         public static Token GetToken(this INativeContext handler, TokenMask mask, int id)
         {
-            return new(id, NativeApi.TokenToPiece(handler.ModelHandle, id), mask);
+            return new(id, NativeApi.TokenToPiece(handler.ModelState.ModelHandle, id), mask);
         }
 
         public static Token Predict(this INativeContext handler, LogitRuleCollection logitRules)
@@ -109,7 +104,7 @@ namespace LlamaNative.Extensions
         {
             TokenCollection tokens = new();
 
-            foreach (int id in NativeApi.Tokenize(context.ModelHandle, value, addBos))
+            foreach (int id in NativeApi.Tokenize(context.ModelState.ModelHandle, value, addBos))
             {
                 tokens.Append(context.GetToken(tokenMask, id));
             }
@@ -131,7 +126,7 @@ namespace LlamaNative.Extensions
 
         public static int VocabCount(this INativeContext handler)
         {
-            return NativeApi.NVocab(handler.ModelHandle);
+            return NativeApi.NVocab(handler.ModelState.ModelHandle);
         }
 
         public static void Write(this INativeContext handler, TokenMask mask, params string[] inputText)

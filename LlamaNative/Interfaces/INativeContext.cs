@@ -11,11 +11,7 @@ namespace LlamaNative.Interfaces
     {
         public uint AvailableBuffer { get; }
 
-        SafeContextHandle ContextHandle { get; }
-
-        KvCacheState KvCache { get; }
-
-        SafeModelHandle ModelHandle { get; }
+        ModelState ModelState { get; }
 
         uint Size { get; }
 
