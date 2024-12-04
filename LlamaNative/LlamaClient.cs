@@ -30,5 +30,24 @@ namespace LlamaNative
                                      lparams,
                                      samplerSets);
         }
+
+        public static INativeContext LoadContext(
+            Model loadedModel,
+            Model draftModel,
+            ContextSettings contextSettings,
+            List<SamplerSet> samplerSets
+        )
+        {
+            SafeContextHandle loadedContext = NativeApi.LoadContext(loadedModel.Handle, contextSettings, out ContextParams contextParams);
+            SafeContextHandle loadedDraftContext = NativeApi.LoadContext(draftModel.Handle, contextSettings, out ContextParams draftContextParams);
+
+            return new NativeContext(loadedDraftContext,
+                                     draftModel.Handle,
+                                     draftContextParams,
+                                     loadedContext,
+                                     loadedModel.Handle,
+                                     contextParams,
+                                     samplerSets);
+        }
     }
 }

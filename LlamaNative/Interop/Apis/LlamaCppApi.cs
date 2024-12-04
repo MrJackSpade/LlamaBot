@@ -106,6 +106,12 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cache")]
         public static partial IntPtr GetKvCache(SafeContextHandle ctx);
 
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cell_seq_id_count")]
+        public static partial IntPtr GetKVCellSeqIdCount(IntPtr cell);
+
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cell_seq_ids")]
+        public static partial void GetKvCellSeqIds(IntPtr cell, [Out] int[] seqIds);
+
         /// <summary>
         /// Token logits obtained from the last call to llama_eval()
         /// The logits for the last token are stored in the last row

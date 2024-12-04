@@ -35,10 +35,6 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>libggml.so</TargetPath>
 		</Content>
-		<Content Include="Binaries\CUDA\llama.ilk">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>llama.ilk</TargetPath>
-		</Content>
 		<Content Include="Binaries\CUDA\llama.pdb">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.pdb</TargetPath>
@@ -46,10 +42,6 @@
 		<Content Include="Binaries\CUDA\ggml.dll">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.dll</TargetPath>
-		</Content>
-		<Content Include="Binaries\CUDA\ggml.ilk">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>ggml.ilk</TargetPath>
 		</Content>
 		<Content Include="Binaries\CUDA\ggml.pdb">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

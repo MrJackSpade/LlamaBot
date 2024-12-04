@@ -34,6 +34,14 @@
 	  <None Remove="Discord\Model\**" />
 	</ItemGroup>
 	<ItemGroup>
+	  <None Remove="Characters\Magnum\Drummer2\Configuration.json" />
+	  <None Remove="Characters\Magnum\Drummer2\System.txt" />
+	  <None Remove="Characters\Magnum\Magnum2-RP-Draft\Configuration.json" />
+	  <None Remove="Characters\Magnum\Magnum2-RP-Draft\System.txt" />
+	  <None Remove="Characters\Magnum\Magnum4-RP\Configuration.json" />
+	  <None Remove="Characters\Magnum\Magnum4-RP\System.txt" />
+	  <None Remove="Characters\Magnum\Magnum2-RP\Configuration.json" />
+	  <None Remove="Characters\Magnum\Magnum2-RP\System.txt" />
 	  <None Remove="Characters\Magnum\Magnum4\Configuration.json" />
 	  <None Remove="Characters\Magnum\Magnum4\System.txt" />
 	  <None Remove="Characters\Mistral\Entropy\Configuration.json" />
@@ -66,5 +74,25 @@
 	<ItemGroup>
 		<Folder Include="Characters\Llama3\LlamaBot\" />
 		<Folder Include="Discord\Exceptions\" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Update="Characters\Magnum\Magnum2-RP\Configuration.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Update="Characters\Magnum\Magnum2-RP\System.txt">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Update="Characters\Magnum\Magnum2-RP-Draft\Configuration.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Update="Characters\Magnum\Magnum2-RP-Draft\System.txt">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
-﻿using LlamaNative.Interop.Structs;
+﻿using LlamaNative.Decode.Interfaces;
+using LlamaNative.Interop.Structs;
 using LlamaNative.Logit.Collections;
 using LlamaNative.Models;
 using LlamaNative.Tokens.Interfaces;
@@ -10,11 +11,9 @@ namespace LlamaNative.Interfaces
     {
         public uint AvailableBuffer { get; }
 
-        IReadOnlyTokenCollection Buffer { get; }
+        SafeContextHandle ContextHandle { get; }
 
-        IReadOnlyTokenCollection Evaluated { get; }
-
-        SafeContextHandle Handle { get; }
+        KvCacheState KvCache { get; }
 
         SafeModelHandle ModelHandle { get; }
 

@@ -1,16 +1,19 @@
-﻿namespace LlamaNative.Decode.Models
+﻿using LlamaNative.Tokens.Models;
+using LlamaNative.Utils;
+
+namespace LlamaNative.Decode.Models
 {
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-    public class BatchDecode<T>
+    public class BatchDecode
     {
-        private List<BatchItem<T>> _items = [];
+        private List<BatchItem> _items = [];
 
         public int Count => _items.Count;
 
         public float[] Embeddings { get; set; }
 
-        public IReadOnlyList<BatchItem<T>> Items => _items;
+        public IReadOnlyList<BatchItem> Items => _items;
 
         public byte[] Logits { get; set; }
 
@@ -21,20 +24,19 @@
         /// <param name="position"></param>
         /// <param name="sequenceIds">Defaults to { 0 }</param>
         /// <param name="includeLogits">Defaults to false</param>
-        public void AddItem(T token, uint position, int[] sequenceIds = null, bool includeLogits = false)
+        public void AddItem(Token token, uint position, int[] sequenceIds, bool includeLogits = false)
         {
-            BatchItem<T> item = new()
+            Ensure.NotNullOrEmpty(sequenceIds);
+
+            BatchItem item = new(token, position, sequenceIds)
             {
-                SequenceIds = sequenceIds ?? [0],
-                Position = position,
-                Token = token,
                 IncludeLogits = includeLogits
             };
 
             this.AddItem(item);
         }
 
-        public void AddItem(BatchItem<T> item)
+        public void AddItem(BatchItem item)
         {
             _items.Add(item);
             _items = [.. _items.OrderBy(i => i.Position)];
@@ -45,15 +47,15 @@
             _items.Clear();
         }
 
-        public BatchDecode<T> Clone(Func<BatchItem<T>, bool> predicate)
+        public BatchDecode Clone(Func<BatchItem, bool> predicate)
         {
-            BatchDecode<T> result = new()
+            BatchDecode result = new()
             {
                 Embeddings = Embeddings,
                 Logits = Logits
             };
 
-            foreach (BatchItem<T>? item in Items.Where(predicate))
+            foreach (BatchItem? item in Items.Where(predicate))
             {
                 result.AddItem(item);
             }
@@ -61,7 +63,7 @@
             return result;
         }
 
-        public bool TryRemove(uint positionToRemove, out BatchItem<T> found)
+        public bool TryRemove(uint positionToRemove, out BatchItem found)
         {
             for (int i = 0; i < _items.Count; i++)
             {

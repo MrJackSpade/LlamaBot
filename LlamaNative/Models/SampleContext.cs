@@ -1,4 +1,5 @@
-﻿using LlamaNative.Interop.Structs;
+﻿using LlamaNative.Decode.Interfaces;
+using LlamaNative.Interop.Structs;
 using LlamaNative.Tokens.Interfaces;
 using LlamaNative.Tokens.Models;
 
@@ -10,7 +11,7 @@ namespace LlamaNative.Models
 
         public SafeContextHandle ContextHandle { get; set; }
 
-        public IReadOnlyTokenCollection ContextTokens { get; set; }
+        public KvCacheState KvCache { get; set; }
 
         public SafeModelHandle ModelHandle { get; set; }
 

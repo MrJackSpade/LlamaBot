@@ -7,7 +7,7 @@ using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Decode.Utils
 {
-    internal partial class KvCacheShifter(uint threadCount, uint batchSize, SafeContextHandle handle, SafeModelHandle modelHandle) : IArrayShifter<Token>
+    internal partial class KvCacheShifter(uint threadCount, uint batchSize, SafeContextHandle handle, SafeModelHandle modelHandle) : IArrayShifter
     {
         private readonly uint _batchSize = batchSize;
 
@@ -22,29 +22,16 @@ namespace LlamaNative.Decode.Utils
             throw new NotImplementedException();
         }
 
-        public void Decode(BatchDecode<Token> batch)
+        public void Decode(BatchDecode batch)
         {
-            BatchDecode<int> idBatch = new();
+            BatchDecode idBatch = new();
 
-            foreach (BatchItem<Token> oldItem in batch.Items)
+            foreach (BatchItem oldItem in batch.Items)
             {
-                idBatch.AddItem(oldItem.Token.Id, oldItem.Position, oldItem.SequenceIds, oldItem.IncludeLogits);
+                idBatch.AddItem(oldItem.Token, oldItem.Position, oldItem.SequenceIds, oldItem.IncludeLogits);
             }
 
             NativeApi.Decode(_handle, idBatch, _batchSize);
-        }
-
-        public void Evaluate(Token[] tokens, uint pos)
-        {
-            if (_threadCount == 0)
-            {
-                throw new LlamaCppRuntimeError("Evaluation thread count can not be zero");
-            }
-
-            if (NativeApi.Eval(_handle, tokens.Select(l => l.Id).ToArray(), tokens.Length, pos, (int)_threadCount) != 0)
-            {
-                throw new LlamaCppRuntimeError("Failed to eval.");
-            }
         }
 
         public int GetCacheTokenCount()
@@ -75,19 +62,6 @@ namespace LlamaNative.Decode.Utils
         public void ShiftCacheTokens(uint sequenceId, uint startPos, uint endPos, int delta)
         {
             NativeApi.ShiftCacheTokens(_handle, sequenceId, startPos, endPos, delta);
-        }
-
-        public void Validate(KvCacheState<Token> kvCache)
-        {
-            Token[] evaluated = NativeApi.GetEvaluated(_handle, _model);
-
-            for (int i = 0; i < kvCache.Length; i++)
-            {
-                if (evaluated[i] != kvCache[(uint)i])
-                {
-                    throw new InvalidOperationException();
-                }
-            }
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace LlamaNative.Decode.Interfaces
 {
-    public interface IArrayShifter<T>
+    public interface IArrayShifter
     {
         /// <summary>
         /// Copy all tokens that belong to the specified source sequence to another destination sequence.
@@ -17,14 +17,7 @@ namespace LlamaNative.Decode.Interfaces
         /// </summary>
         /// <param name="start"></param>
         /// <param name="count"></param>
-        void Decode(BatchDecode<T> batch);
-
-        /// <summary>
-        /// Evaluates the tokens
-        /// </summary>
-        /// <param name="start"></param>
-        /// <param name="count"></param>
-        void Evaluate(T[] tokens, uint startPos);
+        void Decode(BatchDecode batch);
 
         /// <summary>
         /// Returns the number of tokens in the KV cache
@@ -67,7 +60,5 @@ namespace LlamaNative.Decode.Interfaces
         /// endPos < 0 : [startPos, inf)
         /// </summary>
         void ShiftCacheTokens(uint sequenceId, uint startPos, uint endPos, int delta);
-
-        void Validate(KvCacheState<T> kvCache);
     }
 }

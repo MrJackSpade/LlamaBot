@@ -1,38 +1,41 @@
 ﻿using LlamaNative.Decode.Utils;
-
-using System.Collections;
+using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Decode.Interfaces
 {
-    public class KvCacheState<T> : IEnumerable<T>
+    public class KvCacheState
     {
-        private readonly T[] _backingData;
+        private readonly SequencedToken[] _backingData;
 
-        private readonly T _defaultToken;
+        private readonly SequencedToken _defaultToken;
+
+        public IEnumerable<Token> GetSequence(int seqId)
+        {
+            //Should this be ordered?
+            return _backingData.Where(s => s.SequenceIds.Contains(seqId)).Select(s => s.Data);
+        }
 
         private readonly HashSet<uint> _relocated;
 
-        private readonly KvCacheTransformation<T>?[] _transformations;
-
-        public KvCacheState(T[] backingData, T defaultToken)
-        {
-            _defaultToken = defaultToken;
-            _transformations = new KvCacheTransformation<T>[backingData.Length];
-            _backingData = backingData;
-            _relocated = new HashSet<uint>(_backingData.Length);
-        }
-
-        public KvCacheState(uint size, T defaultToken) : this(new T[size], defaultToken)
-        {
-            for (int i = 0; i < size; i++)
-            {
-                _backingData[i] = defaultToken;
-            }
-        }
+        private readonly KvCacheTransformation<SequencedToken>?[] _transformations;
 
         public uint Length => (uint)_transformations.Length;
 
-        public T this[uint index]
+        public KvCacheState(uint size, Token defaultToken)
+        {
+            _backingData = new SequencedToken[size];
+            _defaultToken = new SequencedToken(defaultToken, [0]);
+
+            for (int i = 0; i < size; i++)
+            {
+                _backingData[i] = _defaultToken;
+            }
+
+            _transformations = new KvCacheTransformation<SequencedToken>[size];
+            _relocated = new HashSet<uint>(_backingData.Length);
+        }
+
+        public SequencedToken this[uint index]
         {
             get => _backingData[index];
             set => _backingData[index] = value;
@@ -48,19 +51,9 @@ namespace LlamaNative.Decode.Interfaces
             _relocated.Clear();
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public IEnumerable<KvCacheTransformation<SequencedToken>> GetMoves()
         {
-            return ((IEnumerable<T>)_backingData).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return _backingData.GetEnumerator();
-        }
-
-        public IEnumerable<KvCacheTransformation<T>> GetMoves()
-        {
-            foreach (KvCacheTransformation<T>? transform in _transformations.Where(s => (s?.Delta ?? 0) != 0))
+            foreach (KvCacheTransformation<SequencedToken>? transform in _transformations.Where(s => (s?.Delta ?? 0) != 0))
             {
                 yield return transform!;
             }
@@ -94,7 +87,7 @@ namespace LlamaNative.Decode.Interfaces
             }
 
             _relocated.Add(oldIndex);
-            _transformations[newIndex] = new KvCacheTransformation<T>(_backingData[oldIndex], oldIndex, newIndex);
+            _transformations[newIndex] = new KvCacheTransformation<SequencedToken>(_backingData[oldIndex], oldIndex, newIndex);
         }
 
         public void Pin(uint index)
@@ -110,7 +103,7 @@ namespace LlamaNative.Decode.Interfaces
             }
 
             _relocated.Add(index);
-            _transformations[index] = new KvCacheTransformation<T>(_backingData[index], index);
+            _transformations[index] = new KvCacheTransformation<SequencedToken>(_backingData[index], index);
         }
     }
 }

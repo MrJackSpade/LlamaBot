@@ -1,27 +1,28 @@
 ﻿using LlamaNative.Decode.Collections;
 using LlamaNative.Decode.Interfaces;
 using LlamaNative.Decode.Models;
+using LlamaNative.Tokens.Models;
 using System.Diagnostics;
 
 namespace LlamaNative.Decode.Utils
 {
-    public partial class PointerArraySynchronizer<T>(IArrayShifter<T> shifter, T defaultT)
+    public partial class PointerArraySynchronizer(IArrayShifter shifter, Token defaultT)
     {
-        protected IArrayShifter<T> _arrayShifter = shifter;
+        protected IArrayShifter _arrayShifter = shifter;
 
-        private readonly T _defaultToken = defaultT;
+        private readonly SequencedToken _defaultToken = new (defaultT, [0]);
 
-        public void Sync(KvCacheState<T> kvCache, PointerArray<T> buffer)
+        public void Sync(KvCacheState kvCache, PointerArray buffer)
         {
             this.TransformCache(kvCache, buffer);
             this.DecodeNew(kvCache, buffer);
         }
 
-        public void TransformCache(KvCacheState<T> kvCache, PointerArray<T> buffer)
+        public void TransformCache(KvCacheState kvCache, PointerArray buffer)
         {
             uint matchCount = 0;
 
-            while (matchCount < kvCache.Length && Equals(kvCache[matchCount], buffer[matchCount]))
+            while (matchCount < kvCache.Length && Equals(kvCache[matchCount].Data, buffer[matchCount].Data))
             {
                 matchCount++;
             }
@@ -33,7 +34,7 @@ namespace LlamaNative.Decode.Utils
             {
                 uint thisShiftCount = 0;
 
-                while (thisShiftStart + thisShiftCount < kvCache.Length && Equals(kvCache[thisShiftStart + thisShiftCount], buffer[matchCount + thisShiftCount]))
+                while (thisShiftStart + thisShiftCount < kvCache.Length && Equals(kvCache[thisShiftStart + thisShiftCount].Data, buffer[matchCount + thisShiftCount].Data))
                 {
                     thisShiftCount++;
                 }
@@ -67,24 +68,24 @@ namespace LlamaNative.Decode.Utils
             this.RemoveCacheTokens(kvCache, clearStart, kvCache.Length);
         }
 
-        private void Decode(KvCacheState<T> kvCache, BatchDecode<T> llamaBatch)
+        private void Decode(KvCacheState kvCache, BatchDecode llamaBatch)
         {
             if (llamaBatch.Items.Count > 0)
             {
                 _arrayShifter.Decode(llamaBatch);
 
-                foreach (BatchItem<T> item in llamaBatch.Items)
+                foreach (BatchItem item in llamaBatch.Items)
                 {
-                    kvCache[item.Position] = item.Token;
+                    kvCache[item.Position] = new (item.Token, item.SequenceIds);
                 }
 
                 llamaBatch.Clear();
             }
         }
 
-        private void DecodeNew(KvCacheState<T> kvCache, PointerArray<T> buffer)
+        private void DecodeNew(KvCacheState kvCache, PointerArray buffer)
         {
-            BatchDecode<T> llamaBatch = new();
+            BatchDecode llamaBatch = new();
 
             for (uint i = 0; i < buffer.Pointer; i++)
             {
@@ -93,21 +94,21 @@ namespace LlamaNative.Decode.Utils
                     throw new Exception("Default token found in buffer");
                 }
 
-                if (!Equals(kvCache[i], buffer[i]))
+                if (!Equals(kvCache[i].Data, buffer[i].Data))
                 {
-                    llamaBatch.AddItem(buffer[i], i);
+                    llamaBatch.AddItem(buffer[i].Data, i, buffer[i].SequenceIds);
                 }
             }
 
             this.Decode(kvCache, llamaBatch);
         }
 
-        private bool IsDefault(T toTest)
+        private bool IsDefault(SequencedToken toTest)
         {
-            return Equals(_defaultToken, toTest);
+            return Equals(_defaultToken, toTest.Data);
         }
 
-        private void RemoveCacheTokens(KvCacheState<T> kvCache, uint clearStart, uint clearEnd)
+        private void RemoveCacheTokens(KvCacheState kvCache, uint clearStart, uint clearEnd)
         {
             for (uint i = clearStart; i < clearEnd; i++)
             {
@@ -115,11 +116,9 @@ namespace LlamaNative.Decode.Utils
             }
 
             _arrayShifter.RemoveCacheTokens(clearStart, clearEnd);
-
-            _arrayShifter.Validate(kvCache);
         }
 
-        private void ShiftCacheTokens(KvCacheState<T> kvCache, int start, int count, int amount)
+        private void ShiftCacheTokens(KvCacheState kvCache, int start, int count, int amount)
         {
             if (amount > 0)
             {
@@ -138,8 +137,6 @@ namespace LlamaNative.Decode.Utils
             }
 
             _arrayShifter.ShiftCacheTokens(0, (uint)start, (uint)(start + count), amount);
-
-            _arrayShifter.Validate(kvCache);
         }
     }
 }

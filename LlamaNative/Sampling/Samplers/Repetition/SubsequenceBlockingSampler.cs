@@ -2,6 +2,7 @@
 using LlamaNative.Models;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Settings;
+using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Extensions;
 
 namespace LlamaNative.Sampling.Samplers.Repetition
@@ -10,16 +11,18 @@ namespace LlamaNative.Sampling.Samplers.Repetition
     {
         private readonly SubsequenceBlockingSamplerSettings _settings = settings;
 
-        public void SampleNext(SampleContext context)
+        public void SampleNext(SampleContext sampleContext)
         {
             if (_settings.ResponseStartBlock == 0)
             {
                 return;
             }
 
-            int[] sequenceTokens = NativeApi.Tokenize(context.ModelHandle, _settings.SubSequence, false);
+            TokenCollection sequence = new TokenCollection(sampleContext.KvCache.GetSequence(0)).Trim();
 
-            bool inSequence = context.ContextTokens.EndsWith(sequenceTokens);
+            int[] sequenceTokens = NativeApi.Tokenize(sampleContext.ModelHandle, _settings.SubSequence, false);
+
+            bool inSequence = sequence.EndsWith(sequenceTokens);
 
             if (!inSequence)
             {
@@ -31,7 +34,7 @@ namespace LlamaNative.Sampling.Samplers.Repetition
             int start = sequenceTokens.Length;
 
             //-1 because otherwise we align with the end of the sequence
-            long end = context.ContextTokens.Count - sequenceTokens.Length - 1;
+            long end = sequence.Count - sequenceTokens.Length - 1;
 
             for (int i = (int)end; i > start; i--)
             {
@@ -39,7 +42,7 @@ namespace LlamaNative.Sampling.Samplers.Repetition
 
                 for (int j = 0; j < sequenceTokens.Length; j++)
                 {
-                    if (sequenceTokens[j] != context.ContextTokens[i + j].Id)
+                    if (sequenceTokens[j] != sequence[i + j].Id)
                     {
                         match = false;
                         break;
@@ -48,7 +51,7 @@ namespace LlamaNative.Sampling.Samplers.Repetition
 
                 if (match)
                 {
-                    int nextToken = context.ContextTokens[i + sequenceTokens.Length].Id;
+                    int nextToken = sequence[i + sequenceTokens.Length].Id;
                     banTokens.Add(nextToken);
 
                     if (banTokens.Count > _settings.ResponseStartBlock)
@@ -60,8 +63,8 @@ namespace LlamaNative.Sampling.Samplers.Repetition
 
             foreach (int banToken in banTokens)
             {
-                context.Candidates.SetLogit(banToken, float.NegativeInfinity);
-                context.OriginalCandidates.SetLogit(banToken, float.NegativeInfinity);
+                sampleContext.Candidates.SetLogit(banToken, float.NegativeInfinity);
+                sampleContext.OriginalCandidates.SetLogit(banToken, float.NegativeInfinity);
             }
         }
     }

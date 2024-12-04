@@ -14,7 +14,7 @@ namespace LlamaNative.Sampling.Samplers.FrequencyAndPresence
 
         public void SampleNext(SampleContext sampleContext)
         {
-            TokenCollection sampleTokens = sampleContext.ContextTokens.Trim();
+            TokenCollection sampleTokens = new TokenCollection(sampleContext.KvCache.GetSequence(0)).Trim();
 
             int[] lastTokens = this.GetLastTokens(sampleTokens, TokenMask.Undefined, _settings.RepeatTokenPenaltyWindow).Ids;
 

@@ -1,29 +1,20 @@
-﻿namespace LlamaNative.Decode.Models
+﻿using LlamaNative.Tokens.Models;
+
+namespace LlamaNative.Decode.Models
 {
-    public class BatchItem<T>
+    public class BatchItem(Token token, uint pos, int[] seqIds)
     {
-        public BatchItem()
-        {
-        }
-
-        public BatchItem(T token, uint pos, int[]? seqIds = null)
-        {
-            Token = token;
-            Position = pos;
-            SequenceIds = seqIds ?? [0];
-        }
-
         public bool IncludeLogits { get; set; }
 
-        public uint Position { get; set; }
+        public uint Position { get; set; } = pos;
 
-        public int[] SequenceIds { get; set; }
+        public int[] SequenceIds { get; set; } = seqIds;
 
-        public T Token { get; set; }
+        public Token Token { get; set; } = token;
 
         public override string ToString()
         {
-            return $"[{Position}] {Token}";
+            return $"[{Position}] {this.Token}";
         }
     }
 }

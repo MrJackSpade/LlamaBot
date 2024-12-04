@@ -38,6 +38,7 @@ namespace LlamaNative.Interop.Structs
 #if WINDOWS
 
 #else
+        //This is padding because the structure size differs between Windows and Linux
 
         public long P2;
 
@@ -53,5 +54,13 @@ namespace LlamaNative.Interop.Structs
         {
             return $"pos: {Pos}; delt: {Delta}; value {Value}";
         }
+    }
+
+    public class SequencedKvCell(int pos, int value, int[] sequenceIds)
+    {
+        public int Pos { get; } = pos;
+        public int Value { get; } = value;
+
+        public int[] SequenceIds { get; } = sequenceIds;
     }
 }

@@ -20,7 +20,7 @@ namespace LlamaNative.Chat
                 throw new ArgumentException("Samplers and logit bias must be migrated to SamplerSets");
             }
 
-            List<SamplerSet> samplerSets = new();
+            List<SamplerSet> samplerSets = [];
 
             foreach (SamplerSetConfiguration samplerSet in settings.SamplerSets)
             {

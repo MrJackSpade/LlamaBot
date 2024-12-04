@@ -12,14 +12,14 @@ namespace LlamaNative.Extensions
     {
         public static float[] GetEmbeddings(this INativeContext handler)
         {
-            return handler.Handle.GetEmbeddings();
+            return handler.ContextHandle.GetEmbeddings();
         }
 
         public static Span<float> GetLogits(this INativeContext handler)
         {
             int n_vocab = handler.VocabCount();
 
-            Span<float> logits = NativeApi.GetLogits(handler.Handle, n_vocab);
+            Span<float> logits = NativeApi.GetLogits(handler.ContextHandle, n_vocab);
 
             return logits;
         }

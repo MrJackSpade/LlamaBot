@@ -4,6 +4,7 @@ using LlamaNative.Models;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Settings;
+using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Extensions;
 using LlamaNative.Utils.Extensions;
 using System.Diagnostics;
@@ -85,7 +86,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 this.Push(sampleContext.GetOriginalData(selectedToken));
             }
 
-            Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
+            TokenCollection contextTokens = new TokenCollection(sampleContext.KvCache.GetSequence(0)).Trim();
+
+            Debug.WriteLine($"[{contextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
 
             TokenData originalP = sampleContext.GetOriginalData(selectedToken);
 

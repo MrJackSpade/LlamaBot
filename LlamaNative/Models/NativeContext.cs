@@ -10,8 +10,6 @@ using LlamaNative.Logit.Extensions;
 using LlamaNative.Logit.Models;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Models;
-using LlamaNative.Tokens.Collections;
-using LlamaNative.Tokens.Interfaces;
 using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Models
@@ -22,27 +20,31 @@ namespace LlamaNative.Models
 
         private readonly List<SamplerSet> _allSamplers;
 
-        private readonly PointerArray<Token> _buffer;
+        private readonly PointerArray _buffer;
 
         private readonly float[,] _embeddingStack;
 
         private readonly ContextParams _settings;
 
-        private readonly PointerArraySynchronizer<Token> _synchronizer;
+        private readonly ContextParams _draftSettings;
 
-        private KvCacheState<Token> _kvCache;
+        private readonly PointerArraySynchronizer _synchronizer;
+
+        public KvCacheState KvCache { get; private set; }
 
         public uint AvailableBuffer => Size - _buffer.Pointer;
 
-        public IReadOnlyTokenCollection Buffer => new TokenCollection(_buffer);
+        public SafeContextHandle ContextHandle { get; private set; }
 
-        public IReadOnlyTokenCollection Evaluated => new TokenCollection(_kvCache).Trim();
+        public SafeContextHandle? DraftContextHandle { get; private set; }
 
-        public SafeContextHandle Handle { get; private set; }
+        public SafeModelHandle? DraftModelHandle { get; }
 
         public SafeModelHandle ModelHandle { get; }
 
         public uint Size { get; private set; }
+
+        private Dictionary<int, string> ActiveLogitBias => ActiveSamplerSet.LogitBias;
 
         private SamplerSet ActiveSamplerSet => _activeSamplers.Peek();
 
@@ -50,11 +52,19 @@ namespace LlamaNative.Models
 
         private ITokenSelector ActiveTokenSelector => ActiveSamplerSet.TokenSelector;
 
-        private Dictionary<int, string> ActiveLogitBias => ActiveSamplerSet.LogitBias;
-
-        public NativeContext(SafeContextHandle handle, SafeModelHandle modelHandle, ContextParams settings, List<SamplerSet> samplerSets)
+        public NativeContext(SafeContextHandle draftContextHandle, SafeModelHandle draftModelHandle, ContextParams draftSettings, SafeContextHandle contextHandle, SafeModelHandle modelHandle, ContextParams settings, List<SamplerSet> samplerSets) : this(contextHandle, modelHandle, settings, samplerSets)
         {
-            ArgumentNullException.ThrowIfNull(handle);
+            ArgumentNullException.ThrowIfNull(draftContextHandle);
+            ArgumentNullException.ThrowIfNull(draftModelHandle);
+
+            this.DraftModelHandle = draftModelHandle;
+            this.DraftContextHandle = draftContextHandle;
+            this._draftSettings = draftSettings;
+        }
+
+        public NativeContext(SafeContextHandle contextHandle, SafeModelHandle modelHandle, ContextParams settings, List<SamplerSet> samplerSets)
+        {
+            ArgumentNullException.ThrowIfNull(contextHandle);
             ArgumentNullException.ThrowIfNull(modelHandle);
             ArgumentNullException.ThrowIfNull(settings);
             ArgumentNullException.ThrowIfNull(samplerSets);
@@ -70,28 +80,24 @@ namespace LlamaNative.Models
                 }
             }
 
-            _synchronizer = new PointerArraySynchronizer<Token>(
-                new KvCacheShifter(settings.NThreads, settings.NBatch, handle, modelHandle),
+            _synchronizer = new PointerArraySynchronizer(
+                new KvCacheShifter(settings.NThreads, settings.NBatch, contextHandle, modelHandle),
                 Token.Null
                 );
 
-            Handle = handle;
+            ContextHandle = contextHandle;
 
             _settings = settings;
             Size = _settings.NCtx;
 
-            _buffer = new PointerArray<Token>(Size);
+            _buffer = new PointerArray(Size);
             _buffer.Fill(Token.Null);
 
-            _kvCache = new KvCacheState<Token>(Size, Token.Null);
+            KvCache = new KvCacheState(Size, Token.Null);
 
             ModelHandle = modelHandle;
 
             this.PrimeStack();
-        }
-
-        protected NativeContext()
-        {
         }
 
         public void Clear(bool includeCache)
@@ -100,13 +106,13 @@ namespace LlamaNative.Models
 
             if (includeCache)
             {
-                _kvCache = new KvCacheState<Token>(Size, Token.Null);
+                KvCache = new KvCacheState(Size, Token.Null);
             }
         }
 
         public void Dispose()
         {
-            Handle.Dispose();
+            ContextHandle.Dispose();
         }
 
         public void Evaluate(int count = -1)
@@ -116,7 +122,7 @@ namespace LlamaNative.Models
                 throw new NotImplementedException();
             }
 
-            _synchronizer.Sync(_kvCache, _buffer);
+            _synchronizer.Sync(KvCache, _buffer);
         }
 
         public virtual Token SelectToken(LogitRuleCollection? logitRules, out SampleContext sampleContext)
@@ -136,8 +142,8 @@ namespace LlamaNative.Models
             sampleContext = new()
             {
                 Candidates = candidates,
-                ContextHandle = Handle,
-                ContextTokens = Evaluated,
+                ContextHandle = ContextHandle,
+                KvCache = KvCache,
                 ModelHandle = ModelHandle,
                 OriginalCandidates = originalCandidates
             };
@@ -175,7 +181,7 @@ namespace LlamaNative.Models
                 throw new OutOfContextException();
             }
 
-            _buffer[_buffer.Pointer++] = token;
+            _buffer[_buffer.Pointer++] = new (token, [0]);
 
             if (ActiveSamplerSet.Pop == token.Id)
             {

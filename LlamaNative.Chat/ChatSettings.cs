@@ -1,7 +1,5 @@
 ﻿using LlamaNative.Chat.Models;
 using LlamaNative.Interop.Settings;
-using LlamaNative.Sampling.Models;
-using LlamaNative.Sampling.Samplers.Temperature;
 
 namespace LlamaNative.Chat
 {
@@ -17,7 +15,9 @@ namespace LlamaNative.Chat
 
         public ContextSettings ContextSettings { get; set; } = new ContextSettings();
 
-        public ModelSettings ModelSettings { get; set; }
+        public ModelSettings? DraftModelSettings { get; set; }
+
+        public required ModelSettings ModelSettings { get; set; }
 
         /// <summary>
         /// Forces the bot to vary its response by X number

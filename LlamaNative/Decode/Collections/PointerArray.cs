@@ -1,14 +1,16 @@
-﻿using System.Collections;
+﻿using LlamaNative.Decode.Interfaces;
+using LlamaNative.Tokens.Models;
+using System.Collections;
 
 namespace LlamaNative.Decode.Collections
 {
-    public class PointerArray<T> : IEnumerable<T>
+    public class PointerArray : IEnumerable<SequencedToken>
     {
-        private readonly T[] _backingData;
+        private readonly SequencedToken[] _backingData;
 
-        public PointerArray(uint length, params T[] array)
+        public PointerArray(uint length, params SequencedToken[] array)
         {
-            _backingData = new T[length];
+            _backingData = new SequencedToken[length];
 
             for (int i = 0; i < array.Length; i++)
             {
@@ -22,7 +24,7 @@ namespace LlamaNative.Decode.Collections
 
         public uint Pointer { get; set; }
 
-        public T this[uint index]
+        public SequencedToken this[uint index]
         {
             get => _backingData[index];
             set => _backingData[index] = value;
@@ -33,17 +35,17 @@ namespace LlamaNative.Decode.Collections
             Pointer = 0;
         }
 
-        public void Fill(T item)
+        public void Fill(Token item)
         {
             for (int i = 0; i < _backingData.Length; i++)
             {
-                _backingData[i] = item;
+                _backingData[i] = new(item, [0]);
             }
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public IEnumerator<SequencedToken> GetEnumerator()
         {
-            return ((IEnumerable<T>)_backingData).GetEnumerator();
+            return ((IEnumerable<SequencedToken>)_backingData).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -51,7 +53,7 @@ namespace LlamaNative.Decode.Collections
             return _backingData.GetEnumerator();
         }
 
-        public Span<T> Slice(int startIndex, int length)
+        public Span<SequencedToken> Slice(int startIndex, int length)
         {
             return _backingData.AsSpan().Slice(startIndex, length);
         }
@@ -76,7 +78,7 @@ namespace LlamaNative.Decode.Collections
             Pointer -= count;
         }
 
-        public void Write(T element)
+        public void Write(SequencedToken element)
         {
             this[Pointer] = element;
             Pointer++;

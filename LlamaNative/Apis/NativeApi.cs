@@ -6,6 +6,7 @@ using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Tokens.Models;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -13,12 +14,19 @@ namespace LlamaNative.Apis
 {
     public static unsafe class NativeApi
     {
+        private class CellDefinition
+        {
+            public SequencedKvCell Cell { get; set; }
+
+            public int Index { get; set; }
+        }
+
         static NativeApi()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
-        public static int Decode(SafeContextHandle handle, BatchDecode<int> batch, uint maxBatchSize)
+        public static int Decode(SafeContextHandle handle, BatchDecode batch, uint maxBatchSize)
         {
             //for logging
             uint toDecode = (uint)batch.Items.Count;
@@ -36,7 +44,7 @@ namespace LlamaNative.Apis
             }
 
             //grab the items
-            List<BatchItem<int>> batchItems = [.. batch.Items];
+            List<BatchItem> batchItems = [.. batch.Items];
 
             if (batch.Embeddings != null)
             {
@@ -50,7 +58,7 @@ namespace LlamaNative.Apis
 
             do
             {
-                BatchDecode<int> thisBatch = new();
+                BatchDecode thisBatch = new();
 
                 //Always process in order of position
                 batchItems = [.. batchItems.OrderBy(b => b.Position)];
@@ -66,7 +74,7 @@ namespace LlamaNative.Apis
                 }
 
                 //Now we try and find room
-                if (!TryFindBlock(handle, thisBatchSize, maxBatchSize, out FoundBlock fb))
+                if (!TryFindBlock(handle, thisBatchSize, maxBatchSize, out FoundBlock? fb))
                 {
                     //if no room, we fail
                     return 1;
@@ -88,12 +96,12 @@ namespace LlamaNative.Apis
                     if (thisBatch.Count < maxBatchSize)
                     {
                         //If so, eval it now. We have the space
-                        thisBatch.AddItem(tr.Value, tr.Pos);
+                        thisBatch.AddItem(tr.ToBatchItem());
                     }
                     else
                     {
                         //If not, save it for the next pass
-                        batchItems.Add(new BatchItem<int>(tr.Value, tr.Pos));
+                        batchItems.Add(tr.ToBatchItem());
                     }
                 }
 
@@ -105,7 +113,7 @@ namespace LlamaNative.Apis
                     if (thisBatch.Count > 0)
                     {
                         //And one of those items is the expected last token
-                        if (thisBatch.TryRemove(originalHighestPosition, out BatchItem<int> found))
+                        if (thisBatch.TryRemove(originalHighestPosition, out BatchItem found))
                         {
                             //remove it, because we need to process it on its own later
                             batchItems.Add(found);
@@ -166,19 +174,30 @@ namespace LlamaNative.Apis
             return Marshal.PtrToStructure<KvCache>(kvCachePtr);
         }
 
-        public static KvCell[] GetKvCells(SafeContextHandle context)
+        public static SequencedKvCell[] GetKvCells(SafeContextHandle context)
         {
             KvCache cache = GetKvCache(context);
-
             uint count = cache.Size;
-
-            KvCell[] cells = new KvCell[count];
-
+            SequencedKvCell[] cells = new SequencedKvCell[count];
             int cellSize = Marshal.SizeOf<KvCell>();
 
             for (int i = 0; i < count; i++)
             {
-                cells[i] = Marshal.PtrToStructure<KvCell>(nint.Add(cache.CellsPointer, i * cellSize));
+                nint cellPtr = nint.Add(cache.CellsPointer, i * cellSize);
+
+                KvCell thisCell = Marshal.PtrToStructure<KvCell>(cellPtr);
+
+                // Get sequence IDs
+                nint seqIdCount = LlamaCppApi.GetKVCellSeqIdCount(cellPtr);
+
+                int[] seqIds = new int[seqIdCount];
+
+                if (seqIdCount > 0)
+                {
+                    LlamaCppApi.GetKvCellSeqIds(cellPtr, seqIds);
+                }
+
+                cells[i] = new SequencedKvCell(thisCell.Pos, thisCell.Value, seqIds);
             }
 
             return cells;
@@ -293,6 +312,29 @@ namespace LlamaNative.Apis
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
+        public static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
+        {
+            int cnt = Encoding.Unicode.GetByteCount(text + 1);
+
+            int[] res = new int[cnt + (add_bos ? 1 : 0)];
+
+            int n = LlamaCppApi.Tokenize(ctx, text, res, res.Length, add_bos, parseSpecial);
+
+            if (n < 0)
+            {
+                throw new LlamaCppRuntimeError("Error happened during tokenization. It's possibly caused by wrong encoding. Please try to specify the encoding.");
+            }
+
+            res = res.Take(n).ToArray();
+
+            if (useLegacy && res[0] == 29871)
+            {
+                res = res.Skip(1).ToArray();
+            }
+
+            return res;
+        }
+
         public static string TokenToPiece(this SafeModelHandle ctx, int token, bool special = true)
         {
             // Assuming a buffer size of 256, adjust as needed.
@@ -322,7 +364,7 @@ namespace LlamaNative.Apis
 
         internal static Token[] GetEvaluated(SafeContextHandle context, SafeModelHandle model)
         {
-            KvCell[] cells = GetKvCells(context);
+            SequencedKvCell[] cells = GetKvCells(context);
 
             Token[] evaluated = new Token[cells.Length];
 
@@ -330,7 +372,7 @@ namespace LlamaNative.Apis
 
             {
                 int i = 0;
-                foreach (KvCell cell in cells)
+                foreach (SequencedKvCell cell in cells)
                 {
                     if (cell.Pos == -1)
                     {
@@ -366,7 +408,7 @@ namespace LlamaNative.Apis
                 Debugger.Break();
             }
 
-            foreach (KvCell cell in cells)
+            foreach (SequencedKvCell cell in cells)
             {
                 Token token;
 
@@ -405,29 +447,6 @@ namespace LlamaNative.Apis
             return evaluated;
         }
 
-        public static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
-        {
-            int cnt = Encoding.Unicode.GetByteCount(text + 1);
-
-            int[] res = new int[cnt + (add_bos ? 1 : 0)];
-
-            int n = LlamaCppApi.Tokenize(ctx, text, res, res.Length, add_bos, parseSpecial);
-
-            if (n < 0)
-            {
-                throw new LlamaCppRuntimeError("Error happened during tokenization. It's possibly caused by wrong encoding. Please try to specify the encoding.");
-            }
-
-            res = res.Take(n).ToArray();
-
-            if (useLegacy && res[0] == 29871)
-            {
-                res = res.Skip(1).ToArray();
-            }
-
-            return res;
-        }
-
         private static void Log(string method, params object[] args)
         {
             args ??= [];
@@ -435,7 +454,7 @@ namespace LlamaNative.Apis
             Debug.WriteLine($"{method}({string.Join(", ", args)})");
         }
 
-        private static int ProcessBatch(SafeContextHandle handle, BatchDecode<int> thisBatch)
+        private static int ProcessBatch(SafeContextHandle handle, BatchDecode thisBatch)
         {
             int[] tokens = new int[thisBatch.Items.Count];
             int[] pos = new int[thisBatch.Items.Count];
@@ -443,7 +462,7 @@ namespace LlamaNative.Apis
 
             for (int i = 0; i < thisBatch.Items.Count; i++)
             {
-                tokens[i] = thisBatch.Items[i].Token;
+                tokens[i] = thisBatch.Items[i].Token.Id;
                 pos[i] = (int)thisBatch.Items[i].Position;
                 nseq[i] = thisBatch.Items[i].SequenceIds.Length;
             }
@@ -507,11 +526,11 @@ namespace LlamaNative.Apis
             param.TensorSplit = tensorSplitPtr;
         }
 
-        private static bool TryFindBlock(SafeContextHandle handle, uint size, uint maxSize, out FoundBlock? foundBlock)
+        private static bool TryFindBlock(SafeContextHandle handle, uint size, uint maxSize, [NotNullWhen(true)] out FoundBlock? foundBlock)
         {
             foundBlock = null;
 
-            KvCell[] cells = GetKvCells(handle);
+            SequencedKvCell[] cells = GetKvCells(handle);
 
             List<uint> checkCells = new(cells.Length);
 
@@ -566,7 +585,7 @@ namespace LlamaNative.Apis
                     {
                         requiredSize++;
 
-                        thisBlock.AddReplacement(cells[offset].Pos, cells[offset].Value);
+                        thisBlock.AddReplacement(cells[offset].Pos, cells[offset].Value, cells[offset].SequenceIds);
 
                         if (foundBlock != null && foundBlock.ActualSize <= thisBlock.ActualSize)
                         {
@@ -594,13 +613,6 @@ namespace LlamaNative.Apis
             }
 
             return foundBlock != null;
-        }
-
-        private class CellDefinition
-        {
-            public KvCell Cell { get; set; }
-
-            public int Index { get; set; }
         }
     }
 }
