@@ -1,5 +1,4 @@
 ﻿using LlamaNative.Decode.Interfaces;
-using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Decode.Models
 {
@@ -9,6 +8,9 @@ namespace LlamaNative.Decode.Models
 
         public SequencedToken Value { get; set; } = value;
 
-        public BatchItem ToBatchItem() => new(Value.Data, Pos, Value.SequenceIds);
+        public BatchItem ToBatchItem()
+        {
+            return new(Value.Data, Pos, Value.SequenceIds);
+        }
     }
 }

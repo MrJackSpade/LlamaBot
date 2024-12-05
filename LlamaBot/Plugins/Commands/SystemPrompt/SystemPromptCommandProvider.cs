@@ -1,5 +1,4 @@
-﻿using Discord;
-using LlamaBot.Extensions;
+﻿using LlamaBot.Extensions;
 using LlamaBot.Plugins.Commands.ClearContext;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
@@ -42,7 +41,8 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
                 if (!_llamaBotClient!.SystemPrompts.TryGetValue(channelId, out string? value))
                 {
                     responseString = _llamaBotClient.DefaultSystemPrompt;
-                } else
+                }
+                else
                 {
                     responseString = value;
                 }

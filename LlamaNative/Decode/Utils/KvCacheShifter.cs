@@ -1,9 +1,7 @@
 ﻿using LlamaNative.Apis;
 using LlamaNative.Decode.Interfaces;
 using LlamaNative.Decode.Models;
-using LlamaNative.Exceptions;
 using LlamaNative.Interop.Structs;
-using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Decode.Utils
 {

@@ -1,8 +1,5 @@
-﻿using LlamaNative.Decode.Interfaces;
-using LlamaNative.Interop.Structs;
-using LlamaNative.Logit.Collections;
+﻿using LlamaNative.Logit.Collections;
 using LlamaNative.Models;
-using LlamaNative.Tokens.Interfaces;
 using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Interfaces

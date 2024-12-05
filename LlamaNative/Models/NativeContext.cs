@@ -4,6 +4,7 @@ using LlamaNative.Decode.Utils;
 using LlamaNative.Exceptions;
 using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
+using LlamaNative.Interop.Apis;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Logit.Collections;
 using LlamaNative.Logit.Extensions;
@@ -11,26 +12,25 @@ using LlamaNative.Logit.Models;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Models;
 using LlamaNative.Tokens.Models;
+using System;
+using System.Diagnostics;
+using System.Text;
 
 namespace LlamaNative.Models
 {
     public class NativeContext : INativeContext
     {
+        private readonly Queue<DraftToken> _draftTokens = new();
+
         private readonly Stack<SamplerSet> _activeSamplers = new();
 
         private readonly List<SamplerSet> _allSamplers;
 
-        private readonly PointerArray _buffer;
-
         private readonly float[,] _embeddingStack;
 
-        private readonly PointerArraySynchronizer _synchronizer;
-
-        public ModelState DraftModelState { get; }
+        public ModelState? DraftModelState { get; }
 
         public ModelState ModelState { get; }
-
-        public uint AvailableBuffer => Size - _buffer.Pointer;
 
         public uint Size { get; private set; }
 
@@ -42,12 +42,14 @@ namespace LlamaNative.Models
 
         private ITokenSelector ActiveTokenSelector => ActiveSamplerSet.TokenSelector;
 
+        public uint AvailableBuffer => ModelState.AvailableBuffer;
+
         public NativeContext(SafeContextHandle draftContextHandle, SafeModelHandle draftModelHandle, ContextParams draftSettings, SafeContextHandle contextHandle, SafeModelHandle modelHandle, ContextParams settings, List<SamplerSet> samplerSets) : this(contextHandle, modelHandle, settings, samplerSets)
         {
             ArgumentNullException.ThrowIfNull(draftContextHandle);
             ArgumentNullException.ThrowIfNull(draftModelHandle);
 
-            this.DraftModelState = new(new KvCacheState(draftSettings.NCtx, Token.Null), draftSettings, draftContextHandle, draftModelHandle);
+            DraftModelState = new(new KvCacheState(draftSettings.NCtx, Token.Null), draftSettings, draftContextHandle, draftModelHandle);
         }
 
         public NativeContext(SafeContextHandle contextHandle, SafeModelHandle modelHandle, ContextParams settings, List<SamplerSet> samplerSets)
@@ -69,28 +71,21 @@ namespace LlamaNative.Models
                 }
             }
 
-            _synchronizer = new PointerArraySynchronizer(
-                new KvCacheShifter(settings.NThreads, settings.NBatch, contextHandle, modelHandle),
-                Token.Null
-                );
-
-            this.ModelState = new(new KvCacheState(settings.NCtx, Token.Null), settings, contextHandle, modelHandle);
-
-            _buffer = new PointerArray(Size);
-            _buffer.Fill(Token.Null);
+            ModelState = new(new KvCacheState(settings.NCtx, Token.Null), settings, contextHandle, modelHandle);
 
             this.PrimeStack();
         }
 
         public void Clear(bool includeCache)
         {
-            _buffer.Clear();
+            ModelState.ClearBuffer();
+            DraftModelState?.ClearBuffer();
 
             if (includeCache)
             {
                 ModelState.KvCache = new KvCacheState(Size, Token.Null);
 
-                if(DraftModelState is not null)
+                if (DraftModelState is not null)
                 {
                     DraftModelState.KvCache = new KvCacheState(Size, Token.Null);
                 }
@@ -110,19 +105,57 @@ namespace LlamaNative.Models
                 throw new NotImplementedException();
             }
 
-            _synchronizer.Sync(ModelState.KvCache, _buffer);
-
             if (DraftModelState is not null)
             {
-                _synchronizer.Sync(DraftModelState.KvCache, _buffer);
+                DraftModelState.Sync();
+
+                Debug.WriteLine("Filling draft tokens");
+
+                this.FillDraft(DraftModelState);
             }
+
+            ModelState.Sync();
+        }
+
+        private const int DRAFT_LENGTH = 5;
+
+        private void FillDraft(ModelState draftModelState)
+        {
+            while(_draftTokens.Count < DRAFT_LENGTH)
+            {
+                Debug.WriteLine("Selecting token for draft");
+
+                Span<float> logits = draftModelState.GetLogits();
+
+                TokenDataArray candidates = new(logits);
+
+                SamplingApi.SoftMax(candidates);
+
+                Token selectedToken = draftModelState.GetToken(TokenMask.Bot, candidates[0].Id);
+
+                Debug.WriteLine($"Selected token: [{selectedToken.Id}] \"{selectedToken}\"");
+
+                _draftTokens.Enqueue(new(selectedToken, [0]));
+
+                draftModelState.AppendToken(selectedToken);
+
+                draftModelState.Sync();
+            }
+
+            StringBuilder draftBuilder = new();
+            foreach (DraftToken draftToken in _draftTokens)
+            {
+                draftBuilder.Append(draftToken.Token.ToString());
+            }
+
+            Debug.WriteLine($"Draft: {draftBuilder}");
         }
 
         public virtual Token SelectToken(LogitRuleCollection? logitRules, out SampleContext sampleContext)
         {
             logitRules ??= [];
 
-            Span<float> logits = this.GetLogits();
+            Span<float> logits = this.ModelState.GetLogits();
 
             logits.Update(ActiveLogitBias);
 
@@ -157,14 +190,15 @@ namespace LlamaNative.Models
 
             int tokenId = ActiveTokenSelector.SampleNext(sampleContext);
 
-            Token toReturn = this.GetToken(TokenMask.Bot, tokenId);
+            Token toReturn = ModelState.GetToken(TokenMask.Bot, tokenId);
 
             return toReturn;
         }
 
         public void SetBufferPointer(uint startIndex)
         {
-            _buffer.Pointer = startIndex;
+            ModelState.SetBufferPointer(startIndex);
+            DraftModelState?.SetBufferPointer(startIndex);
         }
 
         public void Write(Token token)
@@ -174,11 +208,29 @@ namespace LlamaNative.Models
                 throw new OutOfContextException();
             }
 
-            _buffer[_buffer.Pointer++] = new(token, [0]);
+            ModelState.AppendToken(token);
+
+            if (_draftTokens.Count > 0)
+            {
+                if (_draftTokens.Peek()?.Token?.Id == token.Id)
+                {
+                    Debug.WriteLine("Draft token written");
+                    _draftTokens.Dequeue();
+                }
+                else
+                {
+                    Debug.WriteLine($"Non draft token written: [{token.Id}] \"{token}\"");
+                    _draftTokens.Clear();
+                    DraftModelState?.Sync(ModelState);
+                }
+            } else
+            {
+                DraftModelState?.AppendToken(token);
+            }
 
             if (ActiveSamplerSet.Pop == token.Id)
             {
-                this._activeSamplers.Pop();
+                _activeSamplers.Pop();
             }
             else
             {
@@ -219,16 +271,5 @@ namespace LlamaNative.Models
                 throw new ArgumentException("Pop operations must be unique");
             }
         }
-    }
-
-    public class ModelState(KvCacheState kvCache, ContextParams settings, SafeContextHandle contextHandle, SafeModelHandle modelHandle)
-    {
-        public SafeContextHandle ContextHandle { get; set; } = contextHandle;
-
-        public KvCacheState KvCache { get; set; } = kvCache;
-
-        public SafeModelHandle ModelHandle { get; set; } = modelHandle;
-
-        public ContextParams Settings { get; set; } = settings;
     }
 }

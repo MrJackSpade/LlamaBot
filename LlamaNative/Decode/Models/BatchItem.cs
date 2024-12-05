@@ -14,7 +14,7 @@ namespace LlamaNative.Decode.Models
 
         public override string ToString()
         {
-            return $"[{Position}] {this.Token}";
+            return $"[{Position}] {Token}";
         }
     }
 }

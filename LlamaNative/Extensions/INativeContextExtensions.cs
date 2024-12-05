@@ -1,5 +1,4 @@
 ﻿using LlamaNative.Apis;
-using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
 using LlamaNative.Logit.Collections;
 using LlamaNative.Models;
@@ -10,20 +9,6 @@ namespace LlamaNative.Extensions
 {
     public static class INativeContextExtensions
     {
-        public static Span<float> GetLogits(this INativeContext handler)
-        {
-            int n_vocab = handler.VocabCount();
-
-            Span<float> logits = NativeApi.GetLogits(handler.ModelState.ContextHandle, n_vocab);
-
-            return logits;
-        }
-
-        public static Token GetToken(this INativeContext handler, TokenMask mask, int id)
-        {
-            return new(id, NativeApi.TokenToPiece(handler.ModelState.ModelHandle, id), mask);
-        }
-
         public static Token Predict(this INativeContext handler, LogitRuleCollection logitRules)
         {
             handler.Evaluate();
@@ -106,7 +91,7 @@ namespace LlamaNative.Extensions
 
             foreach (int id in NativeApi.Tokenize(context.ModelState.ModelHandle, value, addBos))
             {
-                tokens.Append(context.GetToken(tokenMask, id));
+                tokens.Append(context.ModelState.GetToken(tokenMask, id));
             }
 
             return tokens;
@@ -118,7 +103,7 @@ namespace LlamaNative.Extensions
 
             foreach (int id in value)
             {
-                tokens.Append(context.GetToken(mask, id));
+                tokens.Append(context.ModelState.GetToken(mask, id));
             }
 
             return tokens;

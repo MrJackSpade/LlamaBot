@@ -3,7 +3,6 @@ using LlamaNative.Chat.Interfaces;
 using LlamaNative.Chat.Models;
 using LlamaNative.Interfaces;
 using LlamaNative.Models;
-using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Models;
 using LlamaNative.Serialization;
 
@@ -17,12 +16,12 @@ namespace LlamaNative.Chat
 
             Model? draftModel = null;
 
-            if(settings.DraftModelSettings is not null)
+            if (settings.DraftModelSettings is not null)
             {
                 draftModel = LlamaClient.LoadModel(settings.DraftModelSettings);
             }
 
-            if(settings.SamplerSets.Count == 0)
+            if (settings.SamplerSets.Count == 0)
             {
                 throw new ArgumentException("Samplers and logit bias must be migrated to SamplerSets");
             }
@@ -31,7 +30,8 @@ namespace LlamaNative.Chat
 
             foreach (SamplerSetConfiguration samplerSet in settings.SamplerSets)
             {
-                SamplerSet newSet = new() { 
+                SamplerSet newSet = new()
+                {
                     TokenSelector = SamplerDeserializer.InstantiateSelector(samplerSet.TokenSelector),
                     LogitBias = samplerSet.LogitBias
                 };
@@ -41,11 +41,11 @@ namespace LlamaNative.Chat
                     newSet.SimpleSamplers.Add(SamplerDeserializer.InstantiateSimple(samplerSetting));
                 }
 
-                if(samplerSet.Push is not null && samplerSet.Pop is not null)
+                if (samplerSet.Push is not null && samplerSet.Pop is not null)
                 {
                     int[] pushTokens = NativeApi.Tokenize(model.Handle, samplerSet.Push, false);
 
-                    if(pushTokens.Length > 1)
+                    if (pushTokens.Length > 1)
                     {
                         throw new InvalidOperationException("Push tokens must be a single token");
                     }
@@ -72,7 +72,8 @@ namespace LlamaNative.Chat
                 context = LlamaClient.LoadContext(model,
                                                   settings.ContextSettings,
                                                   samplerSets);
-            } else
+            }
+            else
             {
                 context = LlamaClient.LoadContext(model,
                                                   draftModel,

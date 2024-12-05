@@ -25,7 +25,8 @@ namespace LlamaNative.Tokens.Models
 
             for (int token_id = 0; token_id < logits.Length; token_id++)
             {
-                candidates.Add(new TokenData(token_id, logits[token_id], 0.0f));
+                float l = logits[token_id];
+                candidates.Add(new TokenData(token_id, l, 0.0f));
             }
 
             Data = candidates.ToArray();

@@ -1,5 +1,4 @@
 ﻿using LlamaNative.Chat.Models;
-using LlamaNative.Sampling.Models;
 
 namespace LlamaBot.Extensions
 {

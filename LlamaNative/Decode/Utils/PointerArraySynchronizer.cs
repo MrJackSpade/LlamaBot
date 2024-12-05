@@ -10,7 +10,7 @@ namespace LlamaNative.Decode.Utils
     {
         protected IArrayShifter _arrayShifter = shifter;
 
-        private readonly SequencedToken _defaultToken = new (defaultT, [0]);
+        private readonly SequencedToken _defaultToken = new(defaultT, [0]);
 
         public void Sync(KvCacheState kvCache, PointerArray buffer)
         {
@@ -76,7 +76,7 @@ namespace LlamaNative.Decode.Utils
 
                 foreach (BatchItem item in llamaBatch.Items)
                 {
-                    kvCache[item.Position] = new (item.Token, item.SequenceIds);
+                    kvCache[item.Position] = new(item.Token, item.SequenceIds);
                 }
 
                 llamaBatch.Clear();

@@ -17,7 +17,7 @@ namespace LlamaNative.Sampling.Samplers.Temperature
         {
             int toReturn = SamplingApi.TokenGreedy(sampleContext.Candidates);
 
-            var cache = sampleContext.KvCache;
+            Decode.Interfaces.KvCacheState cache = sampleContext.KvCache;
 
             TokenCollection tokens = new(cache.GetSequence(0)); //Only concerned about the primary sequence right now
 

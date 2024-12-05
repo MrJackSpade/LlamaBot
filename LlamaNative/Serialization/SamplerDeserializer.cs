@@ -54,7 +54,7 @@ namespace LlamaNative.Serialization
 
             foreach (ConstructorInfo ci in t.GetConstructors())
             {
-                if(ci.DeclaringType != t)
+                if (ci.DeclaringType != t)
                 {
                     continue;
                 }

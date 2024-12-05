@@ -1,5 +1,4 @@
 ﻿using LlamaNative.Tokens.Models;
-using System.Diagnostics;
 
 namespace LlamaNative.Decode.Interfaces
 {

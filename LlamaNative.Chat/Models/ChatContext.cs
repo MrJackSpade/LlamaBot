@@ -10,7 +10,6 @@ using LlamaNative.Models;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Extensions;
 using LlamaNative.Tokens.Models;
-using LlamaNative.Utils;
 using System.Text;
 
 namespace LlamaNative.Chat.Models
@@ -199,13 +198,15 @@ namespace LlamaNative.Chat.Models
 
                     Token token = NativeContext.SelectToken(logitRules, out SampleContext sampleContext);
 
+                    bool contentGenerated = string.Join("", response.Select(r => r.SelectedToken)).Trim().Length > 0;
+
                     string s_end = Settings.ChatTemplate.EndMessage;
                     string s_value = token.Value ?? string.Empty;
 
                     //Check for explicit stop token
                     if (Settings.ChatTemplate.StopTokenIds.Contains(token.Id))
                     {
-                        if (response.Count == 0)
+                        if (!contentGenerated)
                         {
                             logitRules.BlockToken(token);
                             continue;
@@ -216,7 +217,7 @@ namespace LlamaNative.Chat.Models
                     else if (s_value.Contains(s_end))
                     //Check for primary stop string, trim if needed.
                     {
-                        if (response.Count == 0)
+                        if (!contentGenerated)
                         {
                             logitRules.BlockToken(token);
                             continue;

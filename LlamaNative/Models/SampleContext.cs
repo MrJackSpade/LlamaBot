@@ -1,6 +1,5 @@
 ﻿using LlamaNative.Decode.Interfaces;
 using LlamaNative.Interop.Structs;
-using LlamaNative.Tokens.Interfaces;
 using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Models
