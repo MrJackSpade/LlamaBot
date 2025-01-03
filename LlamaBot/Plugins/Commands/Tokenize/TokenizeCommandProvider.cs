@@ -32,7 +32,7 @@ namespace LlamaBot.Plugins.Commands.Tokenize
                 sb.AppendLine("```json");
                 sb.AppendLine("{ ");
 
-                List<Token> results = _llamaBotClient.Tokenize(command.Content);
+                List<Token> results = _llamaBotClient.Tokenize(command.Content.Replace("\\n", "\n"));
 
                 for (int i = 0; i < results.Count; i++)
                 {
