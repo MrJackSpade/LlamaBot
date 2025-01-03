@@ -29,6 +29,7 @@ namespace LlamaBot.Plugins.Commands.Tokenize
             {
                 StringBuilder sb = new();
 
+                sb.AppendLine("```json");
                 sb.AppendLine("{ ");
 
                 List<Token> results = _llamaBotClient.Tokenize(command.Content);
@@ -49,6 +50,7 @@ namespace LlamaBot.Plugins.Commands.Tokenize
                 }
 
                 sb.AppendLine("}");
+                sb.AppendLine("```");
 
                 return CommandResult.Success(sb.ToString());
             }
