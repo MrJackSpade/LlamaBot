@@ -480,5 +480,12 @@ namespace LlamaBot
                 }
             }
         }
+
+        public Dictionary<string, int> Tokenize(string content)
+        {
+            Ensure.NotNull(_chatContext);
+
+            return _chatContext.Tokenize(content);
+        }
     }
 }

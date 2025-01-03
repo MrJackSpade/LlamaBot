@@ -26,6 +26,8 @@ namespace LlamaBot.Plugins.Interfaces
 
         void SetClearDate(ulong channelId, DateTime triggered);
 
+        Dictionary<string, int> Tokenize(string content);
+
         Task<IMessage?> TryGetLastBotMessage(ISocketMessageChannel channel);
 
         void TryInterrupt();

@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "Magnum4",
+      "commandLineArgs": "Magnum2-RP",
       "nativeDebugging": false
     }
   }
