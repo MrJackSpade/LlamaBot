@@ -1,4 +1,5 @@
 ﻿using LlamaNative.Chat.Models;
+using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Chat.Interfaces
 {
@@ -27,6 +28,7 @@ namespace LlamaNative.Chat.Interfaces
         void SendMessage(ChatMessage message);
 
         bool TryInterrupt();
-        Dictionary<string, int> Tokenize(string content);
+
+        List<Token> Tokenize(string content);
     }
 }

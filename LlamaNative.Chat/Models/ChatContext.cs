@@ -383,11 +383,11 @@ namespace LlamaNative.Chat.Models
             return selection;
         }
 
-        public Dictionary<string?, int> Tokenize(string content)
+        public List<Token> Tokenize(string content)
         {
             Ensure.NotNull(NativeContext);
 
-            return NativeContext.Tokenize(TokenMask.Undefined, content).ToDictionary(t => t.GetEscapedValue(), t => t.Id);
+            return [.. NativeContext.Tokenize(TokenMask.Undefined, content)];
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using LlamaNative.Chat.Models;
+using LlamaNative.Tokens.Models;
 
 namespace LlamaBot.Plugins.Interfaces
 {
@@ -26,7 +27,7 @@ namespace LlamaBot.Plugins.Interfaces
 
         void SetClearDate(ulong channelId, DateTime triggered);
 
-        Dictionary<string, int> Tokenize(string content);
+        List<Token> Tokenize(string content);
 
         Task<IMessage?> TryGetLastBotMessage(ISocketMessageChannel channel);
 

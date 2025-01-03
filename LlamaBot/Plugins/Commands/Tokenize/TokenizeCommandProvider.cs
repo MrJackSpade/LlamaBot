@@ -4,8 +4,10 @@ using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
+using LlamaNative.Tokens.Models;
 using LlamaNative.Utils;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace LlamaBot.Plugins.Commands.Tokenize
 {
@@ -25,11 +27,30 @@ namespace LlamaBot.Plugins.Commands.Tokenize
 
             if (command.Channel is ISocketMessageChannel smc)
             {
-                Dictionary<string, int> results = _llamaBotClient.Tokenize(command.Content);
+                StringBuilder sb = new();
 
-                string json = JsonConvert.SerializeObject(results, Formatting.Indented);
+                sb.AppendLine("{ ");
 
-                return CommandResult.Success(json);
+                List<Token> results = _llamaBotClient.Tokenize(command.Content);
+
+                for (int i = 0; i < results.Count; i++)
+                {
+                    Token t = results[i];
+                    sb.Append("    \"" + t.GetEscapedValue().Replace("*", "\\*") + "\": " + t.Id);
+
+                    if (i < results.Count - 1)
+                    {
+                        sb.AppendLine(",");
+                    }
+                    else
+                    {
+                        sb.AppendLine();
+                    }
+                }
+
+                sb.AppendLine("}");
+
+                return CommandResult.Success(sb.ToString());
             }
             else
             {

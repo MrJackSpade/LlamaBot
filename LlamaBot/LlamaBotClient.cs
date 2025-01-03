@@ -481,7 +481,7 @@ namespace LlamaBot
             }
         }
 
-        public Dictionary<string, int> Tokenize(string content)
+        public List<Token> Tokenize(string content)
         {
             Ensure.NotNull(_chatContext);
 
