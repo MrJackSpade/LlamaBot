@@ -37,7 +37,7 @@ namespace LlamaBot.Plugins.Commands.Tokenize
                 for (int i = 0; i < results.Count; i++)
                 {
                     Token t = results[i];
-                    sb.Append("    \"" + t.GetEscapedValue().Replace("*", "\\*") + "\": " + t.Id);
+                    sb.Append("    \"" + t.GetEscapedValue() + "\": " + t.Id);
 
                     if (i < results.Count - 1)
                     {
