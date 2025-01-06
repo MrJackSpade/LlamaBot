@@ -169,16 +169,27 @@ namespace LlamaNative.Apis
         public static KvCell[] GetKvCells(SafeContextHandle context)
         {
             KvCache cache = GetKvCache(context);
-
             uint count = cache.Size;
-
             KvCell[] cells = new KvCell[count];
-
             int cellSize = Marshal.SizeOf<KvCell>();
 
             for (int i = 0; i < count; i++)
             {
-                cells[i] = Marshal.PtrToStructure<KvCell>(nint.Add(cache.CellsPointer, i * cellSize));
+                nint cellPtr = nint.Add(cache.CellsPointer, i * cellSize);
+
+                KvCell thisCell = Marshal.PtrToStructure<KvCell>(cellPtr);
+
+                // Get sequence IDs
+                nint seqIdCount = LlamaCppApi.GetKVCellSeqIdCount(cellPtr);
+
+                int[] seqIds = new int[seqIdCount];
+
+                if (seqIdCount > 0)
+                {
+                    LlamaCppApi.GetKvCellSeqIds(cellPtr, seqIds);
+                }
+
+                cells[i] = thisCell;
             }
 
             return cells;
@@ -187,6 +198,12 @@ namespace LlamaNative.Apis
         public static unsafe Span<float> GetLogits(SafeContextHandle ctx, int length)
         {
             float* logits = LlamaCppApi.GetLogitsIth(ctx, -1);
+
+            if ((IntPtr)logits == IntPtr.Zero)
+            {
+                throw new LlamaCppRuntimeError("Failed to get logits.");
+            }
+
             return new Span<float>(logits, length);
         }
 
@@ -195,7 +212,7 @@ namespace LlamaNative.Apis
             lparams = LlamaCppApi.ContextDefaultParams();
             lparams.NCtx = contextSettings.ContextSize ?? lparams.NCtx;
             lparams.NBatch = contextSettings.BatchSize;
-            lparams.Seed = contextSettings.Seed;
+            lparams.NoPerf = true;
             lparams.TypeV = contextSettings.TypeV;
             lparams.TypeK = contextSettings.TypeK;
             lparams.LogitsAll = contextSettings.Perplexity;
@@ -291,6 +308,29 @@ namespace LlamaNative.Apis
         public static void Test()
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        }
+
+        public static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
+        {
+            int cnt = Encoding.Unicode.GetByteCount(text + 1);
+
+            int[] res = new int[cnt + (add_bos ? 1 : 0)];
+
+            int n = LlamaCppApi.Tokenize(ctx, text, res, res.Length, add_bos, parseSpecial);
+
+            if (n < 0)
+            {
+                throw new LlamaCppRuntimeError("Error happened during tokenization. It's possibly caused by wrong encoding. Please try to specify the encoding.");
+            }
+
+            res = res.Take(n).ToArray();
+
+            if (useLegacy && res[0] == 29871)
+            {
+                res = res.Skip(1).ToArray();
+            }
+
+            return res;
         }
 
         public static string TokenToPiece(this SafeModelHandle ctx, int token, bool special = true)
@@ -403,29 +443,6 @@ namespace LlamaNative.Apis
             }
 
             return evaluated;
-        }
-
-        public static int[] Tokenize(SafeModelHandle ctx, string text, bool add_bos, bool useLegacy = true, bool parseSpecial = true)
-        {
-            int cnt = Encoding.Unicode.GetByteCount(text + 1);
-
-            int[] res = new int[cnt + (add_bos ? 1 : 0)];
-
-            int n = LlamaCppApi.Tokenize(ctx, text, res, res.Length, add_bos, parseSpecial);
-
-            if (n < 0)
-            {
-                throw new LlamaCppRuntimeError("Error happened during tokenization. It's possibly caused by wrong encoding. Please try to specify the encoding.");
-            }
-
-            res = res.Take(n).ToArray();
-
-            if (useLegacy && res[0] == 29871)
-            {
-                res = res.Skip(1).ToArray();
-            }
-
-            return res;
         }
 
         private static void Log(string method, params object[] args)

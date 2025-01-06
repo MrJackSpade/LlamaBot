@@ -76,18 +76,5 @@ namespace LlamaNative.Decode.Utils
         {
             NativeApi.ShiftCacheTokens(_handle, sequenceId, startPos, endPos, delta);
         }
-
-        public void Validate(KvCacheState<Token> kvCache)
-        {
-            Token[] evaluated = NativeApi.GetEvaluated(_handle, _model);
-
-            for (int i = 0; i < kvCache.Length; i++)
-            {
-                if (evaluated[i] != kvCache[(uint)i])
-                {
-                    throw new InvalidOperationException();
-                }
-            }
-        }
     }
 }

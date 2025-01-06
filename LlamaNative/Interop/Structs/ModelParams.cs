@@ -12,6 +12,11 @@ namespace LlamaNative.Interop.Structs
     public struct ModelParams
     {
         /// <summary>
+        /// NULL-terminated list of devices to use for offloading (if NULL, all available devices are used)
+        /// </summary>
+        public IntPtr Devices;
+
+        /// <summary>
         /// Number of layers to store in VRAM.
         /// </summary>
         public int NGpuLayers;

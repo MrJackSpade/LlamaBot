@@ -21,9 +21,15 @@ namespace LlamaNative.Interop.Structs
         public int Src;
 
         /// <summary>
+        /// Token tail.
+        /// </summary>
+        public int Tail;
+
+        /// <summary>
         /// Token value.
         /// </summary>
         public int Value;
+
 
         /// <summary>
         /// Address of the sequence id

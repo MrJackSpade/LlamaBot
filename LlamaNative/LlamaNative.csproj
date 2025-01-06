@@ -22,89 +22,29 @@
 		<DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
 		<Optimize>false</Optimize>
 	</PropertyGroup>
+	<ItemGroup Condition="'$(CopyCpuFiles)' == 'true'">
+	</ItemGroup>
 	<ItemGroup Condition="'$(CopyCUDAFiles)' == 'true'">
 		<Content Include="Binaries\CUDA\llama.dll">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.dll</TargetPath>
 		</Content>
-		<Content Include="Binaries\CUDA\libllama.so">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>libllama.so</TargetPath>
-		</Content>
-		<Content Include="Binaries\CUDA\libggml.so">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>libggml.so</TargetPath>
-		</Content>
-		<Content Include="Binaries\CUDA\llama.ilk">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>llama.ilk</TargetPath>
-		</Content>
-		<Content Include="Binaries\CUDA\llama.pdb">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>llama.pdb</TargetPath>
-		</Content>
 		<Content Include="Binaries\CUDA\ggml.dll">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.dll</TargetPath>
 		</Content>
-		<Content Include="Binaries\CUDA\ggml.ilk">
+		<Content Include="Binaries\CUDA\ggml-base.dll">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>ggml.ilk</TargetPath>
+			<TargetPath>ggml-base.dll</TargetPath>
 		</Content>
-		<Content Include="Binaries\CUDA\ggml.pdb">
+		<Content Include="Binaries\CUDA\ggml-cpu.dll">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>ggml.pdb</TargetPath>
+			<TargetPath>ggml-cpu.dll</TargetPath>
 		</Content>
-	</ItemGroup>
-	<ItemGroup Condition="'$(CopyCpuFiles)' == 'true'">
-		<Content Include="Binaries\Cpu\llama.dll">
+		<Content Include="Binaries\CUDA\ggml-cuda.dll">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>llama.dll</TargetPath>
+			<TargetPath>ggml-cuda.dll</TargetPath>
 		</Content>
-		<Content Include="Binaries\Cpu\libllama.so">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>libllama.so</TargetPath>
-		</Content>
-		<Content Include="Binaries\Cpu\llama.ilk">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>llama.ilk</TargetPath>
-		</Content>
-		<Content Include="Binaries\Cpu\llama.pdb">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>llama.pdb</TargetPath>
-		</Content>
-		<Content Include="Binaries\Cpu\ggml.dll">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>ggml.dll</TargetPath>
-		</Content>
-		<Content Include="Binaries\Cpu\libggml.so">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>libggml.so</TargetPath>
-		</Content>
-		<Content Include="Binaries\Cpu\ggml.ilk">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>ggml.ilk</TargetPath>
-		</Content>
-		<Content Include="Binaries\Cpu\ggml.pdb">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<TargetPath>ggml.pdb</TargetPath>
-		</Content>
-	</ItemGroup>
-	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-		<Exec Condition="'$(OS)' == 'Windows_NT'" Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -Command &quot;Get-ChildItem -Path '$(ProjectDir)' -Filter '*.zip' -Recurse | ForEach-Object { Expand-Archive -Path $_.FullName -DestinationPath $_.DirectoryName -Force }&quot;" />
-		<Exec Condition="'$(OS)' != 'Windows_NT'" Command="find '$(ProjectDir)' -name '*.zip' -execdir unzip -o {} \;" />
-	</Target>
-	<ItemGroup>
-		<None Remove="Binaries\CUDA\llama.dll.zip" />
-		<None Remove="Binaries\CUDA\llama.ilk.zip" />
-		<None Remove="Binaries\CUDA\llama.pdb.zip" />
-		<None Remove="Binaries\CUDA\libllama.so.zip" />
-		<None Remove="Binaries\CUDA\libggml.so.zip" />
-		<None Remove="Binaries\Cpu\llama.dll.zip" />
-		<None Remove="Binaries\Cpu\llama.ilk.zip" />
-		<None Remove="Binaries\Cpu\llama.pdb.zip" />
-		<None Remove="Binaries\Cpu\libllama.so.zip" />
-		<None Remove="Binaries\Cpu\libggml.so.zip" />
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\LlamaBot.Shared\LlamaBot.Shared.csproj" />

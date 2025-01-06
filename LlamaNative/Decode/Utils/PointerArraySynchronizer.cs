@@ -115,8 +115,6 @@ namespace LlamaNative.Decode.Utils
             }
 
             _arrayShifter.RemoveCacheTokens(clearStart, clearEnd);
-
-            _arrayShifter.Validate(kvCache);
         }
 
         private void ShiftCacheTokens(KvCacheState<T> kvCache, int start, int count, int amount)
@@ -138,8 +136,6 @@ namespace LlamaNative.Decode.Utils
             }
 
             _arrayShifter.ShiftCacheTokens(0, (uint)start, (uint)(start + count), amount);
-
-            _arrayShifter.Validate(kvCache);
         }
     }
 }

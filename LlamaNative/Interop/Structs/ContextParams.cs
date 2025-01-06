@@ -15,11 +15,6 @@ namespace LlamaNative.Interop.Structs
     public struct ContextParams
     {
         /// <summary>
-        /// RNG seed, -1 for random.
-        /// </summary>
-        public uint Seed;
-
-        /// <summary>
         /// Text context, 0 = from model.
         /// </summary>
         public uint NCtx;
@@ -147,6 +142,12 @@ namespace LlamaNative.Interop.Structs
         /// </summary>
         [MarshalAs(UnmanagedType.I1)]
         public bool FlashAttn;
+
+        /// <summary>
+        /// Whether to use flash attention.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool NoPerf;
 
         /// <summary>
         /// Abort callback. If it returns true, execution of llama_decode() will be aborted. Currently works only with CPU execution.
