@@ -45,6 +45,26 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml-cuda.dll</TargetPath>
 		</Content>
+		<Content Include="Binaries\CUDA\libllama.so">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<TargetPath>libllama.so</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\libggml.so">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<TargetPath>libggml.so</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\libggml-base.so">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<TargetPath>libggml-base.so</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\libggml-cpu.so">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<TargetPath>libggml-cpu.so</TargetPath>
+		</Content>
+		<Content Include="Binaries\CUDA\libggml-cuda.so">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<TargetPath>libggml-cuda.so</TargetPath>
+		</Content>
 	</ItemGroup>
 	<ItemGroup>
 	  <ProjectReference Include="..\LlamaBot.Shared\LlamaBot.Shared.csproj" />
