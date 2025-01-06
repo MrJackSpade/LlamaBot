@@ -131,6 +131,9 @@ namespace LlamaBot
 
         private static async Task Main(string[] args)
         {
+            Console.WriteLine("Press any key to continue...");
+            Console.ReadKey();
+
             _recursiveConfiguration = _recursiveConfigurationReader.Read(args[0]);
 
             _recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemPrompt);
