@@ -87,7 +87,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 int ki = Clamp(k);
                 // Sample the next word X using top-k sampling
                 SamplingApi.TopK(sampleContext.Candidates, ki, 1);
-                x = SamplingApi.Token(sampleContext.ContextHandle, sampleContext.Candidates);
+                x = SamplingApi.Token(sampleContext.Candidates);
             }
 
             // Compute error as the difference between observed surprise and target surprise value

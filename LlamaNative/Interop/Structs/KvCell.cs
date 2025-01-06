@@ -30,7 +30,6 @@ namespace LlamaNative.Interop.Structs
         /// </summary>
         public int Value;
 
-
         /// <summary>
         /// Address of the sequence id
         /// </summary>

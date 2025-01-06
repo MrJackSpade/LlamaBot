@@ -128,7 +128,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
                 if (!greedy)
                 {
-                    selectedToken = SamplingApi.Token(sampleContext.ContextHandle, sampleContext.Candidates);
+                    selectedToken = SamplingApi.Token(sampleContext.Candidates);
                 }
                 else
                 {

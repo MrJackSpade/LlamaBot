@@ -258,17 +258,27 @@ namespace LlamaNative.Interop.Apis
         /// <param name="ctx"></param>
         /// <param name="candidates">Pointer to TokenDataArray</param>
         /// <returns></returns>
-        public static int Token(SafeContextHandle ctx, TokenDataArray candidates)
+        public static int Token(TokenDataArray candidates)
         {
-            System.Buffers.MemoryHandle handle = candidates.Data.Pin();
-            TokenDataArrayNative st = new()
-            {
-                data = new nint(handle.Pointer),
-                size = candidates.Size,
-                sorted = candidates.Ordered
-            };
+            SoftMax(candidates);
 
-            return LlamaCppApi.SampleToken(ctx, new nint(&st));
+            var random = Random.Shared;
+            double sum = 0;
+            double r = random.NextDouble();
+            TokenData[] candidateData = candidates.Data.ToArray();
+
+            for (uint i = 0; i < candidates.Size; i++)
+            {
+                sum += candidateData[i].P;
+
+                if (r <= sum)
+                {
+                    return candidateData[i].Id;
+                }
+            }
+
+            // Fallback in case of floating-point rounding issues
+            return candidateData[^1].Id;
         }
 
         /// <summary>
