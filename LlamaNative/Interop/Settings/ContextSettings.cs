@@ -43,8 +43,6 @@ namespace LlamaNative.Interop.Settings
         /// </summary>
         public float RopeFrequencyScaling { get; set; } = 0;
 
-        public uint Seed { get; set; } = (uint)new Random().Next();
-
         /// <summary>
         /// Default CPU Count - 2
         /// </summary>
@@ -52,7 +50,7 @@ namespace LlamaNative.Interop.Settings
 
         public bool GenerateEmbedding { get; set; }
 
-        public RopeScalingType RopeScalingType { get; set; } = RopeScalingType.None;
+        public RopeScalingType RopeScalingType { get; set; } = RopeScalingType.Unspecified;
 
         public float YarnExtFactor { get; set; } = -1.0f;
 

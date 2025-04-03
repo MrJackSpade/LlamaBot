@@ -13,12 +13,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 {
     public class TargetedEntropySampler : BaseDynamicSampler<TargetedEntropySamplerSettings>, ITokenSelector
     {
-        private readonly TargetedEntropySamplerSettings _settings;
-
         public TargetedEntropySampler(TargetedEntropySamplerSettings settings) : base(settings.QueueSize, settings)
         {
-            _settings = settings;
-
             foreach (int id in _settings.GreedyExclude)
             {
                 _isWords.Add(id, true);

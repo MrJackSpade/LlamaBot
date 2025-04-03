@@ -313,7 +313,8 @@ namespace LlamaNative.Chat.Models
                 yield break;
             }
 
-            if (messageCurrent < splitSettings.MessageMaxCharacters)
+            if (splitSettings.MessageMaxCharacters > 0 &&
+                messageCurrent < splitSettings.MessageMaxCharacters)
             {
                 yield return tokenSelections;
                 yield break;

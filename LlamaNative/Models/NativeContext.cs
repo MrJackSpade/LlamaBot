@@ -24,8 +24,6 @@ namespace LlamaNative.Models
 
         private readonly PointerArray<Token> _buffer;
 
-        private readonly float[,] _embeddingStack;
-
         private readonly ContextParams _settings;
 
         private readonly PointerArraySynchronizer<Token> _synchronizer;
@@ -60,15 +58,6 @@ namespace LlamaNative.Models
             ArgumentNullException.ThrowIfNull(samplerSets);
 
             _allSamplers = [.. samplerSets];
-            _embeddingStack = new float[settings.NCtx, 8192];
-
-            for (int x = 0; x < settings.NCtx; x++)
-            {
-                for (int y = 0; y < 8192; y++)
-                {
-                    _embeddingStack[x, y] = float.NaN;
-                }
-            }
 
             _synchronizer = new PointerArraySynchronizer<Token>(
                 new KvCacheShifter(settings.NThreads, settings.NBatch, handle, modelHandle),

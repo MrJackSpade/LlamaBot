@@ -2,11 +2,13 @@
 
 namespace LlamaNative.Models
 {
-    public class Model(SafeModelHandle handle, int vocab) : IDisposable
+    public class Model(SafeModelHandle handle, SafeVocabHandle vocab, int nvocab) : IDisposable
     {
         public SafeModelHandle Handle { get; private set; } = handle;
 
-        public int Vocab { get; private set; } = vocab;
+        public int NVocab { get; private set; } = nvocab;
+
+        public SafeVocabHandle Vocab { get; private set; } = vocab;
 
         public void Dispose()
         {

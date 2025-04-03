@@ -5,6 +5,7 @@ using LlamaNative.Sampling.Samplers.FrequencyAndPresence;
 using LlamaNative.Sampling.Samplers.Mirostat;
 using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Samplers.Temperature;
+using LlamaNative.Sampling.Settings;
 using System.Reflection;
 using System.Text.Json;
 
@@ -20,10 +21,13 @@ namespace LlamaNative.Serialization
         {
             RegisterSelector<TargetedTemperatureSampler>();
             RegisterSelector<TargetedEntropySampler>();
-            RegisterSelector<TemperatureSampler>();
+            RegisterSelector<TemperatureTokenSampler>();
             RegisterSelector<GreedySampler>();
+            RegisterSelector<GaussianTargetedSampler>();
+            RegisterSelector<PowerLawTargetedSampler>();
 
             RegisterSimple<RepetitionSampler>();
+            RegisterSimple<TemperatureSampler>();
             RegisterSimple<ComplexPresenceSampler>();
             RegisterSimple<MinPSampler>();
             RegisterSimple<TfsSampler>();

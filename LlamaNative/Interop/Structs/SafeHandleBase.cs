@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace LlamaNative.Interop.Structs
 {
@@ -37,9 +38,12 @@ namespace LlamaNative.Interop.Structs
 
         protected sealed override bool ReleaseHandle()
         {
-            _free(handle);
-            this.SetHandle(IntPtr.Zero);
+            //Skip
             return true;
+
+            _free(handle);
+                this.SetHandle(IntPtr.Zero);
+                return true;
         }
     }
 }

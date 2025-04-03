@@ -2,8 +2,8 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "Magnum2-RP",
-      "nativeDebugging": false
+      "commandLineArgs": "Command-A-Gaus",
+      "nativeDebugging": true
     }
   }
 }

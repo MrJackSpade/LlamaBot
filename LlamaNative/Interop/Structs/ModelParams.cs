@@ -37,11 +37,6 @@ namespace LlamaNative.Interop.Structs
         public IntPtr TensorSplit;
 
         /// <summary>
-        /// Comma separated list of RPC servers to use for offloading.
-        /// </summary>
-        public IntPtr RpcServers;
-
-        /// <summary>
         /// Called with a progress value between 0 and 1, pass NULL to disable.
         /// </summary>
         public LlamaProgressCallback ProgressCallback;

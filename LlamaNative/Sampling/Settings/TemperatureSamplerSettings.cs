@@ -1,9 +1,7 @@
 ﻿namespace LlamaNative.Sampling.Settings
 {
-    public class TemperatureSamplerSettings : BaseDynamicSamplerSettings
+    public class TemperatureSamplerSettings
     {
-        public bool PreserveWords { get; set; } = true;
-
         public float Temperature { get; set; } = 1.0f;
     }
 }

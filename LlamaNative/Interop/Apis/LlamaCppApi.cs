@@ -226,8 +226,8 @@ namespace LlamaNative.Interop
         [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
         public static extern IntPtr NewContextWithModel(SafeModelHandle mdl, ContextParams params_);
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_n_vocab")]
-        public static partial int NVocab(SafeModelHandle ctx);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_vocab_n_tokens")]
+        public static partial int NVocab(SafeVocabHandle vocab);
 
         /// <summary>
         /// Print system information
@@ -295,6 +295,9 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_eos")]
         public static partial int TokenEos();
 
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_model_get_vocab")]
+        public static partial IntPtr GetVocab(SafeModelHandle ctx);
+
         /// <summary>
         /// Convert the provided text into tokens.
         /// The tokens pointer must be large enough to hold the resulting tokens.
@@ -307,8 +310,10 @@ namespace LlamaNative.Interop
         /// <param name="n_max_tokens"></param>
         /// <param name="add_bos"></param>
         /// <returns></returns>
-        public static int Tokenize(SafeModelHandle ctx, string text, int[] tokens, int n_max_tokens, bool add_bos, bool special = false)
+        public static int Tokenize(SafeModelHandle model, string text, int[] tokens, int n_max_tokens, bool add_bos, bool special = false)
         {
+            SafeVocabHandle safeVocabHandle = new (GetVocab(model), (n) => { });
+
             byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(text);
             int result;
 
@@ -316,7 +321,7 @@ namespace LlamaNative.Interop
             {
                 fixed (byte* pUtf8Bytes = utf8Bytes)
                 {
-                    result = TokenizeNative(ctx, (IntPtr)pUtf8Bytes, utf8Bytes.Length, tokens, n_max_tokens, add_bos, special);
+                    result = TokenizeNative(safeVocabHandle, (IntPtr)pUtf8Bytes, utf8Bytes.Length, tokens, n_max_tokens, add_bos, special);
                 }
             }
 
@@ -324,7 +329,7 @@ namespace LlamaNative.Interop
         }
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_tokenize")]
-        public static partial int TokenizeNative(SafeModelHandle model,
+        public static partial int TokenizeNative(SafeVocabHandle vocab,
             IntPtr text,
             int textLen,
             [Out] int[] tokens,
@@ -336,7 +341,7 @@ namespace LlamaNative.Interop
         public static partial int TokenNl();
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_to_piece")]
-        public static partial int TokenToPiece(SafeModelHandle model,
+        public static partial int TokenToPiece(SafeVocabHandle vocab,
                                                int token,
                                                [Out] byte[] buf,
                                                int length,

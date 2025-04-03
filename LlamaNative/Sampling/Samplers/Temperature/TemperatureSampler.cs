@@ -1,15 +1,22 @@
-﻿using LlamaNative.Models;
+﻿using LlamaNative.Interop.Apis;
+using LlamaNative.Models;
 using LlamaNative.Sampling.Interfaces;
-using LlamaNative.Sampling.Samplers.Mirostat;
 using LlamaNative.Sampling.Settings;
 
 namespace LlamaNative.Sampling.Samplers.Temperature
 {
-    public class TemperatureSampler(TemperatureSamplerSettings temperatureSamplerSettings) : BaseDynamicSampler<TemperatureSamplerSettings>(0, temperatureSamplerSettings), ITokenSelector
+    public class TemperatureSampler(TemperatureSamplerSettings temperatureSamplerSettings) : ISimpleSampler
     {
-        public int SampleNext(SampleContext sampleContext)
+        public void SampleNext(SampleContext sampleContext)
         {
-            return this.SelectToken(sampleContext, _settings.Temperature <= 0, out _);
+            for (ulong i = 0; i < sampleContext.Candidates.Size; i++)
+            {
+                float v = sampleContext.Candidates.Data.Span[(int)i].Logit;
+
+                sampleContext.Candidates.Data.Span[(int)i].Logit = v / temperatureSamplerSettings.Temperature;
+            }
+
+            SamplingApi.SoftMax(sampleContext.Candidates);
         }
     }
 }

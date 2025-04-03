@@ -280,14 +280,20 @@ namespace LlamaNative.Apis
 
             SafeModelHandle handle = new(model_ptr, LlamaCppApi.FreeModel);
 
-            int vocab = LlamaCppApi.NVocab(handle);
+            nint vocab_ptr = LlamaCppApi.GetVocab(handle);
 
-            return new(handle, vocab);
+            SafeVocabHandle vocab = new(vocab_ptr, (n) => { });
+
+            int nvocab = LlamaCppApi.NVocab(vocab);
+
+            return new(handle, vocab, nvocab);
         }
 
         public static int NVocab(SafeModelHandle handle)
         {
-            return LlamaCppApi.NVocab(handle);
+            nint vocab_ptr = LlamaCppApi.GetVocab(handle);
+            SafeVocabHandle vocab = new(vocab_ptr, LlamaCppApi.FreeModel);
+            return LlamaCppApi.NVocab(vocab);
         }
 
         public static void RemoveCacheToken(SafeContextHandle handle, uint pos)
@@ -335,13 +341,15 @@ namespace LlamaNative.Apis
 
         public static string TokenToPiece(this SafeModelHandle ctx, int token, bool special = true)
         {
+            SafeVocabHandle vocab = new(LlamaCppApi.GetVocab(ctx), (n) => { });
+
             // Assuming a buffer size of 256, adjust as needed.
             byte[] buffer = new byte[256];
 
             int result;
             try
             {
-                result = LlamaCppApi.TokenToPiece(ctx, token, buffer, buffer.Length, 0, special);
+                result = LlamaCppApi.TokenToPiece(vocab, token, buffer, buffer.Length, 0, special);
             }
             catch (Exception e)
             {

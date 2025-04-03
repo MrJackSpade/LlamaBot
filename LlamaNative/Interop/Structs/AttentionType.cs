@@ -2,10 +2,10 @@
 {
     public enum AttentionType
     {
-        LLAMA_ATTENTION_TYPE_UNSPECIFIED = -1,
+        Unspecified = -1,
 
-        LLAMA_ATTENTION_TYPE_CAUSAL = 0,
+        Casual = 0,
 
-        LLAMA_ATTENTION_TYPE_NON_CAUSAL = 1,
+        NonCasual = 1,
     };
 }
