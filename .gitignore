@@ -13,3 +13,5 @@ LlamaBot.Shared/obj/
 LlamaBot.Plugins/bin/
 LlamaBot.Shared/bin/
 LlamaBot/LlamaBot.Configuration.json
+*.pdb
+*.ilk
