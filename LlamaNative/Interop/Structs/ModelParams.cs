@@ -17,6 +17,11 @@ namespace LlamaNative.Interop.Structs
         public IntPtr Devices;
 
         /// <summary>
+        ///NULL-terminated list of buffer types to use for tensors that match a pattern
+        /// </summary>
+        public IntPtr TensorBufferTypeOverrides;
+
+        /// <summary>
         /// Number of layers to store in VRAM.
         /// </summary>
         public int NGpuLayers;

@@ -20,6 +20,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         protected static void WriteToLog(SampleContext sampleContext, Span<TokenData> candidateSpan, bool topOnly, int selectedToken, StringBuilder candidateBuilder)
         {
+            Dictionary<int, float> originalPs = sampleContext.OriginalCandidates.Data.ToArray().ToDictionary(x => x.Id, x => x.P);
+
             if (topOnly)
             {
                 candidateBuilder.Append(" [SINGLE] [");
@@ -31,12 +33,26 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
                 ulong displayCount = Math.Min(10, sampleContext.Candidates.Size);
 
-                for (int i = 0; i < (int)displayCount; i++)
+                int i = 0;
+                ulong d = 0;
+
+                do
                 {
-                    if (candidateSpan[i].P == 0)
+                    if(d > displayCount || i >= sampleContext.Candidates.Data.Length)
                     {
                         break;
                     }
+                 
+                    float p = candidateSpan[i].P;
+                    float originalP = originalPs[candidateSpan[i].Id];
+
+                    if (p < 0.001 && originalP < 0.001)
+                    {
+                        i++;
+                        continue;
+                    }
+
+                    d++;
 
                     if (i > 0)
                     {
@@ -44,7 +60,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                     }
 
                     candidateBuilder.Append(sampleContext.GetDisplayString(candidateSpan[i].Id));
-                }
+
+                    i++;
+                } while (true);
             }
 
             candidateBuilder.Append(']');

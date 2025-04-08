@@ -160,33 +160,31 @@ namespace LlamaNative.Apis
             }
         }
 
-        public static KvCache GetKvCache(SafeContextHandle context)
-        {
-            nint kvCachePtr = LlamaCppApi.GetKvCache(context);
-            return Marshal.PtrToStructure<KvCache>(kvCachePtr);
-        }
-
         public static KvCell[] GetKvCells(SafeContextHandle context)
         {
-            KvCache cache = GetKvCache(context);
-            uint count = cache.Size;
+            uint count = 0;
+            IntPtr cellsPtr = 0;
+
+            if (!LlamaCppApi.GetKvCells(context, out count, out cellsPtr))
+            {
+                return Array.Empty<KvCell>();
+            }
+
             KvCell[] cells = new KvCell[count];
             int cellSize = Marshal.SizeOf<KvCell>();
 
             for (int i = 0; i < count; i++)
             {
-                nint cellPtr = nint.Add(cache.CellsPointer, i * cellSize);
-
+                IntPtr cellPtr = IntPtr.Add(cellsPtr, i * cellSize);
                 KvCell thisCell = Marshal.PtrToStructure<KvCell>(cellPtr);
 
-                // Get sequence IDs
-                nint seqIdCount = LlamaCppApi.GetKVCellSeqIdCount(cellPtr);
-
-                int[] seqIds = new int[seqIdCount];
-
+                // Get sequence IDs if needed
+                IntPtr seqIdCount = LlamaCppApi.GetKVCellSeqIdCount(cellPtr);
                 if (seqIdCount > 0)
                 {
+                    int[] seqIds = new int[seqIdCount];
                     LlamaCppApi.GetKvCellSeqIds(cellPtr, seqIds);
+                    // Do something with seqIds if needed
                 }
 
                 cells[i] = thisCell;

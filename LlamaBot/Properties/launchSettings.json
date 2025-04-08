@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "Command-A-Gaus",
+      "commandLineArgs": "Llama4-Scout",
       "nativeDebugging": true
     }
   }

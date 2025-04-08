@@ -4,8 +4,8 @@
     {
         public float DistributionWidth { get; set; } = 0.2f;
 
-        public float TailHeaviness { get; set; } = 4.0f; // Lower values = heavier tails, 2.0 = Cauchy
+        public float TailHeaviness { get; set; } = 3.0f; // Lower values = heavier tails, 2.0 = Cauchy
 
-        public float PeakLogitValue { get; set; } = 12.0f; // Peak value for the bell curve
+        public float PeakLogitValue { get; set; } = 3.0f; // Peak value for the bell curve
     }
 }

@@ -124,6 +124,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             var candidatesArray = context.Candidates;
             var candidatesSpan = candidatesArray.Data.Span;
 
+            candidatesArray.Ordered = false;
+
             // Reset logits of all tokens to a very low value
             for (int i = 0; i < candidatesSpan.Length; i++)
             {
@@ -162,6 +164,12 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
                 if (tokenIdx >= 0)
                 {
+                    if (candidate.P < _settings.MinP)
+                    {
+                        candidatesSpan[tokenIdx].Logit = -100.0f; // Effectively -inf for tokens below threshold
+                        continue; // Skip candidates below the minimum probability
+                    }
+
                     if (_settings.DistributionWidth <= float.Epsilon) // Handle case where width is effectively zero
                     {
                         candidatesSpan[tokenIdx].Logit = candidate.Id == closestTokenId ? _settings.PeakLogitValue : -100.0f;
@@ -174,6 +182,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                     }
                 }
             }
+
+            context.Candidates.Ordered = false;
+            SamplingApi.SoftMax(context.Candidates);
 
             // Sample using temperature sampling
             int sampled = SamplingApi.Token(candidatesArray);
