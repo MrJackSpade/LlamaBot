@@ -264,12 +264,27 @@ namespace LlamaNative.Apis
 
             SetTensors(ref lparams, new float[16]);
 
+            // Handle TensorBufferTypeOverrides
+            IntPtr tensorOverridesPtr = IntPtr.Zero;
+            if (!string.IsNullOrWhiteSpace(modelSettings.TensorBufferTypeOverrides))
+            {
+                // Create the tensor buffer type overrides using the C++ side function
+                tensorOverridesPtr = LlamaCppApi.CreateTensorBufferTypeOverrides(modelSettings.TensorBufferTypeOverrides);
+                lparams.TensorBufferTypeOverrides = tensorOverridesPtr;
+            }
+
             if (!File.Exists(modelSettings.ModelPath))
             {
                 throw new FileNotFoundException($"The model file does not exist: {modelSettings.ModelPath}");
             }
 
             nint model_ptr = LlamaCppApi.LoadModelFromFile(modelSettings.ModelPath, lparams);
+
+            // Free the tensor buffer type overrides if we created them
+            if (tensorOverridesPtr != IntPtr.Zero)
+            {
+                LlamaCppApi.FreeTensorBufferTypeOverrides(tensorOverridesPtr);
+            }
 
             if (model_ptr == nint.Zero)
             {
@@ -286,7 +301,6 @@ namespace LlamaNative.Apis
 
             return new(handle, vocab, nvocab);
         }
-
         public static int NVocab(SafeModelHandle handle)
         {
             nint vocab_ptr = LlamaCppApi.GetVocab(handle);

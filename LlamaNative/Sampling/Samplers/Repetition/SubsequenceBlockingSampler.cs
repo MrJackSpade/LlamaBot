@@ -49,6 +49,12 @@ namespace LlamaNative.Sampling.Samplers.Repetition
                 if (match)
                 {
                     int nextToken = context.ContextTokens[i + sequenceTokens.Length].Id;
+
+                    if(_settings.Exclude.Contains(nextToken))
+                    {
+                        continue;
+                    }
+
                     banTokens.Add(nextToken);
 
                     if (banTokens.Count > _settings.ResponseStartBlock)

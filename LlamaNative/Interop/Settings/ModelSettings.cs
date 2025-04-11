@@ -9,5 +9,7 @@
         public bool UseMemoryLock { get; set; } = true;
 
         public bool UseMemoryMap { get; set; } = false;
+
+        public string? TensorBufferTypeOverrides { get; set; }
     }
 }

@@ -107,12 +107,17 @@ namespace LlamaNative.Interop
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool GetKvCells(SafeContextHandle ctx, out uint size, out IntPtr cellsPtr);
 
-
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cell_seq_id_count")]
         public static partial IntPtr GetKVCellSeqIdCount(IntPtr cell);
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cell_seq_ids")]
         public static partial void GetKvCellSeqIds(IntPtr cell, [Out] int[] seqIds);
+
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_create_tensor_buffer_type_overrides")]
+        public static partial IntPtr CreateTensorBufferTypeOverrides([MarshalAs(UnmanagedType.LPUTF8Str)] string overridesStr);
+
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_free_tensor_buffer_type_overrides")]
+        public static partial void FreeTensorBufferTypeOverrides(IntPtr overridesPtr);
 
         /// <summary>
         /// Token logits obtained from the last call to llama_eval()
@@ -314,7 +319,7 @@ namespace LlamaNative.Interop
         /// <returns></returns>
         public static int Tokenize(SafeModelHandle model, string text, int[] tokens, int n_max_tokens, bool add_bos, bool special = false)
         {
-            SafeVocabHandle safeVocabHandle = new (GetVocab(model), (n) => { });
+            SafeVocabHandle safeVocabHandle = new(GetVocab(model), (n) => { });
 
             byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(text);
             int result;

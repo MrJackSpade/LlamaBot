@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "Llama4-Scout",
+      "commandLineArgs": "Llama4-Maverick",
       "nativeDebugging": true
     }
   }

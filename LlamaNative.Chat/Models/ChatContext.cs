@@ -215,7 +215,7 @@ namespace LlamaNative.Chat.Models
 
                         break;
                     }
-                    else if (s_value.Contains(s_end))
+                    else if (s_value.Contains(s_end) && s_end != string.Empty)
                     //Check for primary stop string, trim if needed.
                     {
                         if (!contentGenerated)
