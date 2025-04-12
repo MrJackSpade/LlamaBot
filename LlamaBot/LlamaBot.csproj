@@ -67,4 +67,12 @@
 		<Folder Include="Characters\Llama3\LlamaBot\" />
 		<Folder Include="Discord\Exceptions\" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Content Update="Characters\Llama3\Llama4-Maverick-Base\Configuration.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	  <Content Update="Characters\Llama3\Llama4-Maverick-Base\System.txt">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
 </Project>

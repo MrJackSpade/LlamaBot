@@ -351,7 +351,10 @@ namespace LlamaNative.Chat.Models
 
             foreach (MaskedString ms in this.ContextToMaskedString(continueLast))
             {
-                NativeContext.Write(ms.Mask, ms.Value);
+                if(!string.IsNullOrEmpty(ms.Value))
+                {
+                    NativeContext.Write(ms.Mask, ms.Value);
+                }
             }
         }
 
