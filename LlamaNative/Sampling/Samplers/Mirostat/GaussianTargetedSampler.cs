@@ -122,8 +122,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         private int ApplyGaussianDistribution(List<TokenData> candidates, float target, SampleContext context)
         {
             // Create a work copy of candidates to modify
-            var candidatesArray = context.Candidates;
-            var candidatesSpan = candidatesArray.Data.Span;
+            Tokens.Models.TokenDataArray candidatesArray = context.Candidates;
+            Span<TokenData> candidatesSpan = candidatesArray.Data.Span;
 
             // Reset logits of all tokens to a very low value
             for (int i = 0; i < candidatesSpan.Length; i++)
@@ -135,7 +135,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             float minDistance = float.MaxValue;
             int closestTokenId = -1;
 
-            foreach (var candidate in candidates)
+            foreach (TokenData candidate in candidates)
             {
                 float distance = Math.Abs(candidate.P - target);
                 if (distance < minDistance)
@@ -146,7 +146,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             // Apply Gaussian distribution to valid candidates
-            foreach (var candidate in candidates)
+            foreach (TokenData candidate in candidates)
             {
                 float distance = Math.Abs(candidate.P - target);
                 int tokenIdx = -1;

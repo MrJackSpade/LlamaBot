@@ -4,6 +4,11 @@ using System.Text;
 
 namespace LlamaNative.Chat.Models
 {
+    public enum HeaderType
+    {
+        User, Assistant, Generic
+    }
+
     public class ChatTemplate
     {
         public string EndHeader { get; set; } = ": ";
@@ -18,13 +23,42 @@ namespace LlamaNative.Chat.Models
 
         public string StartHeader { get; set; } = "|";
 
+        public string StartUserHeader
+        {
+            get => _startUserHeader ?? StartHeader;
+            set => _startUserHeader = value;
+        }
+
+        public string StartAssistantHeader
+        {
+            get => _startAssistantHeader ?? StartHeader;
+            set => _startAssistantHeader = value;
+        }
+
+        private string _startAssistantHeader = string.Empty;
+
+        private string _startUserHeader = string.Empty;
+
         public int[] StopTokenIds { get; set; } = [];
 
-        public MaskedString ToHeader(string userName, bool newHeader)
+        public MaskedString ToHeader(string userName, bool newHeader, HeaderType headerType = HeaderType.Generic)
         {
             StringBuilder sb = new();
 
-            sb.Append(StartHeader);
+            switch (headerType)
+            {
+                case HeaderType.User:
+                    sb.Append(StartUserHeader); 
+                    break;
+                case HeaderType.Assistant:
+                    sb.Append(StartAssistantHeader); 
+                    break;
+                case HeaderType.Generic:
+                    sb.Append(StartHeader);
+                    break;
+                default: throw new ArgumentOutOfRangeException(nameof(headerType), headerType, null);
+            }
+
             sb.Append(userName);
             sb.Append(EndHeader);
 
@@ -42,7 +76,7 @@ namespace LlamaNative.Chat.Models
         /// <param name="message">The message to write</param>
         /// <param name="endMessage">If true, append the end message characters and padding</param>
         /// <returns></returns>
-        public IEnumerable<MaskedString> ToMaskedString(ChatMessage message, bool endMessage)
+        public IEnumerable<MaskedString> ToMaskedString(ChatMessage message, bool endMessage, HeaderType headerType = HeaderType.Generic)
         {
             if (message.ContentOnly)
             {
@@ -55,7 +89,7 @@ namespace LlamaNative.Chat.Models
 
             Ensure.NotNull(message.User);
 
-            yield return this.ToHeader(message.User, false);
+            yield return this.ToHeader(message.User, false, headerType);
 
             yield return new MaskedString(MessagePrefix + message.Content, message.ContentMask);
 
@@ -65,11 +99,11 @@ namespace LlamaNative.Chat.Models
             }
         }
 
-        public string ToString(ChatMessage message, bool endMessage)
+        public string ToString(ChatMessage message, bool endMessage, HeaderType headerType = HeaderType.Generic)
         {
             StringBuilder sb = new();
 
-            foreach (MaskedString ms in this.ToMaskedString(message, endMessage))
+            foreach (MaskedString ms in this.ToMaskedString(message, endMessage, headerType))
             {
                 sb.Append(ms.Value);
             }

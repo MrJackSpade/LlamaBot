@@ -69,7 +69,7 @@ namespace LlamaBot
                         new SubsequenceBlockingSamplerSettings()
                         {
                             ResponseStartBlock = _chatSettings.ResponseStartBlock,
-                            SubSequence = _chatSettings.ChatTemplate.ToHeader(_chatSettings.BotName, false).Value
+                            SubSequences = [_chatSettings.ChatTemplate.ToHeader(_chatSettings.BotName, false, HeaderType.Assistant).Value]
                         }
                     ));
             }

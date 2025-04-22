@@ -240,7 +240,7 @@ namespace LlamaNative.Apis
                 throw new LlamaCppRuntimeError($"Failed to load context.");
             }
 
-            SafeContextHandle ctx = new(ctx_ptr, LlamaCppApi.FreeContext);
+            SafeContextHandle ctx = new(ctx_ptr, FreeContext);
 
             if (!string.IsNullOrEmpty(contextSettings.LoraAdapter))
             {
@@ -252,6 +252,11 @@ namespace LlamaNative.Apis
             }
 
             return ctx;
+        }
+
+        private static void FreeContext(nint handle)
+        {
+            LlamaCppApi.FreeContext(handle);
         }
 
         public static Model LoadModel(ModelSettings modelSettings)
@@ -291,7 +296,7 @@ namespace LlamaNative.Apis
                 throw new LlamaCppRuntimeError($"Failed to load model {modelSettings.ModelPath}.");
             }
 
-            SafeModelHandle handle = new(model_ptr, LlamaCppApi.FreeModel);
+            SafeModelHandle handle = new(model_ptr, FreeModel);
 
             nint vocab_ptr = LlamaCppApi.GetVocab(handle);
 
@@ -301,6 +306,12 @@ namespace LlamaNative.Apis
 
             return new(handle, vocab, nvocab);
         }
+
+        private static void FreeModel(nint handle)
+        {
+            LlamaCppApi.FreeModel(handle);
+        }
+
         public static int NVocab(SafeModelHandle handle)
         {
             nint vocab_ptr = LlamaCppApi.GetVocab(handle);

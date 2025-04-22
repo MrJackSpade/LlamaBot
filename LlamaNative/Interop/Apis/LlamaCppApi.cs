@@ -1,5 +1,4 @@
 ﻿using LlamaNative.Interop.Structs;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace LlamaNative.Interop
@@ -34,7 +33,6 @@ namespace LlamaNative.Interop
         public static partial int ApplyLoraFromFile(SafeContextHandle ctx, string path_lora, string path_base_model, int n_threads);
 
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_context_default_params")]
-        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
         public static extern ContextParams ContextDefaultParams();
 
         /// <summary>
@@ -169,7 +167,6 @@ namespace LlamaNative.Interop
         /// <param name="params_"></param>
         /// <returns></returns>
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_init_from_file", CharSet = CharSet.Unicode)]
-        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
         public static extern IntPtr InitFromFile(string path_model, ContextParams params_);
 
         /// <summary>
@@ -187,7 +184,6 @@ namespace LlamaNative.Interop
         /// <param name="params_"></param>
         /// <returns></returns>
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_load_model_from_file", CharSet = CharSet.Ansi)]
-        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
         public static extern IntPtr LoadModelFromFile(string path_model, ModelParams params_);
 
         /// <summary>
@@ -212,7 +208,6 @@ namespace LlamaNative.Interop
         public static partial bool MmapSupported();
 
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_model_default_params")]
-        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
         public static extern ModelParams ModelDefaultParams();
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_n_ctx")]
@@ -230,7 +225,6 @@ namespace LlamaNative.Interop
         /// <param name="params_"></param>
         /// <returns></returns>
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_new_context_with_model")]
-        [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time")]
         public static extern IntPtr NewContextWithModel(SafeModelHandle mdl, ContextParams params_);
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_vocab_n_tokens")]

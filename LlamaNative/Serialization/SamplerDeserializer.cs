@@ -5,7 +5,6 @@ using LlamaNative.Sampling.Samplers.FrequencyAndPresence;
 using LlamaNative.Sampling.Samplers.Mirostat;
 using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Samplers.Temperature;
-using LlamaNative.Sampling.Settings;
 using System.Reflection;
 using System.Text.Json;
 
@@ -58,7 +57,7 @@ namespace LlamaNative.Serialization
 
             foreach (ConstructorInfo ci in t.GetConstructors())
             {
-                if(ci.DeclaringType != t)
+                if (ci.DeclaringType != t)
                 {
                     continue;
                 }

@@ -3,10 +3,7 @@ using LlamaNative.Interfaces;
 using LlamaNative.Interop.Settings;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
-using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Models;
-using LlamaNative.Sampling.Samplers.Temperature;
-using LlamaNative.Sampling.Settings;
 
 namespace LlamaNative
 {

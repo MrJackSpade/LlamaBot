@@ -4,7 +4,7 @@
     {
         public int ResponseStartBlock { get; set; }
 
-        public string SubSequence { get; set; }
+        public string[] SubSequences { get; set; } = [];
 
         /// <summary>
         /// Exclude from penalty

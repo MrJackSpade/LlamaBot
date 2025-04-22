@@ -13,8 +13,6 @@ namespace LlamaNative.Chat.Interfaces
 
         ChatMessage this[int index] { get; }
 
-        uint CalculateLength(ChatMessage message);
-
         void Clear(bool includeCache);
 
         void Insert(int index, ChatMessage message);

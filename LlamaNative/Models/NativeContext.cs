@@ -168,7 +168,7 @@ namespace LlamaNative.Models
 
             if (ActiveSamplerSet.Pop == token.Id)
             {
-                this._activeSamplers.Pop();
+                _activeSamplers.Pop();
             }
             else
             {

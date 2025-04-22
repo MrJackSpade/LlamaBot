@@ -43,5 +43,10 @@
         /// Size of the token queue for dynamic adjustment
         /// </summary>
         public virtual int QueueSize { get; set; } = 10;
+
+        /// <summary>
+        /// Min probability across all tokens
+        /// </summary>
+        public float MinP { get; set; } = 0.05f;
     }
 }

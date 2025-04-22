@@ -262,7 +262,7 @@ namespace LlamaNative.Interop.Apis
         {
             SoftMax(candidates);
 
-            var random = Random.Shared;
+            Random random = Random.Shared;
             double sum = 0;
             double r = random.NextDouble();
             TokenData[] candidateData = candidates.Data.ToArray();

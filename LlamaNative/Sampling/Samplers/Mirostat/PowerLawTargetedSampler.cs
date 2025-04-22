@@ -4,7 +4,6 @@ using LlamaNative.Models;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Settings;
-using LlamaNative.Utils.Extensions;
 using System.Diagnostics;
 using System.Text;
 
@@ -56,15 +55,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             // Filter candidates as in original
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
 
-            List<TokenData> candidates = [.. candidateSpan.Where(c =>
-                c.P >= _settings.MinP &&
-                sampleContext.GetOriginalData(c.Id).P >= _settings.MinP
-            )];
-
-            if (candidates.Count == 0)
-            {
-                candidates.Add(candidateSpan[0]);
-            }
+            List<TokenData> candidates = this.FilterCandidates(sampleContext);
 
             float target = this.CalculateNextTarget();
 
@@ -109,7 +100,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             if (!topOnly || _settings.FactorPreservedWords)
             {
-                var originalP = sampleContext.GetOriginalData(selectedToken);
+                TokenData originalP = sampleContext.GetOriginalData(selectedToken);
                 this.Push(originalP);
             }
 
@@ -121,8 +112,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         private int ApplyPowerLawDistribution(List<TokenData> candidates, float target, SampleContext context)
         {
             // Create a work copy of candidates to modify
-            var candidatesArray = context.Candidates;
-            var candidatesSpan = candidatesArray.Data.Span;
+            Tokens.Models.TokenDataArray candidatesArray = context.Candidates;
+            Span<TokenData> candidatesSpan = candidatesArray.Data.Span;
 
             candidatesArray.Ordered = false;
 
@@ -136,7 +127,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             float minDistance = float.MaxValue;
             int closestTokenId = -1;
 
-            foreach (var candidate in candidates)
+            foreach (TokenData candidate in candidates)
             {
                 float distance = Math.Abs(candidate.P - target);
                 if (distance < minDistance)
@@ -147,7 +138,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             // Apply Power Law distribution to valid candidates
-            foreach (var candidate in candidates)
+            foreach (TokenData candidate in candidates)
             {
                 float distance = Math.Abs(candidate.P - target);
                 int tokenIdx = -1;

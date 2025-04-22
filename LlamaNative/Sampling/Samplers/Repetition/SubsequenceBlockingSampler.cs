@@ -17,40 +17,57 @@ namespace LlamaNative.Sampling.Samplers.Repetition
                 return;
             }
 
-            int[] sequenceTokens = NativeApi.Tokenize(context.ModelHandle, _settings.SubSequence, false);
+            List<int[]> sequenceTokenCollection = [];
 
-            bool inSequence = context.ContextTokens.EndsWith(sequenceTokens);
+            foreach (string s in _settings.SubSequences)
+            {
+                var thisSequence = NativeApi.Tokenize(context.ModelHandle, s, false);
+                sequenceTokenCollection.Add(thisSequence);
+            }
 
-            if (!inSequence)
+            var currentSequence = sequenceTokenCollection.FirstOrDefault(context.ContextTokens.EndsWith);
+
+            if (currentSequence is null)
             {
                 return;
             }
 
             HashSet<int> banTokens = [];
 
-            int start = sequenceTokens.Length;
+            int start = currentSequence.Length;
 
             //-1 because otherwise we align with the end of the sequence
-            long end = context.ContextTokens.Count - sequenceTokens.Length - 1;
+            long end = context.ContextTokens.Count - currentSequence.Length - 1;
 
             for (int i = (int)end; i > start; i--)
             {
-                bool match = true;
+                bool anyMatch = false;
 
-                for (int j = 0; j < sequenceTokens.Length; j++)
+                foreach(var checkSequence in sequenceTokenCollection)
                 {
-                    if (sequenceTokens[j] != context.ContextTokens[i + j].Id)
+                    bool match = true;
+
+                    for (int j = 0; j < currentSequence.Length; j++)
                     {
-                        match = false;
+                        if (currentSequence[j] != context.ContextTokens[i + j].Id)
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+
+                    if (match)
+                    {
+                        anyMatch = true;
                         break;
                     }
                 }
 
-                if (match)
+                if (anyMatch)
                 {
-                    int nextToken = context.ContextTokens[i + sequenceTokens.Length].Id;
+                    int nextToken = context.ContextTokens[i + currentSequence.Length].Id;
 
-                    if(_settings.Exclude.Contains(nextToken))
+                    if (_settings.Exclude.Contains(nextToken))
                     {
                         continue;
                     }
@@ -67,7 +84,6 @@ namespace LlamaNative.Sampling.Samplers.Repetition
             foreach (int banToken in banTokens)
             {
                 context.Candidates.SetLogit(banToken, float.NegativeInfinity);
-                context.OriginalCandidates.SetLogit(banToken, float.NegativeInfinity);
             }
         }
     }

@@ -18,6 +18,49 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         protected int QueueSize { get; private set; } = queueSize;
 
+        protected List<TokenData> FilterCandidates(SampleContext sampleContext)
+        {
+            List<TokenData> toReturn = [];
+
+            Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
+
+            for (int i = 0; i < candidateSpan.Length; i++)
+            {
+                TokenData token = candidateSpan[i];
+
+                //This accounts for adjustments based on samplers
+                if (token.P < _settings.MinP)
+                {
+                    continue;
+                }
+
+                TokenData originalTokenData = sampleContext.GetOriginalData(token.Id);
+
+                //This ensures a minimum probability for the original token
+                if (originalTokenData.P < _settings.MinP)
+                {
+                    continue;
+                }
+
+                if (_settings.MinPs.TryGetValue(token.Id, out float minP))
+                {
+                    if (originalTokenData.P < minP)
+                    {
+                        continue;
+                    }
+                }
+
+                toReturn.Add(token);
+            }
+
+            if (toReturn.Count == 0)
+            {
+                toReturn.Add(sampleContext.Candidates[0]);
+            }
+
+            return toReturn;
+        }
+
         protected static void WriteToLog(SampleContext sampleContext, Span<TokenData> candidateSpan, bool topOnly, int selectedToken, StringBuilder candidateBuilder)
         {
             Dictionary<int, float> originalPs = sampleContext.OriginalCandidates.Data.ToArray().ToDictionary(x => x.Id, x => x.P);
@@ -38,11 +81,11 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
                 do
                 {
-                    if(d > displayCount || i >= sampleContext.Candidates.Data.Length)
+                    if (d > displayCount || i >= sampleContext.Candidates.Data.Length)
                     {
                         break;
                     }
-                 
+
                     float p = candidateSpan[i].P;
                     float originalP = originalPs[candidateSpan[i].Id];
 
@@ -70,14 +113,21 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         protected bool IsWordCompletion(SafeModelHandle ctx, int id)
         {
-            if (!_isWords.TryGetValue(id, out bool word))
+            if (!_isWords.TryGetValue(id, out bool newWordStart))
             {
                 string value = ctx.TokenToPiece(id);
-                word = string.IsNullOrWhiteSpace(value) || !char.IsLetter(value[0]);
-                _isWords[id] = word;
+                bool emptyToken = string.IsNullOrWhiteSpace(value);
+                bool nonLetterStart = !char.IsLetter(value[0]);
+
+                // Ex "As" is the start of a new line, and has no space, but is still a new word
+                bool pascalCase = char.IsUpper(value[0]) && value.Length > 1 && char.IsLower(value[1]);
+
+                newWordStart = emptyToken || nonLetterStart || pascalCase;
+
+                _isWords[id] = newWordStart;
             }
 
-            return !word;
+            return !newWordStart;
         }
 
         protected void Push(TokenData token)

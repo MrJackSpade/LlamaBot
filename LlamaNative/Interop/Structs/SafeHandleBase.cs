@@ -36,14 +36,21 @@ namespace LlamaNative.Interop.Structs
             return $"0x{handle:x16}";
         }
 
-        protected sealed override bool ReleaseHandle()
+        protected override void Dispose(bool disposing)
         {
-            //Skip
-            return true;
-
-            _free(handle);
+            if (disposing)
+            {
+                Debug.WriteLine($"Releasing handle: {handle}");
+                _free(handle);
                 this.SetHandle(IntPtr.Zero);
-                return true;
+            }
+
+            base.Dispose(disposing);
+        }
+
+        protected override bool ReleaseHandle()
+        {
+            return true;
         }
     }
 }
