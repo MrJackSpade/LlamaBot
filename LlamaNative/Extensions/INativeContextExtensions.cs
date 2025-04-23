@@ -10,11 +10,6 @@ namespace LlamaNative.Extensions
 {
     public static class INativeContextExtensions
     {
-        public static float[] GetEmbeddings(this INativeContext handler)
-        {
-            return handler.Handle.GetEmbeddings();
-        }
-
         public static Span<float> GetLogits(this INativeContext handler)
         {
             int n_vocab = handler.VocabCount();
@@ -27,13 +22,6 @@ namespace LlamaNative.Extensions
         public static Token GetToken(this INativeContext handler, TokenMask mask, int id)
         {
             return new(id, NativeApi.TokenToPiece(handler.ModelHandle, id), mask);
-        }
-
-        public static Token Predict(this INativeContext handler, LogitRuleCollection logitRules)
-        {
-            handler.Evaluate();
-
-            return handler.SelectToken(logitRules);
         }
 
         public static IEnumerable<Token> RemoveString(this INativeContext handler, Token token, string s_end)
@@ -74,37 +62,6 @@ namespace LlamaNative.Extensions
             return handler.SelectToken(logitBias, out _);
         }
 
-        public static Token SelectToken(this INativeContext handler, LogitRuleCollection logitBias, out SampleContext context)
-        {
-            return handler.SelectToken(logitBias, out context);
-        }
-
-        public static Token SelectToken(this INativeContext handler, out SampleContext context)
-        {
-            return handler.SelectToken(null, out context);
-        }
-
-        public static void SetBuffer(this INativeContext context, TokenCollection Tokens)
-        {
-            context.Clear(false);
-
-            context.Write(Tokens);
-        }
-
-        public static void SetBuffer(this INativeContext context, IEnumerable<Token> tokens)
-        {
-            Token[] toSet = tokens.ToArray();
-
-            if (toSet.Length > context.Size)
-            {
-                throw new InvalidOperationException("Generated context state is larger than context size");
-            }
-
-            context.Clear(false);
-
-            context.Write(toSet);
-        }
-
         public static TokenCollection Tokenize(this INativeContext context, TokenMask tokenMask, string value, bool addBos = false)
         {
             TokenCollection tokens = new();
@@ -112,18 +69,6 @@ namespace LlamaNative.Extensions
             foreach (int id in NativeApi.Tokenize(context.ModelHandle, value, addBos))
             {
                 tokens.Append(context.GetToken(tokenMask, id));
-            }
-
-            return tokens;
-        }
-
-        public static TokenCollection Tokenize(this INativeContext context, TokenMask mask, IEnumerable<int> value)
-        {
-            TokenCollection tokens = new();
-
-            foreach (int id in value)
-            {
-                tokens.Append(context.GetToken(mask, id));
             }
 
             return tokens;
@@ -149,24 +94,9 @@ namespace LlamaNative.Extensions
             }
         }
 
-        public static void WriteBot(this INativeContext handler, params string[] inputText)
-        {
-            ProcessInputText(handler, TokenMask.Bot, inputText);
-        }
-
-        public static void WritePrompt(this INativeContext handler, params string[] inputText)
-        {
-            ProcessInputText(handler, TokenMask.Prompt, inputText);
-        }
-
         public static void WriteTemplate(this INativeContext handler, params string[] inputText)
         {
             ProcessInputText(handler, TokenMask.Template, inputText);
-        }
-
-        public static void WriteUser(this INativeContext handler, params string[] inputText)
-        {
-            ProcessInputText(handler, TokenMask.User, inputText);
         }
 
         private static void ProcessInputText(this INativeContext handler, TokenMask mask, params string[] inputTexts)

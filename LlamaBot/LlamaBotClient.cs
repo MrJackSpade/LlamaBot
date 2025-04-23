@@ -60,7 +60,7 @@ namespace LlamaBot
 
             if (_chatSettings.ResponseStartBlock > 0)
             {
-                SamplerSetConfiguration defaultSet = _chatSettings.SamplerSets.GetDefault() 
+                SamplerSetConfiguration defaultSet = _chatSettings.SamplerSets.GetDefault()
                                                      ?? throw new ArgumentException("No default sampler set found");
 
                 defaultSet.SimpleSamplers.Add(
@@ -376,11 +376,11 @@ namespace LlamaBot
             {
                 if (_chatSettings.SystemPromptUser is null)
                 {
-                    _chatContext.SendContent(TokenMask.Prompt, applicableSystemPrompt);
+                    _chatContext.SendContent(TokenMask.System, applicableSystemPrompt);
                 }
                 else
                 {
-                    _chatContext.SendMessage(TokenMask.Prompt, _chatSettings.SystemPromptUser, applicableSystemPrompt);
+                    _chatContext.SendMessage(TokenMask.System, _chatSettings.SystemPromptUser, applicableSystemPrompt);
                 }
             }
 
@@ -472,7 +472,7 @@ namespace LlamaBot
                 }
             }
 
-            ChatMessage startTimeIndicator = new(TokenMask.Template, _chatSettings.SystemPromptUser, $"CURRENT TIME ({lastMessageTime.ToDisplayString()})");
+            ChatMessage startTimeIndicator = new(TokenMask.System, _chatSettings.SystemPromptUser, $"CURRENT TIME ({lastMessageTime.ToDisplayString()})");
             _chatContext.Insert(messageStart, startTimeIndicator);
         }
 

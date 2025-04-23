@@ -9,7 +9,7 @@
 
         Bot = 2,
 
-        Prompt = 4,
+        System = 4,
 
         Template = 8,
     }

@@ -6,7 +6,7 @@ namespace LlamaNative.Chat.Models
 {
     public enum HeaderType
     {
-        User, Assistant, Generic
+        User, Assistant, System, Generic
     }
 
     public class ChatTemplate
@@ -29,6 +29,12 @@ namespace LlamaNative.Chat.Models
             set => _startUserHeader = value;
         }
 
+        public string StartSystemHeader
+        {
+            get => _startSystemHeader ?? StartHeader;
+            set => _startSystemHeader = value;
+        }
+
         public string StartAssistantHeader
         {
             get => _startAssistantHeader ?? StartHeader;
@@ -37,30 +43,42 @@ namespace LlamaNative.Chat.Models
 
         private string _startAssistantHeader = string.Empty;
 
+        private string _startSystemHeader = string.Empty;
+
         private string _startUserHeader = string.Empty;
 
         public int[] StopTokenIds { get; set; } = [];
 
-        public MaskedString ToHeader(string userName, bool newHeader, HeaderType headerType = HeaderType.Generic)
+        public MaskedString ToHeader(string userName, bool newHeader, HeaderType headerType)
         {
             StringBuilder sb = new();
 
             switch (headerType)
             {
                 case HeaderType.User:
-                    sb.Append(StartUserHeader); 
+                    sb.Append(StartUserHeader);
                     break;
+
                 case HeaderType.Assistant:
-                    sb.Append(StartAssistantHeader); 
+                    sb.Append(StartAssistantHeader);
                     break;
+
+                case HeaderType.System:
+                    sb.Append(StartSystemHeader);
+                    break;
+
                 case HeaderType.Generic:
                     sb.Append(StartHeader);
                     break;
+
                 default: throw new ArgumentOutOfRangeException(nameof(headerType), headerType, null);
             }
 
-            sb.Append(userName);
-            sb.Append(EndHeader);
+            if(!string.IsNullOrWhiteSpace(userName))
+            {
+                sb.Append(userName);
+                sb.Append(EndHeader);
+            }
 
             if (newHeader)
             {
@@ -76,7 +94,7 @@ namespace LlamaNative.Chat.Models
         /// <param name="message">The message to write</param>
         /// <param name="endMessage">If true, append the end message characters and padding</param>
         /// <returns></returns>
-        public IEnumerable<MaskedString> ToMaskedString(ChatMessage message, bool endMessage, HeaderType headerType = HeaderType.Generic)
+        public IEnumerable<MaskedString> ToMaskedString(ChatMessage message, bool endMessage)
         {
             if (message.ContentOnly)
             {
@@ -89,6 +107,27 @@ namespace LlamaNative.Chat.Models
 
             Ensure.NotNull(message.User);
 
+            HeaderType headerType;
+
+            switch (message.ContentMask)
+            {
+                case TokenMask.User:
+                    headerType = HeaderType.User;
+                    break;
+
+                case TokenMask.Bot:
+                    headerType = HeaderType.Assistant;
+                    break;
+
+                case TokenMask.System:
+                    headerType = HeaderType.System;
+                    break;
+
+                default:
+                    headerType = HeaderType.Generic;
+                    break;
+            }
+
             yield return this.ToHeader(message.User, false, headerType);
 
             yield return new MaskedString(MessagePrefix + message.Content, message.ContentMask);
@@ -99,11 +138,11 @@ namespace LlamaNative.Chat.Models
             }
         }
 
-        public string ToString(ChatMessage message, bool endMessage, HeaderType headerType = HeaderType.Generic)
+        public string ToString(ChatMessage message, bool endMessage)
         {
             StringBuilder sb = new();
 
-            foreach (MaskedString ms in this.ToMaskedString(message, endMessage, headerType))
+            foreach (MaskedString ms in this.ToMaskedString(message, endMessage))
             {
                 sb.Append(ms.Value);
             }

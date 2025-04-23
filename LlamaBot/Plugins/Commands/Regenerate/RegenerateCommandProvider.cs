@@ -28,7 +28,12 @@ namespace LlamaBot.Plugins.Commands.Regenerate
 
             if (command.Channel is ISocketMessageChannel smc)
             {
-                IMessage rootMessage = await _llamaBotClient.TryGetLastBotMessage(smc);
+                IMessage? rootMessage = await _llamaBotClient.TryGetLastBotMessage(smc);
+
+                if(rootMessage is null)
+                {
+                    return CommandResult.Error("No bot message found");
+                }
 
                 ParsedMessage parsedRootMessage = _llamaBotClient.ParseMessage(rootMessage);
 

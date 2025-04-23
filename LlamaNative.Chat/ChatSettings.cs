@@ -1,7 +1,5 @@
 ﻿using LlamaNative.Chat.Models;
 using LlamaNative.Interop.Settings;
-using LlamaNative.Sampling.Models;
-using LlamaNative.Sampling.Samplers.Temperature;
 
 namespace LlamaNative.Chat
 {
