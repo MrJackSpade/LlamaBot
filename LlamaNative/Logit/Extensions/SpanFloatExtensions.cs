@@ -14,18 +14,6 @@ namespace LlamaNative.Logit.Extensions
             }
         }
 
-        public static Dictionary<Token, float> Extract(this Span<float> source, IEnumerable<Token> list)
-        {
-            Dictionary<Token, float> toReturn = [];
-
-            foreach (Token Token in list)
-            {
-                toReturn.Add(Token, source[Token.Id]);
-            }
-
-            return toReturn;
-        }
-
         public static void Update(this Span<float> target, IEnumerable<KeyValuePair<int, string>> list)
         {
             foreach ((int key, string value) in list)
@@ -46,18 +34,6 @@ namespace LlamaNative.Logit.Extensions
                 }
 
                 target[key] = v;
-            }
-        }
-
-        public static void Update(this Span<float> target, IEnumerable<KeyValuePair<Token, float>> list)
-        {
-            foreach (KeyValuePair<Token, float> Token in list)
-            {
-                if (target[Token.Key.Id] != Token.Value)
-                {
-                    Debug.Write($"Adjusting logit [{Token.Key.Id}]; '{target[Token.Key.Id]}' => '{Token.Value}'");
-                    target[Token.Key.Id] = Token.Value;
-                }
             }
         }
     }

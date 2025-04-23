@@ -24,8 +24,6 @@ namespace LlamaNative.Tokens.Collections
 
         public IEnumerable<int> Ids => _tokens.Select(t => t.Id);
 
-        public bool IsNullOrEmpty => _tokens.Count == 0;
-
         public bool IsNullOrWhiteSpace => string.IsNullOrWhiteSpace(this.ToString());
 
         public Token this[int index]
@@ -102,17 +100,6 @@ namespace LlamaNative.Tokens.Collections
         IEnumerator IEnumerable.GetEnumerator()
         {
             return ((IEnumerable)_tokens).GetEnumerator();
-        }
-
-        public void Shift(Token token)
-        {
-            _tokens.RemoveAt(0);
-            _tokens.Add(token);
-        }
-
-        public string ToEscapedString()
-        {
-            return string.Join("", _tokens.Select(t => t.GetEscapedValue()));
         }
 
         public override string ToString()

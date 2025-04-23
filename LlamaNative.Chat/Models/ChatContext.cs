@@ -43,13 +43,6 @@ namespace LlamaNative.Chat.Models
 
         public ChatMessage this[int index] => _messages[index];
 
-        public uint CalculateLength(ChatMessage message)
-        {
-            TokenCollection tokenized = NativeContext.Tokenize(TokenMask.Undefined, Settings.ChatTemplate.ToString(message, true));
-
-            return tokenized.Count;
-        }
-
         public void Clear(bool includeCache)
         {
             lock (_lock)

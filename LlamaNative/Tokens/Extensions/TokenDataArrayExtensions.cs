@@ -122,14 +122,6 @@ namespace LlamaNative.Tokens.Extensions
             tokens.Ordered = false;
         }
 
-        public static void Update(this TokenDataArray tokens, IEnumerable<KeyValuePair<Token, float>> list)
-        {
-            foreach (KeyValuePair<Token, float> Token in list)
-            {
-                tokens.SetProbability(Token.Key.Id, Token.Value);
-            }
-        }
-
         private static int GetTokenIndex(this TokenDataArray tokens, int tokenId)
         {
             for (int i = 0; i < tokens.Data.Span.Length; i++)

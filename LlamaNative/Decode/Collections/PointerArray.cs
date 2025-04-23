@@ -16,10 +16,6 @@ namespace LlamaNative.Decode.Collections
             }
         }
 
-        public int Count => (int)Pointer;
-
-        public uint Length => (uint)_backingData.Length;
-
         public uint Pointer { get; set; }
 
         public T this[uint index]

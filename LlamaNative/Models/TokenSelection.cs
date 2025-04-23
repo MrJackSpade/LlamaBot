@@ -3,14 +3,9 @@ using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Models
 {
-    public class TokenSelection
+    public class TokenSelection(Token selectedToken)
     {
-        public TokenSelection(Token selectedToken)
-        {
-            SelectedToken = selectedToken;
-        }
-
-        public Token SelectedToken { get; set; }
+        public Token SelectedToken { get; set; } = selectedToken;
 
         public Dictionary<int, TokenData> TokenData { get; set; } = [];
     }

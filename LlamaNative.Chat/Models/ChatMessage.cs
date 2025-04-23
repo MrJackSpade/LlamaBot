@@ -12,15 +12,6 @@ namespace LlamaNative.Chat.Models
             ContentMask = contentMask;
         }
 
-        public ChatMessage(string user)
-        {
-            User = user ?? throw new ArgumentNullException(nameof(user));
-        }
-
-        [JsonConstructor]
-        private ChatMessage()
-        { }
-
         public string? Content { get; private set; }
 
         public TokenMask ContentMask { get; private set; }
