@@ -447,7 +447,7 @@ namespace LlamaBot
                         if (timediff > TimeSpan.FromHours(1))
                         {
                             string displayString = timediff.ToDisplayString();
-                            ChatMessage timeIndicator = new(TokenMask.Template, _chatSettings.SystemPromptUser, $"No messages for {displayString} ({lastMessageTime.ToDisplayString()})");
+                            ChatMessage timeIndicator = new(TokenMask.System, _chatSettings.SystemPromptUser, $"No messages for {displayString} ({lastMessageTime.ToDisplayString()})");
                             _chatContext.Insert(messageStart, timeIndicator);
                         }
                     }

@@ -81,32 +81,42 @@ namespace LlamaBot
 
         private static bool IsValidSource(IChannel channel)
         {
+            if (channel is SocketThreadChannel socketThreadChannel)
+            {
+                ulong parentChannel = socketThreadChannel.ParentChannel.Id;
+
+                if (_configuration.ChannelIds is not null)
+                {
+                    if (_configuration.ChannelIds.Contains(parentChannel))
+                    {
+                        return true;
+                    }
+                }
+            } 
+            
             if (channel is SocketTextChannel socketTextChannel)
             {
                 if (_configuration.ChannelIds is not null)
                 {
-                    if (!_configuration.ChannelIds.Contains(socketTextChannel.Id))
+                    if (_configuration.ChannelIds.Contains(socketTextChannel.Id))
                     {
-                        return false;
+                        return true;
                     }
                 }
             }
-            else if (channel is SocketDMChannel socketDMChannel)
+            
+            if (channel is SocketDMChannel socketDMChannel)
             {
                 if (_configuration.UserIds is not null)
                 {
-                    if (!_configuration.UserIds.Contains(socketDMChannel.Users.ToArray()[1].Id))
+                    if (_configuration.UserIds.Contains(socketDMChannel.Users.ToArray()[1].Id))
                     {
-                        return false;
+                        return true;
                     }
                 }
             }
-            else
-            {
-                return false;
-            }
 
-            return true;
+            return false;
         }
 
         private static async Task InitializeDiscordClient()

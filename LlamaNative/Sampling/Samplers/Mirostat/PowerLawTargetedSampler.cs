@@ -127,14 +127,40 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             float minDistance = float.MaxValue;
             int closestTokenId = -1;
 
+            // Track if any token is above min-p
+            bool anyTokenAboveMinP = false;
+
+            // Track max probability token for fallback case
+            float maxP = float.MinValue;
+            int maxPTokenId = -1;
+
             foreach (TokenData candidate in candidates)
             {
+                // Track token with highest probability for fallback
+                if (candidate.P > maxP)
+                {
+                    maxP = candidate.P;
+                    maxPTokenId = candidate.Id;
+                }
+
+                // Check if any token is above min-p threshold
+                if (candidate.P >= _settings.MinP)
+                {
+                    anyTokenAboveMinP = true;
+                }
+
                 float distance = Math.Abs(candidate.P - target);
                 if (distance < minDistance)
                 {
                     minDistance = distance;
                     closestTokenId = candidate.Id;
                 }
+            }
+
+            // If no tokens are above min-p, directly return the token with max probability
+            if (!anyTokenAboveMinP && maxPTokenId != -1)
+            {
+                return maxPTokenId;
             }
 
             // Apply Power Law distribution to valid candidates
