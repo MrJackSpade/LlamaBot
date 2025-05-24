@@ -54,7 +54,7 @@
 	  </Content>
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Discord.Net" Version="3.15.2" />
+		<PackageReference Include="Discord.Net" Version="3.17.4" />
 		<PackageReference Include="Loxifi.StaticConfiguration" Version="0.8.0" />
 	</ItemGroup>
 	<ItemGroup>
