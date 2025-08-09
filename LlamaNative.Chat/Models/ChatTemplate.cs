@@ -29,7 +29,7 @@ namespace LlamaNative.Chat.Models
         {
             get
             {
-                if (string.IsNullOrEmpty(_thinkHeader))
+                if (_thinkHeader == null)
                 {
                     return NewThinkHeader;
                 }
