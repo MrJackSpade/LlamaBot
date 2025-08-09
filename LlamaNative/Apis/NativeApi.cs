@@ -65,54 +65,6 @@ namespace LlamaNative.Apis
                     batchItems.RemoveAt(0);
                 }
 
-                //Now we try and find room
-                if (!TryFindBlock(handle, thisBatchSize, maxBatchSize, out FoundBlock fb))
-                {
-                    //if no room, we fail
-                    return 1;
-                }
-
-                //Did we need to displace anything to find this room?
-                foreach (TokenReplacement tr in fb.TokenReplacements)
-                {
-                    //We're going to need to redecode it
-                    toDecode++;
-
-                    //clear the slot so the cpp dll can use the space
-                    RemoveCacheToken(handle, tr.Pos);
-
-                    //is it after our current highest position token? Track that
-                    currentHighestPosition = Math.Max(currentHighestPosition, tr.Pos);
-
-                    //Do we have room in this batch?
-                    if (thisBatch.Count < maxBatchSize)
-                    {
-                        //If so, eval it now. We have the space
-                        thisBatch.AddItem(tr.Value, tr.Pos);
-                    }
-                    else
-                    {
-                        //If not, save it for the next pass
-                        batchItems.Add(new BatchItem<int>(tr.Value, tr.Pos));
-                    }
-                }
-
-                //If we've already found the need to move something that will
-                //fuck up our decode order
-                if (currentHighestPosition > originalHighestPosition)
-                {
-                    //And we have more than one item
-                    if (thisBatch.Count > 0)
-                    {
-                        //And one of those items is the expected last token
-                        if (thisBatch.TryRemove(originalHighestPosition, out BatchItem<int> found))
-                        {
-                            //remove it, because we need to process it on its own later
-                            batchItems.Add(found);
-                        }
-                    }
-                }
-
                 thisBatchSize = (uint)thisBatch.Count;
 
                 if (thisBatchSize > 1)
@@ -142,57 +94,6 @@ namespace LlamaNative.Apis
             return LlamaCppApi.Eval(handle, tokens, length, (int)evalPointer, evalThreadCount);
         }
 
-        public static float[] GetEmbeddings(this SafeContextHandle handle)
-        {
-            unsafe
-            {
-                int n_embed = LlamaCppApi.NEmbd(handle);
-                float* embeddings = LlamaCppApi.GetEmbeddings(handle);
-                if (embeddings == null)
-                {
-                    return [];
-                }
-
-                Span<float> span = new(embeddings, n_embed);
-                float[] res = new float[n_embed];
-                span.CopyTo(res.AsSpan());
-                return res;
-            }
-        }
-
-        public static KvCell[] GetKvCells(SafeContextHandle context)
-        {
-            uint count = 0;
-            IntPtr cellsPtr = 0;
-
-            if (!LlamaCppApi.GetKvCells(context, out count, out cellsPtr))
-            {
-                return Array.Empty<KvCell>();
-            }
-
-            KvCell[] cells = new KvCell[count];
-            int cellSize = Marshal.SizeOf<KvCell>();
-
-            for (int i = 0; i < count; i++)
-            {
-                IntPtr cellPtr = IntPtr.Add(cellsPtr, i * cellSize);
-                KvCell thisCell = Marshal.PtrToStructure<KvCell>(cellPtr);
-
-                // Get sequence IDs if needed
-                IntPtr seqIdCount = LlamaCppApi.GetKVCellSeqIdCount(cellPtr);
-                if (seqIdCount > 0)
-                {
-                    int[] seqIds = new int[seqIdCount];
-                    LlamaCppApi.GetKvCellSeqIds(cellPtr, seqIds);
-                    // Do something with seqIds if needed
-                }
-
-                cells[i] = thisCell;
-            }
-
-            return cells;
-        }
-
         public static unsafe Span<float> GetLogits(SafeContextHandle ctx, int length)
         {
             float* logits = LlamaCppApi.GetLogitsIth(ctx, -1);
@@ -213,12 +114,11 @@ namespace LlamaNative.Apis
             lparams.NoPerf = true;
             lparams.TypeV = contextSettings.TypeV;
             lparams.TypeK = contextSettings.TypeK;
-            lparams.LogitsAll = contextSettings.Perplexity;
             lparams.Embeddings = contextSettings.GenerateEmbedding;
             lparams.RopeFreqBase = contextSettings.RopeFrequencyBase;
             lparams.RopeFreqScale = contextSettings.RopeFrequencyScaling;
-            lparams.NThreadsBatch = contextSettings.ThreadCount;
-            lparams.NThreads = contextSettings.ThreadCount;
+            lparams.NThreadsBatch = (int)contextSettings.ThreadCount;
+            lparams.NThreads = (int)contextSettings.ThreadCount;
             lparams.RopeScalingType = contextSettings.RopeScalingType;
             lparams.YarnBetaSlow = contextSettings.YarnBetaSlow;
             lparams.YarnBetaFast = contextSettings.YarnBetaFast;
@@ -319,19 +219,36 @@ namespace LlamaNative.Apis
             return LlamaCppApi.NVocab(vocab);
         }
 
+        // Add helper to get memory handle
+        private static SafeMemoryHandle GetMemoryHandle(SafeContextHandle context)
+        {
+            IntPtr memPtr = LlamaCppApi.GetMemory(context);
+            if (memPtr == IntPtr.Zero)
+            {
+                throw new LlamaCppRuntimeError("Failed to get memory from context");
+            }
+            // Memory is owned by context, so we don't free it
+            return new SafeMemoryHandle(memPtr, _ => { });
+        }
+
         public static void RemoveCacheToken(SafeContextHandle handle, uint pos)
         {
-            LlamaCppApi.RemoveCacheTokens(handle, -1, (int)pos, (int)(pos + 1));
+            using var mem = GetMemoryHandle(handle);
+            //TODO: This used to be -1
+            LlamaCppApi.RemoveCacheTokens(mem, 0, (int)pos, (int)(pos + 1));
         }
 
         public static void RemoveCacheTokens(SafeContextHandle handle, uint startPos, uint endPos)
         {
-            LlamaCppApi.RemoveCacheTokens(handle, -1, (int)startPos, (int)endPos);
+            using var mem = GetMemoryHandle(handle);
+            //TODO: This used to be -1
+            LlamaCppApi.RemoveCacheTokens(mem, 0, (int)startPos, (int)endPos);
         }
 
         public static void ShiftCacheTokens(SafeContextHandle handle, uint sequenceId, uint startPos, uint endPos, int delta)
         {
-            LlamaCppApi.ShiftCacheTokens(handle, (int)sequenceId, (int)startPos, (int)endPos, delta);
+            using var mem = GetMemoryHandle(handle);
+            LlamaCppApi.ShiftCacheTokens(mem, (int)sequenceId, (int)startPos, (int)endPos, delta);
         }
 
         public static void Test()
@@ -389,91 +306,6 @@ namespace LlamaNative.Apis
             string toReturn = System.Text.Encoding.UTF8.GetString(buffer, 0, result);
 
             return toReturn;
-        }
-
-        internal static Token[] GetEvaluated(SafeContextHandle context, SafeModelHandle model)
-        {
-            KvCell[] cells = GetKvCells(context);
-
-            Token[] evaluated = new Token[cells.Length];
-
-            Dictionary<int, List<CellDefinition>> cellDict = [];
-
-            {
-                int i = 0;
-                foreach (KvCell cell in cells)
-                {
-                    if (cell.Pos == -1)
-                    {
-                        continue;
-                    }
-
-                    if (!cellDict.TryGetValue(cell.Pos, out List<CellDefinition>? cellColl))
-                    {
-                        cellColl = [];
-                        cellDict[cell.Pos] = cellColl;
-                    }
-
-                    cellColl.Add(new CellDefinition()
-                    {
-                        Index = i,
-                        Cell = cell,
-                    });
-
-                    i++;
-                }
-            }
-
-            foreach (int key in cellDict.Keys)
-            {
-                if (cellDict[key].Count < 2)
-                {
-                    cellDict.Remove(key);
-                }
-            }
-
-            if (cellDict.Count > 0)
-            {
-                Debugger.Break();
-            }
-
-            foreach (KvCell cell in cells)
-            {
-                Token token;
-
-                if (cell.Pos < 0)
-                {
-                    continue;
-                }
-
-                if (cell.Value == -1)
-                {
-                    token = Token.Null;
-                }
-                else
-                {
-                    token = new Token(cell.Value, model.TokenToPiece(cell.Value), TokenMask.Undefined);
-                }
-
-                if (evaluated[cell.Pos] != null)
-                {
-                    //throw new InvalidOperationException("Can not double assign token");
-                }
-                else
-                {
-                    evaluated[cell.Pos] = token;
-                }
-            }
-
-            for (int i = 0; i < evaluated.Length; i++)
-            {
-                if (evaluated[i] == null)
-                {
-                    evaluated[i] = Token.Null;
-                }
-            }
-
-            return evaluated;
         }
 
         private static void Log(string method, params object[] args)
@@ -553,95 +385,6 @@ namespace LlamaNative.Apis
 
             // Now you can set the pointer in your structure.
             param.TensorSplit = tensorSplitPtr;
-        }
-
-        private static bool TryFindBlock(SafeContextHandle handle, uint size, uint maxSize, out FoundBlock? foundBlock)
-        {
-            foundBlock = null;
-
-            KvCell[] cells = GetKvCells(handle);
-
-            List<uint> checkCells = new(cells.Length);
-
-            uint emptyCells = 0;
-
-            uint endStart = (uint)(cells.Length - size);
-
-            for (uint i = 0; i < cells.Length; i++)
-            {
-                if (cells[i].Pos < 0)
-                {
-                    if (i <= endStart)
-                    {
-                        checkCells.Add(i);
-                    }
-
-                    emptyCells++;
-                }
-            }
-
-            if (emptyCells < size)
-            {
-                foundBlock = null;
-                return false;
-            }
-
-            foreach (uint i in checkCells)
-            {
-                FoundBlock thisBlock = new()
-                {
-                    Offset = i,
-                    RequestedSize = size
-                };
-
-                uint requiredSize = size;
-
-                uint thisSize = 0;
-
-                bool overrun = false;
-
-                while (thisSize < requiredSize && thisSize < maxSize)
-                {
-                    uint offset = i + thisSize;
-
-                    if (offset >= cells.Length)
-                    {
-                        overrun = true;
-                        break;
-                    }
-
-                    if (cells[offset].Pos > 0)
-                    {
-                        requiredSize++;
-
-                        thisBlock.AddReplacement(cells[offset].Pos, cells[offset].Value);
-
-                        if (foundBlock != null && foundBlock.ActualSize <= thisBlock.ActualSize)
-                        {
-                            break;
-                        }
-                    }
-
-                    thisSize++;
-                }
-
-                if (overrun)
-                {
-                    break;
-                }
-
-                if (foundBlock == null || foundBlock.ActualSize > thisBlock.ActualSize)
-                {
-                    foundBlock = thisBlock;
-
-                    if (thisBlock.TokenReplacements.Count == 0)
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            return foundBlock != null;
         }
 
         private class CellDefinition

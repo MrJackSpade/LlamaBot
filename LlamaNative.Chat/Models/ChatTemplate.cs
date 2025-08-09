@@ -23,6 +23,24 @@ namespace LlamaNative.Chat.Models
 
         public string StartHeader { get; set; } = "|";
 
+        public string NewThinkHeader { get; set; } = "";
+
+        public string ThinkHeader
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_thinkHeader))
+                {
+                    return NewThinkHeader;
+                }
+
+                return _thinkHeader;
+            }
+            set => _thinkHeader = value;
+        }
+
+        private string? _thinkHeader = null;
+
         public string StartUserHeader
         {
             get => _startUserHeader ?? StartHeader;
@@ -61,6 +79,14 @@ namespace LlamaNative.Chat.Models
 
                 case HeaderType.Assistant:
                     sb.Append(StartAssistantHeader);
+
+                    if(newHeader)
+                    {
+                        sb.Append(NewThinkHeader);
+                    } else
+                    {
+                        sb.Append(ThinkHeader);
+                    }
                     break;
 
                 case HeaderType.System:
@@ -74,7 +100,7 @@ namespace LlamaNative.Chat.Models
                 default: throw new ArgumentOutOfRangeException(nameof(headerType), headerType, null);
             }
 
-            if(!string.IsNullOrWhiteSpace(userName))
+            if (!string.IsNullOrWhiteSpace(userName))
             {
                 sb.Append(userName);
                 sb.Append(EndHeader);

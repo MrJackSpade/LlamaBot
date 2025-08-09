@@ -40,7 +40,6 @@ namespace LlamaNative.Interop.Structs
         {
             if (disposing)
             {
-                Debug.WriteLine($"Releasing handle: {handle}");
                 _free(handle);
                 this.SetHandle(IntPtr.Zero);
             }

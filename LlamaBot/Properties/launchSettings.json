@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "GLM432",
+      "commandLineArgs": "GLM4.5",
       "nativeDebugging": true
     }
   }

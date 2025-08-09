@@ -17,7 +17,7 @@ namespace LlamaNative.Interop.Structs
         public IntPtr Devices;
 
         /// <summary>
-        ///NULL-terminated list of buffer types to use for tensors that match a pattern
+        /// NULL-terminated list of buffer types to use for tensors that match a pattern
         /// </summary>
         public IntPtr TensorBufferTypeOverrides;
 
@@ -32,7 +32,7 @@ namespace LlamaNative.Interop.Structs
         public SplitMode SplitMode;
 
         /// <summary>
-        /// The GPU that is used for the entire model or for small tensors and intermediate results.
+        /// The GPU that is used for the entire model when split_mode is LLAMA_SPLIT_MODE_NONE.
         /// </summary>
         public int MainGpu;
 
@@ -42,7 +42,9 @@ namespace LlamaNative.Interop.Structs
         public IntPtr TensorSplit;
 
         /// <summary>
-        /// Called with a progress value between 0 and 1, pass NULL to disable.
+        /// Called with a progress value between 0.0 and 1.0, pass NULL to disable.
+        /// If the provided progress_callback returns true, model loading continues.
+        /// If it returns false, model loading is immediately aborted.
         /// </summary>
         public LlamaProgressCallback ProgressCallback;
 
@@ -79,5 +81,11 @@ namespace LlamaNative.Interop.Structs
         /// </summary>
         [MarshalAs(UnmanagedType.I1)]
         public bool CheckTensors;
+
+        /// <summary>
+        /// Use extra buffer types (used for weight repacking).
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool UseExtraBufferTypes;
     }
 }

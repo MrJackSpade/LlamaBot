@@ -37,12 +37,12 @@ namespace LlamaNative.Interop.Structs
         /// <summary>
         /// Number of threads to use for generation.
         /// </summary>
-        public uint NThreads;
+        public int NThreads;
 
         /// <summary>
         /// Number of threads to use for batch processing.
         /// </summary>
-        public uint NThreadsBatch;
+        public int NThreadsBatch;
 
         /// <summary>
         /// RoPE scaling type, from `LlamaRopeScalingType`.
@@ -95,7 +95,7 @@ namespace LlamaNative.Interop.Structs
         public uint YarnOrigCtx;
 
         /// <summary>
-        /// Defragment the KV cache if holes/size > thold, < 0 disabled (default).
+        /// Defragment the KV cache if holes/size > thold, &lt;= 0 disabled (default).
         /// </summary>
         public float DefragThold;
 
@@ -107,47 +107,17 @@ namespace LlamaNative.Interop.Structs
         /// <summary>
         /// User data for the evaluation scheduling callback.
         /// </summary>
-        public nint CbEvalUserData;
+        public IntPtr CbEvalUserData;
 
         /// <summary>
-        /// Data type for K cache.
+        /// Data type for K cache [EXPERIMENTAL].
         /// </summary>
         public GgmlType TypeK;
 
         /// <summary>
-        /// Data type for V cache.
+        /// Data type for V cache [EXPERIMENTAL].
         /// </summary>
         public GgmlType TypeV;
-
-        /// <summary>
-        /// The llama_decode() call computes all logits, not just the last one (DEPRECATED - set llama_batch.logits instead).
-        /// </summary>
-        [MarshalAs(UnmanagedType.I1)]
-        public bool LogitsAll;
-
-        /// <summary>
-        /// If true, extract embeddings (together with logits).
-        /// </summary>
-        [MarshalAs(UnmanagedType.I1)]
-        public bool Embeddings;
-
-        /// <summary>
-        /// Whether to offload the KQV ops (including the KV cache) to GPU.
-        /// </summary>
-        [MarshalAs(UnmanagedType.I1)]
-        public bool OffloadKQV;
-
-        /// <summary>
-        /// Whether to use flash attention.
-        /// </summary>
-        [MarshalAs(UnmanagedType.I1)]
-        public bool FlashAttn;
-
-        /// <summary>
-        /// Whether to use flash attention.
-        /// </summary>
-        [MarshalAs(UnmanagedType.I1)]
-        public bool NoPerf;
 
         /// <summary>
         /// Abort callback. If it returns true, execution of llama_decode() will be aborted. Currently works only with CPU execution.
@@ -158,5 +128,48 @@ namespace LlamaNative.Interop.Structs
         /// User data for the abort callback.
         /// </summary>
         public IntPtr AbortCallbackData;
+
+        /// <summary>
+        /// If true, extract embeddings (together with logits).
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool Embeddings;
+
+        /// <summary>
+        /// Offload the KQV ops (including the KV cache) to GPU.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool OffloadKQV;
+
+        /// <summary>
+        /// Use flash attention [EXPERIMENTAL].
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool FlashAttn;
+
+        /// <summary>
+        /// Measure performance timings.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool NoPerf;
+
+        /// <summary>
+        /// Offload host tensor operations to device.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool OpOffload;
+
+        /// <summary>
+        /// Use full-size SWA cache. NOTE: setting to false when n_seq_max > 1 can cause bad performance in some cases.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool SwaFull;
+
+        /// <summary>
+        /// Use a unified buffer across the input sequences when computing the attention. 
+        /// Try to disable when n_seq_max > 1 for improved performance when the sequences do not share a large prefix.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool KvUnified;
     }
 }

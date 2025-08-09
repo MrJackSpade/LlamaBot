@@ -60,7 +60,7 @@ namespace LlamaNative.Models
             _allSamplers = [.. samplerSets];
 
             _synchronizer = new PointerArraySynchronizer<Token>(
-                new KvCacheShifter(settings.NThreads, settings.NBatch, handle, modelHandle),
+                new KvCacheShifter((uint)settings.NThreads, settings.NBatch, handle, modelHandle),
                 Token.Null
                 );
 

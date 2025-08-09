@@ -17,6 +17,9 @@ namespace LlamaNative.Interop
             InitBackend(false);
         }
 
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_memory")]
+        public static partial IntPtr GetMemory(SafeContextHandle ctx);
+
         /// <summary>
         /// Apply a LoRA adapter to a loaded model
         /// path_base_model is the path to a higher quality model to use as a base for
@@ -41,8 +44,8 @@ namespace LlamaNative.Interop
         /// startPos < 0 : [0,  endPos]
         /// endPos < 0 : [startPos, inf)
         /// </summary>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_cp")]
-        public static partial void CopyCacheTokens(SafeContextHandle handle, int sourceSequenceId, int destinationSequenceId, int startPos, int endPos);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_memory_seq_cp")]
+        public static partial void CopyCacheTokens(SafeMemoryHandle handle, int sourceSequenceId, int destinationSequenceId, int startPos, int endPos);
 
         /// <summary>
         /// Copies the state to the specified destination address.
@@ -172,8 +175,8 @@ namespace LlamaNative.Interop
         /// <summary>
         /// Removes all tokens that do not belong to the specified sequence.
         /// </summary>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_keep")]
-        public static partial void KeepCacheTokens(SafeContextHandle handle, int sequenceId);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_memory_seq_keep")]
+        public static partial void KeepCacheTokens(SafeMemoryHandle handle, int sequenceId);
 
         /// <summary>
         /// Various functions for loading a ggml llama model.
@@ -224,7 +227,7 @@ namespace LlamaNative.Interop
         /// <param name="path_model"></param>
         /// <param name="params_"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_new_context_with_model")]
+        [DllImport(LIBRARY_NAME, EntryPoint = "llama_init_from_model")]
         public static extern IntPtr NewContextWithModel(SafeModelHandle mdl, ContextParams params_);
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_vocab_n_tokens")]
@@ -245,8 +248,9 @@ namespace LlamaNative.Interop
         /// startPos < 0 : [0,  endPos]
         /// endPos < 0 : [startPos, inf)
         /// </summary>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_rm")]
-        public static partial void RemoveCacheTokens(SafeContextHandle handle, int sequenceId, int startPos, int endPos);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_memory_seq_rm")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool RemoveCacheTokens(SafeMemoryHandle handle, int sequenceId, int startPos, int endPos);
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_reset_timings")]
         public static partial void ResetTimings(SafeContextHandle ctx);
@@ -287,8 +291,9 @@ namespace LlamaNative.Interop
         /// startPos < 0 : [0,  endPos]
         /// endPos < 0 : [startPos, inf)
         /// </summary>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_kv_cache_seq_add")]
-        public static partial void ShiftCacheTokens(SafeContextHandle handle, int sequenceId, int startPos, int endPos, int delta);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_memory_seq_add")]
+        public static partial void ShiftCacheTokens(SafeMemoryHandle handle, int sequenceId, int startPos, int endPos, int delta);
+
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_bos")]
         public static partial int TokenBos();
