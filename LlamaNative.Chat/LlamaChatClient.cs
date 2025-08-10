@@ -24,6 +24,21 @@ namespace LlamaNative.Chat
 
             int v = NativeApi.NVocab(model.Handle);
 
+            string[] tokenValues = new string[v];
+
+            for (int i = 0; i < v; i++)
+            {
+                try
+                {
+                    string token = NativeApi.TokenToPiece(model.Handle, i);
+
+                    tokenValues[i] = token;
+                }
+                catch (Exception e)
+                {
+                }
+            }
+
             foreach (SamplerSetConfiguration samplerSet in settings.SamplerSets)
             {
                 SamplerSet newSet = new() { 
@@ -33,7 +48,12 @@ namespace LlamaNative.Chat
 
                 for (int i = 0; i < v; i++)
                 {
-                    string token = NativeApi.TokenToPiece(model.Handle, i);
+                    string token = tokenValues[i];
+
+                    if(token is null)
+                    {
+                        continue;
+                    }
 
                     foreach (KeyValuePair<char, string> charBias in samplerSet.CharBias)
                     {
