@@ -22,12 +22,27 @@ namespace LlamaNative.Chat
 
             List<SamplerSet> samplerSets = new();
 
+            int v = NativeApi.NVocab(model.Handle);
+
             foreach (SamplerSetConfiguration samplerSet in settings.SamplerSets)
             {
                 SamplerSet newSet = new() { 
                     TokenSelector = SamplerDeserializer.InstantiateSelector(samplerSet.TokenSelector),
                     LogitBias = samplerSet.LogitBias
                 };
+
+                for (int i = 0; i < v; i++)
+                {
+                    string token = NativeApi.TokenToPiece(model.Handle, i);
+
+                    foreach (KeyValuePair<char, string> charBias in samplerSet.CharBias)
+                    {
+                        if (token.Contains(charBias.Key))
+                        {
+                            newSet.LogitBias.Add(i, charBias.Value);
+                        }
+                    }
+                }
 
                 foreach (SamplerSetting samplerSetting in samplerSet.SimpleSamplers)
                 {

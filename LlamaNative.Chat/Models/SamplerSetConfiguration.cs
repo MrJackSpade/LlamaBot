@@ -13,5 +13,7 @@ namespace LlamaNative.Chat.Models
         public SamplerSetting? TokenSelector { get; set; }
 
         public Dictionary<int, string> LogitBias { get; set; } = [];
+
+        public Dictionary<char, string> CharBias { get; set; } = [];
     }
 }
