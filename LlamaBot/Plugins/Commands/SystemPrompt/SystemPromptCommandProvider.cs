@@ -32,23 +32,24 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
             }
 
             ulong channelId = command.Channel.GetChannelId();
-            string responseString;
+
+            string? responseString;
 
             if (command.Prompt is null)
             {
-                if (!_llamaBotClient!.SystemPrompts.TryGetValue(channelId, out string? value))
+                if (!_llamaBotClient!.ChannelSettings.TryGetValue(channelId, out ChannelSettings? value) || string.IsNullOrWhiteSpace(value.Prompt))
                 {
-                    responseString = _llamaBotClient.DefaultSystemPrompt;
+                    responseString = _llamaBotClient.DefaultChannelSettings.Prompt;
                 }
                 else
                 {
-                    responseString = value;
+                    responseString = value.Prompt;
                 }
             }
             else
             {
                 string prompt = command.Prompt.Replace("\\n", "\n");
-                _llamaBotClient!.SystemPrompts[channelId] = prompt;
+                _llamaBotClient!.ChannelSettings[channelId].Prompt = prompt;
 
                 // Save the prompt to a file
                 await this.SavePromptToFile(channelId, prompt);
@@ -111,7 +112,14 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
                     {
                         // Read the prompt and add it to the dictionary
                         string prompt = await File.ReadAllTextAsync(file);
-                        _llamaBotClient!.SystemPrompts[channelId] = prompt;
+
+                        if(!_llamaBotClient!.ChannelSettings.TryGetValue(channelId, out var channelSettings))
+                        {
+                            channelSettings = new ChannelSettings();
+                            _llamaBotClient.ChannelSettings.Add(channelId, channelSettings);
+                        }
+
+                        channelSettings.Prompt = prompt;
                     }
                 }
 

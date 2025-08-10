@@ -178,7 +178,7 @@ namespace LlamaNative.Chat.Models
 
                 if (!responseSettings.ContinueLast)
                 {
-                    NativeContext.Write(Settings.ChatTemplate.ToHeader(respondingUser, true, HeaderType.Assistant));
+                    NativeContext.Write(Settings.ChatTemplate.ToHeader(respondingUser, true, HeaderType.Assistant, responseSettings.ResponsePrepend));
                 }
 
                 NativeContext.Evaluate();

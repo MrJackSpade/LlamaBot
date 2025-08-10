@@ -14,10 +14,12 @@ using LlamaNative.Sampling.Settings;
 using LlamaNative.Tokens.Models;
 using LlamaNative.Utils;
 using Loxifi;
+using System.Threading.Channels;
 using ThreadState = System.Threading.ThreadState;
 
 namespace LlamaBot
 {
+
     internal class LlamaBotClient : ILlamaBotClient
     {
         private const char ZERO_WIDTH = (char)8203;
@@ -38,20 +40,20 @@ namespace LlamaBot
 
         public string BotName => _chatSettings.BotName;
 
-        public string DefaultSystemPrompt { get; } = string.Empty;
+        public ChannelSettings DefaultChannelSettings { get; } = new ChannelSettings();
 
-        public Dictionary<ulong, string> SystemPrompts { get; set; } = [];
+        public Dictionary<ulong, ChannelSettings> ChannelSettings { get; set; } = [];
 
-        public LlamaBotClient(Character character, string? systemPrompt, ulong botId)
+        public LlamaBotClient(Character character, ChannelSettings channelSettings, ulong botId)
         {
             Ensure.NotNull(character);
             Ensure.NotNull(character.ChatSettings);
 
             _chatContext = LlamaChatClient.LoadChatContext(character.ChatSettings);
 
-            if (!string.IsNullOrWhiteSpace(systemPrompt))
+            if (channelSettings is not null)
             {
-                DefaultSystemPrompt = systemPrompt;
+                DefaultChannelSettings = channelSettings;
             }
 
             _chatSettings = character.ChatSettings;
@@ -194,6 +196,10 @@ namespace LlamaBot
                     }
                 }
 
+                ChannelSettings applicableSettings = GetApplicableSettings(channel.Id);
+
+                responseSettings.ResponsePrepend = string.Format(_chatSettings.ChatTemplate.NewThinkHeader, applicableSettings.Think);
+
                 using IDisposable typingState = channel.EnterTypingState();
 
                 foreach (ChatMessage cm in _chatContext.ReadResponse(responseSettings))
@@ -290,10 +296,8 @@ namespace LlamaBot
             _chatContext.TryInterrupt();
         }
 
-        public void TryProcessMessageAsync(ISocketMessageChannel smc, ReadResponseSettings? readResponseSettings = null)
+        public void TryProcessMessageAsync(ISocketMessageChannel smc, ReadResponseSettings readResponseSettings)
         {
-            readResponseSettings ??= new ReadResponseSettings();
-
             if (_processMessageThread is null || _processMessageThread.ThreadState != ThreadState.Running)
             {
                 _processMessageThread = new Thread(async () =>
@@ -360,27 +364,33 @@ namespace LlamaBot
             }
         }
 
+        private ChannelSettings GetApplicableSettings(ulong channelId)
+        {
+            ChannelSettings applicableChannelSettings = DefaultChannelSettings;
+
+            if (ChannelSettings.TryGetValue(channelId, out ChannelSettings? channelSettings))
+            {
+                applicableChannelSettings = channelSettings;
+            }
+
+            return applicableChannelSettings;
+        }
         private void InsertContextHeaders(ulong channelId)
         {
             Ensure.NotNull(_chatContext);
             Ensure.NotNull(_character);
 
-            string applicableSystemPrompt = DefaultSystemPrompt;
+            ChannelSettings applicableChannelSettings = GetApplicableSettings(channelId);
 
-            if (SystemPrompts.TryGetValue(channelId, out string? channelPrompt))
-            {
-                applicableSystemPrompt = channelPrompt;
-            }
-
-            if (!string.IsNullOrWhiteSpace(applicableSystemPrompt))
+            if (!string.IsNullOrWhiteSpace(applicableChannelSettings.Prompt))
             {
                 if (_chatSettings.SystemPromptUser is null)
                 {
-                    _chatContext.SendContent(TokenMask.System, applicableSystemPrompt);
+                    _chatContext.SendContent(TokenMask.System, applicableChannelSettings.Prompt);
                 }
                 else
                 {
-                    _chatContext.SendMessage(TokenMask.System, _chatSettings.SystemPromptUser, applicableSystemPrompt);
+                    _chatContext.SendMessage(TokenMask.System, _chatSettings.SystemPromptUser, applicableChannelSettings.Prompt);
                 }
             }
 

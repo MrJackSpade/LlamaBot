@@ -4,11 +4,6 @@ using System.Text;
 
 namespace LlamaNative.Chat.Models
 {
-    public enum HeaderType
-    {
-        User, Assistant, System, Generic
-    }
-
     public class ChatTemplate
     {
         public string EndHeader { get; set; } = ": ";
@@ -29,7 +24,7 @@ namespace LlamaNative.Chat.Models
         {
             get
             {
-                if (_thinkHeader == null)
+                if (string.IsNullOrEmpty(_thinkHeader))
                 {
                     return NewThinkHeader;
                 }
@@ -67,7 +62,7 @@ namespace LlamaNative.Chat.Models
 
         public int[] StopTokenIds { get; set; } = [];
 
-        public MaskedString ToHeader(string userName, bool newHeader, HeaderType headerType)
+        public MaskedString ToHeader(string userName, bool newHeader, HeaderType headerType, string? responsePrepend = null)
         {
             StringBuilder sb = new();
 
@@ -79,14 +74,6 @@ namespace LlamaNative.Chat.Models
 
                 case HeaderType.Assistant:
                     sb.Append(StartAssistantHeader);
-
-                    if(newHeader)
-                    {
-                        sb.Append(NewThinkHeader);
-                    } else
-                    {
-                        sb.Append(ThinkHeader);
-                    }
                     break;
 
                 case HeaderType.System:
@@ -98,6 +85,11 @@ namespace LlamaNative.Chat.Models
                     break;
 
                 default: throw new ArgumentOutOfRangeException(nameof(headerType), headerType, null);
+            }
+
+            if (!string.IsNullOrWhiteSpace(responsePrepend))
+            {
+                sb.Append(responsePrepend);
             }
 
             if (!string.IsNullOrWhiteSpace(userName))

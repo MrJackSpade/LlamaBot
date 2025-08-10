@@ -9,9 +9,9 @@ namespace LlamaBot.Plugins.Interfaces
     {
         string BotName { get; }
 
-        string DefaultSystemPrompt { get; }
+        ChannelSettings DefaultChannelSettings { get; }
 
-        Dictionary<ulong, string> SystemPrompts { get; set; }
+        Dictionary<ulong, ChannelSettings> ChannelSettings { get; set; }
 
         string? BuildMessage(string author, string? content);
 

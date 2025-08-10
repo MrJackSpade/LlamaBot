@@ -39,7 +39,7 @@ namespace LlamaBot
 
         public static async Task MessageReceived(SocketMessage message)
         {
-            ReadResponseSettings? readResponseSettings = null;
+            ReadResponseSettings readResponseSettings = new ReadResponseSettings();
 
             if (message.Author.Id == _discordClient.CurrentUser.Id)
             {
@@ -144,10 +144,18 @@ namespace LlamaBot
             _recursiveConfiguration = _recursiveConfigurationReader.Read(args[0]);
 
             _recursiveConfiguration.Resources.TryGetValue("System.txt", out string? systemPrompt);
+            _recursiveConfiguration.Resources.TryGetValue("Think.txt", out string? thinkPrompt);
 
             await InitializeDiscordClient();
 
-            _llamaBotClient = new LlamaBotClient(_recursiveConfiguration.Configuration, systemPrompt, _discordClient.CurrentUser.Id);
+            _llamaBotClient = new LlamaBotClient(
+                _recursiveConfiguration.Configuration, 
+                new ChannelSettings()
+                {
+                    Prompt = systemPrompt,
+                    Think = thinkPrompt
+                }, 
+                _discordClient.CurrentUser.Id);
 
             _pluginService = new PluginService(_logger, _discordClient, _llamaBotClient);
 
