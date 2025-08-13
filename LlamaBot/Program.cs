@@ -150,11 +150,7 @@ namespace LlamaBot
 
             _llamaBotClient = new LlamaBotClient(
                 _recursiveConfiguration.Configuration, 
-                new ChannelSettings()
-                {
-                    Prompt = systemPrompt,
-                    Think = thinkPrompt
-                }, 
+                new ChannelSettings(systemPrompt, thinkPrompt), 
                 _discordClient.CurrentUser.Id);
 
             _pluginService = new PluginService(_logger, _discordClient, _llamaBotClient);
