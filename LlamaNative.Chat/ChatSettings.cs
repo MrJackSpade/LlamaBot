@@ -1,4 +1,5 @@
-﻿using LlamaNative.Chat.Models;
+﻿using LlamaBot;
+using LlamaNative.Chat.Models;
 using LlamaNative.Interop.Settings;
 
 namespace LlamaNative.Chat

@@ -38,22 +38,10 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         public int SampleNext(SampleContext sampleContext)
         {
             SamplingApi.SoftMax(sampleContext.Candidates);
-            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
-
-            int? ts = 0;
-
-            for (int i = 0; i < sampleContext.Candidates.Data.Length; i++)
-            {
-                TokenData newToken = sampleContext.Candidates.Data.Span[i];
-
-                if (newToken.P > 0.001f)
-                {
-                    ts++;
-                }
-            }
 
             // Filter candidates as in original
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
+            Span<TokenData> originalSpan = sampleContext.OriginalCandidates.Data.Span;
 
             List<TokenData> candidates = this.FilterCandidates(sampleContext);
 
@@ -61,7 +49,18 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             // Special handling for top token
             bool topOnly = false;
+
             TokenData topToken = sampleContext.OriginalCandidates[0];
+
+            for(int i = 0; i < originalSpan.Length; i++)
+            {
+                TokenData testToken = originalSpan[i];
+
+                if(topToken.Logit < testToken.Logit)
+                {
+                    topToken = testToken;
+                }
+            }
 
             if (!_settings.GreedyExclude.Contains(topToken.Id))
             {
@@ -69,12 +68,19 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 {
                     topOnly = true;
                 }
-                else if (_settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
+                else if (_settings.MaxPs.TryGetValue(topToken.Id, out float maxP))
                 {
-                    topOnly = true;
+                    SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+
+                    if (topToken.P >= maxP)
+                    {
+                        topOnly = true;
+                    }
                 }
                 else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id))
                 {
+                    SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+
                     if (topToken.P > _settings.PreserveWordMaxP)
                     {
                         topOnly = true;
@@ -94,17 +100,38 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 selectedToken = this.ApplyPowerLawDistribution(candidates, target, sampleContext);
             }
 
-            // Logging and history updating
-            StringBuilder? candidateBuilder = new();
-            WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
-
-            if (!topOnly || _settings.FactorPreservedWords)
+            if (_settings.Log)
             {
-                TokenData originalP = sampleContext.GetOriginalData(selectedToken);
-                this.Push(originalP);
-            }
+                SamplingApi.SoftMax(sampleContext.OriginalCandidates);
 
-            Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
+                int? ts = 0;
+
+                for (int i = 0; i < sampleContext.Candidates.Data.Length; i++)
+                {
+                    TokenData newToken = sampleContext.Candidates.Data.Span[i];
+
+                    if (newToken.P > 0.001f)
+                    {
+                        ts++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                // Logging and history updating
+                StringBuilder? candidateBuilder = new();
+                WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
+
+                if (!topOnly || _settings.FactorPreservedWords)
+                {
+                    TokenData originalP = sampleContext.GetOriginalData(selectedToken);
+                    this.Push(originalP);
+                }
+
+                Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
+            }
 
             return selectedToken;
         }

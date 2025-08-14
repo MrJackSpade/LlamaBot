@@ -17,13 +17,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_repetition_penalties")]
         public static partial void RepetitionPenalties(SafeContextHandle ctx, IntPtr candidates, [In] int[] lastTokens, ulong last_tokens_size, float penaltyRepeat, float penaltyFreq, float penaltyPresent);
 
-        /// <summary>
-        /// Sorts candidate tokens by their logits in descending order and calculate probabilities based on logits.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">Pointer to TokenDataArray</param>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_softmax")]
-        public static partial void SampleSoftMax(SafeContextHandle ctx, IntPtr candidates);
 
         /// <summary>
         /// Tail Free Sampling described in https://www.trentonbricken.com/Tail-Free-Sampling/.

@@ -42,7 +42,7 @@ namespace LlamaBot
 
         public ChannelSettings DefaultChannelSettings { get; } = new ChannelSettings();
 
-        public Dictionary<ulong, ChannelSettings> ChannelSettings { get; set; } = [];
+        public ChannelSettingsCollection ChannelSettings { get; set; } = new ChannelSettingsCollection();
 
         public LlamaBotClient(Character character, ChannelSettings channelSettings, ulong botId)
         {
@@ -198,7 +198,9 @@ namespace LlamaBot
 
                 ChannelSettings applicableSettings = GetApplicableSettings(channel.Id);
 
-                responseSettings.ResponsePrepend = string.Format(_chatSettings.ChatTemplate.NewThinkHeader, applicableSettings.Think);
+                string? applicableThoughts = applicableSettings.GetFullThoughts(responseSettings.RespondingUser ?? _chatSettings.BotName);
+
+                responseSettings.ResponsePrepend = string.Format(_chatSettings.ChatTemplate.NewThinkHeader, applicableThoughts);
 
                 using IDisposable typingState = channel.EnterTypingState();
 
@@ -366,15 +368,9 @@ namespace LlamaBot
 
         private ChannelSettings GetApplicableSettings(ulong channelId)
         {
-            ChannelSettings applicableChannelSettings = DefaultChannelSettings;
-
-            if (ChannelSettings.TryGetValue(channelId, out ChannelSettings? channelSettings))
-            {
-                applicableChannelSettings = channelSettings;
-            }
-
-            return applicableChannelSettings;
+            return ChannelSettings.GetValue(channelId) ?? DefaultChannelSettings;
         }
+
         private void InsertContextHeaders(ulong channelId)
         {
             Ensure.NotNull(_chatContext);

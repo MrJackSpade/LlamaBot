@@ -24,7 +24,23 @@ namespace LlamaNative.Tokens.Models
         /// True if the tokens have been ordered by descending logit values
         /// False if the tokens need to be ordered
         /// </summary>
-        public bool Ordered { get; set; }
+        public bool Ordered
+        {
+            get => _ordered;
+            set
+            {
+                _ordered = value;
+
+                if (!_ordered)
+                {
+                    Calculated = false;
+                }
+            }
+        }
+
+        private bool _ordered;
+
+        public bool Calculated { get; set; }
 
         public ulong Size { get; set; }
 

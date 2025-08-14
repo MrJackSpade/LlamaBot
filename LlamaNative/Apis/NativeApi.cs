@@ -234,15 +234,13 @@ namespace LlamaNative.Apis
         public static void RemoveCacheToken(SafeContextHandle handle, uint pos)
         {
             using var mem = GetMemoryHandle(handle);
-            //TODO: This used to be -1
-            LlamaCppApi.RemoveCacheTokens(mem, 0, (int)pos, (int)(pos + 1));
+            LlamaCppApi.RemoveCacheTokens(mem, -1, (int)pos, (int)(pos + 1));
         }
 
         public static void RemoveCacheTokens(SafeContextHandle handle, uint startPos, uint endPos)
         {
             using var mem = GetMemoryHandle(handle);
-            //TODO: This used to be -1
-            LlamaCppApi.RemoveCacheTokens(mem, 0, (int)startPos, (int)endPos);
+            LlamaCppApi.RemoveCacheTokens(mem, -1, (int)startPos, (int)endPos);
         }
 
         public static void ShiftCacheTokens(SafeContextHandle handle, uint sequenceId, uint startPos, uint endPos, int delta)

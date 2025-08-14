@@ -121,61 +121,35 @@ namespace LlamaNative.Interop.Apis
 
             Span<TokenData> candidateSpan = candidates.Data.Span;
 
-            // Sort the logits in descending order
             if (!candidates.Ordered)
             {
-                // Using LINQ to sort, then copy back to the MemorySpan
-                TokenData[] sortedData = candidates.Data.ToArray();
-
-                Array.Sort(sortedData, (a, b) => b.Logit.CompareTo(a.Logit));
-
-                for (int i = 0; i < sortedData.Length; i++)
-                {
-                    candidateSpan[i] = sortedData[i];
-                }
-
+                MemoryExtensions.Sort(candidateSpan, (a, b) => b.Logit.CompareTo(a.Logit));
                 candidates.Ordered = true;
+            }
+            else if (candidates.Calculated)
+            {
+                return;
             }
 
             float maxLogit = candidateSpan[0].Logit;
-
             float cumSum = 0.0f;
 
-            // Compute exponential values and cumulate sum
+            // Single pass for exp and sum
             for (int i = 0; i < candidateSpan.Length; i++)
             {
-                float expValue = (float)Math.Exp(candidateSpan[i].Logit - maxLogit);
-
+                float expValue = MathF.Exp(candidateSpan[i].Logit - maxLogit);
                 candidateSpan[i].P = expValue;
-
-                if (float.IsNaN(expValue))
-                {
-                    throw new InvalidOperationException();
-                }
-
                 cumSum += expValue;
-
-                if (float.IsNaN(cumSum))
-                {
-                    throw new InvalidOperationException();
-                }
             }
 
-            int index = 0;
-            // Normalize probabilities
+            // Normalize using multiplication
+            float invSum = 1.0f / cumSum;
             for (int i = 0; i < candidateSpan.Length; i++)
             {
-                TokenData data = candidateSpan[i];
-
-                candidateSpan[i].P /= cumSum;
-
-                if (float.IsNaN(candidateSpan[i].P))
-                {
-                    throw new InvalidOperationException();
-                }
-
-                index++;
+                candidateSpan[i].P *= invSum;
             }
+
+            candidates.Calculated = true;
         }
 
         /// <summary>

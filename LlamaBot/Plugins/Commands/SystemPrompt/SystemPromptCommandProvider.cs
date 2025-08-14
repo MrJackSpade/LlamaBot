@@ -5,12 +5,12 @@ using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
+using LlamaNative.Chat.Models;
 
 namespace LlamaBot.Plugins.Commands.SystemPrompt
 {
     internal class SystemPromptCommandProvider : ICommandProvider<SystemPromptCommand>
     {
-        private const string PROMPTS_DIR = "SystemPrompts";
         private IDiscordService? _discordClient;
         private ILlamaBotClient? _llamaBotClient;
         private IPluginService? _pluginService;
@@ -33,26 +33,21 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
 
             ulong channelId = command.Channel.GetChannelId();
 
+            ChannelSettingsCollection csi = _llamaBotClient.ChannelSettings;
+
             string? responseString;
 
             if (command.Prompt is null)
             {
-                if (!_llamaBotClient!.ChannelSettings.TryGetValue(channelId, out ChannelSettings? value) || string.IsNullOrWhiteSpace(value.Prompt))
-                {
-                    responseString = _llamaBotClient.DefaultChannelSettings.Prompt;
-                }
-                else
-                {
-                    responseString = value.Prompt;
-                }
+                responseString = csi.GetPrompt(channelId);
             }
             else
             {
                 string prompt = command.Prompt.Replace("\\n", "\n");
-                _llamaBotClient!.ChannelSettings[channelId].Prompt = prompt;
 
-                // Save the prompt to a file
-                await this.SavePromptToFile(channelId, prompt);
+                csi.SetPrompt(channelId, prompt);
+
+                csi.SaveSettings(channelId);
 
                 responseString = "System Prompt Updated: " + command.Prompt;
             }
@@ -71,64 +66,7 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
             _discordClient = args.DiscordService;
             _llamaBotClient = args.LlamaBotClient;
 
-            // Load all saved prompts
-            await this.LoadAllPrompts();
-
             return InitializationResult.Success();
-        }
-
-        private async Task SavePromptToFile(ulong channelId, string prompt)
-        {
-            try
-            {
-                // Ensure directory exists
-                Directory.CreateDirectory(PROMPTS_DIR);
-
-                // Save the prompt to a file named after the channel ID
-                string filePath = Path.Combine(PROMPTS_DIR, $"{channelId}.txt");
-                await File.WriteAllTextAsync(filePath, prompt);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error saving prompt for channel {channelId}: {ex.Message}");
-            }
-        }
-
-        private async Task LoadAllPrompts()
-        {
-            try
-            {
-                // Ensure directory exists
-                Directory.CreateDirectory(PROMPTS_DIR);
-
-                // Get all prompt files
-                string[] promptFiles = Directory.GetFiles(PROMPTS_DIR, "*.txt");
-
-                foreach (string file in promptFiles)
-                {
-                    // Extract channel ID from filename
-                    string fileName = Path.GetFileNameWithoutExtension(file);
-                    if (ulong.TryParse(fileName, out ulong channelId))
-                    {
-                        // Read the prompt and add it to the dictionary
-                        string prompt = await File.ReadAllTextAsync(file);
-
-                        if(!_llamaBotClient!.ChannelSettings.TryGetValue(channelId, out var channelSettings))
-                        {
-                            channelSettings = new ChannelSettings();
-                            _llamaBotClient.ChannelSettings.Add(channelId, channelSettings);
-                        }
-
-                        channelSettings.Prompt = prompt;
-                    }
-                }
-
-                Console.WriteLine($"Loaded {promptFiles.Length} system prompts");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading system prompts: {ex.Message}");
-            }
         }
     }
 }

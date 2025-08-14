@@ -11,7 +11,7 @@ namespace LlamaBot.Plugins.Interfaces
 
         ChannelSettings DefaultChannelSettings { get; }
 
-        Dictionary<ulong, ChannelSettings> ChannelSettings { get; set; }
+        ChannelSettingsCollection ChannelSettings { get; set; }
 
         string? BuildMessage(string author, string? content);
 

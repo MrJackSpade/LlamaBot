@@ -7,5 +7,8 @@ namespace LlamaBot.Plugins.Commands.Think
     {
         [Description("A forced thought value")]
         public string Think { get; set; }
+
+        [Description("The user name for which this thought will apply")]
+        public string UserName { get; set; }
     }
 }
