@@ -16,7 +16,7 @@ namespace LlamaNative.Sampling.Samplers.Temperature
                 sampleContext.Candidates.Data.Span[(int)i].Logit = v / temperatureSamplerSettings.Temperature;
             }
 
-            SamplingApi.SoftMax(sampleContext.Candidates);
+            SamplingApi.SoftMax(sampleContext.Candidates, true);
         }
     }
 }

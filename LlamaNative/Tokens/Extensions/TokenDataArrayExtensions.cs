@@ -1,4 +1,5 @@
-﻿using LlamaNative.Interop.Structs;
+﻿using LlamaNative.Interop.Apis;
+using LlamaNative.Interop.Structs;
 using LlamaNative.Logit.Models;
 using LlamaNative.Tokens.Models;
 
@@ -14,6 +15,38 @@ namespace LlamaNative.Tokens.Extensions
             return existing.Logit;
         }
 
+        public static TokenData GetMostLikely(this TokenDataArray tokens)
+        {
+            if (!tokens.Calculated)
+            {
+                SamplingApi.SoftMax(tokens, false);
+            }
+
+            if(tokens.Ordered)
+            {
+                return tokens.Data.Span[0];
+            }
+            else
+            {
+                var span = tokens.Data.Span;
+
+                TokenData mostLikely = span[0];
+
+                for (int i = 1; i < span.Length; i++)
+                {
+                    TokenData check = span[i];
+
+                    if (check.P > mostLikely.P)
+                    {
+
+                        mostLikely = check;
+                    }
+                }
+
+                return mostLikely;
+
+            }
+        }
         public static TokenData GetTokenData(this TokenDataArray tokens, int tokenId)
         {
             for (int i = 0; i < tokens.Data.Span.Length; i++)

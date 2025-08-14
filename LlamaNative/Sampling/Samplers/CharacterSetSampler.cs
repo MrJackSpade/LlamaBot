@@ -44,10 +44,9 @@ namespace LlamaNative.Sampling.Samplers
 
                 foreach (int i in toSuppress)
                 {
+                    context.Candidates.Ordered = false;
                     context.Candidates.SetLogit(i, float.NegativeInfinity);
                 }
-
-                SamplingApi.SoftMax(context.Candidates);
             }
             else
             {

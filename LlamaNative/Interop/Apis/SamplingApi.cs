@@ -1,5 +1,6 @@
 ﻿using LlamaNative.Apis;
 using LlamaNative.Interop.Structs;
+using LlamaNative.Tokens.Extensions;
 using LlamaNative.Tokens.Models;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -112,7 +113,7 @@ namespace LlamaNative.Interop.Apis
         /// </summary>
         /// <param name="ctx"></param>
         /// <param name="candidates">Pointer to TokenDataArray</param>
-        public static void SoftMax(TokenDataArray candidates)
+        public static void SoftMax(TokenDataArray candidates, bool sort)
         {
             if (candidates.Size <= 0)
             {
@@ -121,7 +122,7 @@ namespace LlamaNative.Interop.Apis
 
             Span<TokenData> candidateSpan = candidates.Data.Span;
 
-            if (!candidates.Ordered)
+            if (!candidates.Ordered && sort)
             {
                 MemoryExtensions.Sort(candidateSpan, (a, b) => b.Logit.CompareTo(a.Logit));
                 candidates.Ordered = true;
@@ -131,7 +132,20 @@ namespace LlamaNative.Interop.Apis
                 return;
             }
 
-            float maxLogit = candidateSpan[0].Logit;
+            float maxLogit = 0;
+
+            if (candidates.Ordered)
+            {
+                maxLogit = candidateSpan[0].Logit;
+            }
+            else
+            {
+                for (int ci = 0; ci < candidateSpan.Length; ci++)
+                {
+                    maxLogit = Math.Max(candidateSpan[ci].Logit, maxLogit);
+                }
+            }
+
             float cumSum = 0.0f;
 
             // Single pass for exp and sum
@@ -166,7 +180,7 @@ namespace LlamaNative.Interop.Apis
                 return;
             }
 
-            SoftMax(candidates);
+            SoftMax(candidates, true);
 
             List<float> firstDerivatives = [];
             for (int i = 0; i < (int)(candidates.Size - 1); i++)
@@ -234,25 +248,39 @@ namespace LlamaNative.Interop.Apis
         /// <returns></returns>
         public static int Token(TokenDataArray candidates)
         {
-            SoftMax(candidates);
+            SoftMax(candidates, false);
 
             Random random = Random.Shared;
             double sum = 0;
             double r = random.NextDouble();
-            TokenData[] candidateData = candidates.Data.ToArray();
 
-            for (uint i = 0; i < candidates.Size; i++)
+            float lastHighest = int.MaxValue;
+
+            TokenData thisHighest;
+
+            while (true)
             {
-                sum += candidateData[i].P;
+                thisHighest = candidates[0];
 
-                if (r <= sum)
+                for (uint i = 1; i < candidates.Size; i++)
                 {
-                    return candidateData[i].Id;
-                }
-            }
+                    TokenData check = candidates[i];
 
-            // Fallback in case of floating-point rounding issues
-            return candidateData[^1].Id;
+                    if(check.Logit < lastHighest && check.Logit > thisHighest.Logit)
+                    {
+                        thisHighest = check;
+                    }
+                }
+
+                sum += thisHighest.P;
+
+                if(sum >= r)
+                {
+                    return thisHighest.Id;
+                }
+
+                lastHighest = thisHighest.Logit;
+            }
         }
 
         /// <summary>
@@ -263,8 +291,7 @@ namespace LlamaNative.Interop.Apis
         /// <returns></returns>
         public static int TokenGreedy(TokenDataArray candidates)
         {
-            SoftMax(candidates);
-            return candidates.Data.Span[0].Id;
+            return candidates.GetMostLikely().Id;
         }
 
         /// <summary>
@@ -331,7 +358,7 @@ namespace LlamaNative.Interop.Apis
         /// <param name="min_keep"></param>
         public static void TopK(TokenDataArray candidates, int k, int min_keep)
         {
-            SoftMax(candidates);
+            SoftMax(candidates, true);
 
             for (int i = Math.Max(k, min_keep); i < candidates.Data.Span.Length; i++)
             {

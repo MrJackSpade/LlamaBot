@@ -4,6 +4,7 @@ using LlamaNative.Models;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Settings;
+using LlamaNative.Tokens.Extensions;
 using System.Diagnostics;
 using System.Text;
 
@@ -37,8 +38,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         public int SampleNext(SampleContext sampleContext)
         {
-            SamplingApi.SoftMax(sampleContext.Candidates);
-            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+            SamplingApi.SoftMax(sampleContext.Candidates, false);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates, false);
 
             // Filter candidates as in original
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
@@ -51,17 +52,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             // Special handling for top token
             bool topOnly = false;
 
-            TokenData topToken = sampleContext.OriginalCandidates[0];
-
-            for(int i = 0; i < originalSpan.Length; i++)
-            {
-                TokenData testToken = originalSpan[i];
-
-                if(topToken.Logit < testToken.Logit)
-                {
-                    topToken = testToken;
-                }
-            }
+            TokenData topToken = sampleContext.OriginalCandidates.GetMostLikely();
 
             if (!_settings.GreedyExclude.Contains(topToken.Id))
             {
@@ -99,7 +90,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             if (_settings.Log)
             {
-                SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+                SamplingApi.SoftMax(sampleContext.OriginalCandidates, true);
 
                 int? ts = 0;
 
@@ -225,7 +216,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             context.Candidates.Ordered = false;
-            SamplingApi.SoftMax(context.Candidates);
+
+            SamplingApi.SoftMax(context.Candidates, false);
 
             // Sample using temperature sampling
             int sampled = SamplingApi.Token(candidatesArray);

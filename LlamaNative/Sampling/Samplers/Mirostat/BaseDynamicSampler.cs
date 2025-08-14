@@ -4,6 +4,7 @@ using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Settings;
+using LlamaNative.Tokens.Extensions;
 using System.Text;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
@@ -147,12 +148,12 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         protected int SelectToken(SampleContext sampleContext, bool greedy, out bool topOnly)
         {
-            SamplingApi.SoftMax(sampleContext.Candidates);
-            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+            SamplingApi.SoftMax(sampleContext.Candidates, false);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates, false);
 
             topOnly = false;
 
-            TokenData topToken = sampleContext.OriginalCandidates[0];
+            TokenData topToken = sampleContext.OriginalCandidates.GetMostLikely();
 
             if (!_settings.GreedyExclude.Contains(topToken.Id))
             {
@@ -178,7 +179,6 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                         if (newTop.P > _settings.PreserveWordMinP)
                         {
                             SamplingApi.MinP(sampleContext.Candidates, _settings.PreserveWordMinP);
-                            SamplingApi.SoftMax(sampleContext.Candidates);
                         }
                     }
                 }
@@ -192,15 +192,13 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
             else
             {
-                SamplingApi.SoftMax(sampleContext.Candidates);
-
                 if (!greedy)
                 {
                     selectedToken = SamplingApi.Token(sampleContext.Candidates);
                 }
                 else
                 {
-                    selectedToken = sampleContext.Candidates[0].Id;
+                    selectedToken = sampleContext.Candidates.GetMostLikely().Id;
                 }
             }
 

@@ -39,8 +39,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         public int SampleNext(SampleContext sampleContext)
         {
-            SamplingApi.SoftMax(sampleContext.Candidates);
-            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+            SamplingApi.SoftMax(sampleContext.Candidates, true);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates, true);
 
             int? ts = 0;
 
@@ -95,7 +95,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         protected int SelectToken(List<TokenData> candidates, SampleContext sampleContext, out bool topOnly)
         {
-            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates, true);
 
             topOnly = false;
 

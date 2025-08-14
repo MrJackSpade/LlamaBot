@@ -28,7 +28,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         public void ApplyOriginalMinP(SampleContext context)
         {
-            SamplingApi.SoftMax(context.Candidates);
+            SamplingApi.SoftMax(context.Candidates, true);
 
             Dictionary<int, int>? mapping = [];
 
@@ -94,7 +94,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             //SoftMax for backup
             this.ApplyOriginalMinP(sampleContext);
-            SamplingApi.SoftMax(sampleContext.Candidates);
+            SamplingApi.SoftMax(sampleContext.Candidates, true);
 
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
 

@@ -44,7 +44,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             float n = sampleContext.Candidates.Data.Length;
 
-            SamplingApi.SoftMax(sampleContext.Candidates);
+            SamplingApi.SoftMax(sampleContext.Candidates, true);
 
             float sum_ti_bi = 0.0f;
             float sum_ti_sq = 0.0f;

@@ -77,8 +77,8 @@ namespace LlamaNative.Sampling.Samplers
 
         public void SampleNext(SampleContext sampleContext)
         {
-            SamplingApi.SoftMax(sampleContext.Candidates);
-            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
+            SamplingApi.SoftMax(sampleContext.Candidates, true);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates, true);
             this.ApplyOriginalMinP(sampleContext);
         }
 

@@ -22,7 +22,6 @@ namespace LlamaNative.Serialization
             RegisterSelector<TargetedEntropySampler>();
             RegisterSelector<TemperatureTokenSampler>();
             RegisterSelector<GreedySampler>();
-            RegisterSelector<GaussianTargetedSampler>();
             RegisterSelector<PowerLawTargetedSampler>();
 
             RegisterSimple<RepetitionSampler>();
