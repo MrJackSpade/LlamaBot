@@ -112,13 +112,13 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 StringBuilder? candidateBuilder = new();
                 WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
 
-                if (!topOnly || _settings.FactorPreservedWords)
-                {
-                    TokenData originalP = sampleContext.GetOriginalData(selectedToken);
-                    this.Push(originalP);
-                }
-
                 Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
+            }
+
+            if (!topOnly || _settings.FactorPreservedWords)
+            {
+                TokenData originalP = sampleContext.GetOriginalData(selectedToken);
+                this.Push(originalP);
             }
 
             return selectedToken;
