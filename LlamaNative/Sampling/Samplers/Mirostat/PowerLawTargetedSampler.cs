@@ -38,6 +38,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         public int SampleNext(SampleContext sampleContext)
         {
             SamplingApi.SoftMax(sampleContext.Candidates);
+            SamplingApi.SoftMax(sampleContext.OriginalCandidates);
 
             // Filter candidates as in original
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
@@ -70,8 +71,6 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 }
                 else if (_settings.MaxPs.TryGetValue(topToken.Id, out float maxP))
                 {
-                    SamplingApi.SoftMax(sampleContext.OriginalCandidates);
-
                     if (topToken.P >= maxP)
                     {
                         topOnly = true;
@@ -79,8 +78,6 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 }
                 else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id))
                 {
-                    SamplingApi.SoftMax(sampleContext.OriginalCandidates);
-
                     if (topToken.P > _settings.PreserveWordMaxP)
                     {
                         topOnly = true;
