@@ -23,7 +23,7 @@ namespace LlamaBot.Plugins.Interfaces
 
         ParsedMessage ParseMessage(IMessage checkMessage);
 
-        void SetAutoRespond(ulong channelId, string username, bool disabled);
+        void SetAutoRespond(ulong channelId, string username);
 
         void SetClearDate(ulong channelId, DateTime triggered);
 

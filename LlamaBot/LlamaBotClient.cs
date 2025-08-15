@@ -245,7 +245,7 @@ namespace LlamaBot
             }
         }
 
-        public void SetAutoRespond(ulong channelId, string userName, bool disabled)
+        public void SetAutoRespond(ulong channelId, string userName)
         {
             if (string.IsNullOrWhiteSpace(userName))
             {
@@ -255,7 +255,7 @@ namespace LlamaBot
             {
                 _metaData.AutoResponds[channelId] = new AutoRespond()
                 {
-                    Disabled = disabled,
+                    Disabled = userName == "_",
                     UserName = userName,
                 };
             }
