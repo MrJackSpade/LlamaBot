@@ -57,6 +57,8 @@ namespace LlamaNative.Chat.Models
 
         public void SetThoughts(ulong channelId, string username, string thoughts)
         {
+            username ??= string.Empty;
+
             if (!IsLoaded(channelId))
             {
                 LoadSettings(channelId);
@@ -75,12 +77,12 @@ namespace LlamaNative.Chat.Models
 
         public string? GetUserThoughts(ulong channelId, string username)
         {
+            username ??= string.Empty;
+
             if (!IsLoaded(channelId))
             {
                 LoadSettings(channelId);
             }
-
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
 
             ChannelSettings? channelSettings = _channels[channelId];
 
