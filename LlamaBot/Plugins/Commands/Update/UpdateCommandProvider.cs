@@ -55,7 +55,7 @@ namespace LlamaBot.Plugins.Commands.Update
 
                     if (parsed.Author != _llamaBotClient.BotName)
                     {
-                        newContent = _llamaBotClient.BuildMessage(parsed.Author, $" {command.Content?.Trim()}");
+                        newContent = _llamaBotClient.BuildMessage(parsed.Author, $" {command.Content?.Trim()}", false);
 
                     }                        
                     

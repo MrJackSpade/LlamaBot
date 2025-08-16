@@ -9,5 +9,7 @@
         public string RespondingUser { get; set; }
 
         public string? ResponsePrepend { get; set; }
+
+        public bool PrependDefaultUser { get; set; }
     }
 }

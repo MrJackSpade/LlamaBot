@@ -77,11 +77,11 @@ namespace LlamaBot
             }
         }
 
-        public string BuildMessage(string author, string content)
+        public string BuildMessage(string author, string content, bool prependDefaultUser)
         {
             string header = string.Empty;
 
-            if (author != _chatSettings.BotName)
+            if (author != _chatSettings.BotName || prependDefaultUser)
             {
                 header += $"{ZERO_WIDTH}**{author}:**{ZERO_WIDTH}";
             }
@@ -105,7 +105,7 @@ namespace LlamaBot
             return _chatContext.ReadResponse(new ReadResponseSettings()
             {
                 RespondingUser = user,
-            }).First().Content;
+            }, CancellationToken.None).First().Content;
         }
 
         public AutoRespond GetAutoRespond(ulong channelId)
@@ -158,7 +158,7 @@ namespace LlamaBot
             return toReturn;
         }
 
-        public async Task ProcessMessage(ISocketMessageChannel channel, ReadResponseSettings responseSettings)
+        public async Task ProcessMessage(ISocketMessageChannel channel, ReadResponseSettings responseSettings, CancellationToken cancellationToken)
         {
             if (!_processingSemaphore.Wait(0))
             {
@@ -204,7 +204,7 @@ namespace LlamaBot
 
                 using IDisposable typingState = channel.EnterTypingState();
 
-                foreach (ChatMessage cm in _chatContext.ReadResponse(responseSettings))
+                foreach (ChatMessage cm in _chatContext.ReadResponse(responseSettings, cancellationToken))
                 {
                     string cmContent = cm.Content;
 
@@ -214,7 +214,7 @@ namespace LlamaBot
                         prependMessageContent = string.Empty;
                     }
 
-                    string content = this.BuildMessage(cm.User, cmContent);
+                    string content = this.BuildMessage(cm.User, cmContent, responseSettings.PrependDefaultUser);
 
                     content = content.Trim();
 
@@ -298,7 +298,7 @@ namespace LlamaBot
             _chatContext.TryInterrupt();
         }
 
-        public void TryProcessMessageAsync(ISocketMessageChannel smc, ReadResponseSettings readResponseSettings)
+        public void TryProcessMessageAsync(ISocketMessageChannel smc, ReadResponseSettings readResponseSettings, CancellationToken cancellationToken)
         {
             if (_processMessageThread is null || _processMessageThread.ThreadState != ThreadState.Running)
             {
@@ -306,7 +306,7 @@ namespace LlamaBot
                 {
                     try
                     {
-                        await this.ProcessMessage(smc, readResponseSettings);
+                        await this.ProcessMessage(smc, readResponseSettings, cancellationToken);
                     }
                     catch (AlreadyProcessingException) { }
                 });

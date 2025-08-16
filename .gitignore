@@ -15,3 +15,7 @@ LlamaBot.Shared/bin/
 LlamaBot/LlamaBot.Configuration.json
 *.pdb
 *.ilk
+LlamaBotAutomated/Characters/
+LlamaBotAutomated/obj/
+LlamaBotAutomated/bin/
+LlamaBotAutomated/LlamaBotAutomated.Configuration.json

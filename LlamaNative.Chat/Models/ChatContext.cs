@@ -27,7 +27,14 @@ namespace LlamaNative.Chat.Models
         {
             get
             {
-                TokenCollection contextTokens = NativeContext.Tokenize(TokenMask.Undefined, this.ContextToString(false));
+                string context = this.ContextToString(false);
+
+                if (string.IsNullOrWhiteSpace(context))
+                {
+                    return (uint)Settings.ContextSettings.ContextSize;   
+                }
+
+                TokenCollection contextTokens = NativeContext.Tokenize(TokenMask.Undefined, context);
 
                 return NativeContext.Size - contextTokens.Count;
             }
@@ -157,7 +164,7 @@ namespace LlamaNative.Chat.Models
 
         private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
-        public List<ChatMessage> ReadResponse(ReadResponseSettings responseSettings)
+        public List<ChatMessage> ReadResponse(ReadResponseSettings responseSettings, CancellationToken cancellationToken)
         {
             if (!_processingSemaphore.Wait(0))
             {
@@ -185,6 +192,8 @@ namespace LlamaNative.Chat.Models
 
                 do
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     if (!_running)
                     {
                         break;

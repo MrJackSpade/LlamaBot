@@ -34,7 +34,7 @@ namespace LlamaBot.Plugins.Commands.Continue
                 _llamaBotClient.TryProcessMessageAsync(smc, new ReadResponseSettings()
                 {
                     ContinueLast = continueLast
-                });
+                }, CancellationToken.None);
 
                 return CommandResult.Success();
             }

@@ -19,7 +19,7 @@ namespace LlamaNative.Chat.Interfaces
 
         string PredictNextUser();
 
-        List<ChatMessage> ReadResponse(ReadResponseSettings responseSettings);
+        List<ChatMessage> ReadResponse(ReadResponseSettings responseSettings, CancellationToken cancellationToken);
 
         void RemoveAt(int index);
 

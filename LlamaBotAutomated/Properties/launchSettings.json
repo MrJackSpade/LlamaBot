@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LlamaBotAutomated": {
+      "commandName": "Project",
+      "commandLineArgs": "GLM4.5"
+    }
+  }
+}
