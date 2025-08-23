@@ -22,30 +22,11 @@
 		</Content>
 	</ItemGroup>
 	<ItemGroup>
-	  <Compile Remove="Characters\Qwen\NewFolder\**" />
-	  <Compile Remove="Discord\Commands\**" />
-	  <Compile Remove="Discord\Model\**" />
-	  <Content Remove="Characters\Qwen\NewFolder\**" />
-	  <EmbeddedResource Remove="Characters\Qwen\NewFolder\**" />
-	  <EmbeddedResource Remove="Discord\Commands\**" />
-	  <EmbeddedResource Remove="Discord\Model\**" />
-	  <None Remove="Characters\Qwen\NewFolder\**" />
-	  <None Remove="Discord\Commands\**" />
-	  <None Remove="Discord\Model\**" />
+	  <Compile Remove="Characters\**" />
+	  <EmbeddedResource Remove="Characters\**" />
+	  <None Remove="Characters\**" />
 	</ItemGroup>
 	<ItemGroup>
-	  <None Remove="Characters\Magnum\Magnum4\Configuration.json" />
-	  <None Remove="Characters\Magnum\Magnum4\System.txt" />
-	  <None Remove="Characters\Mistral\Entropy\Configuration.json" />
-	  <None Remove="Characters\Mistral\Entropy\System.txt" />
-	  <None Remove="Characters\Mistral\Mystery\Configuration.json" />
-	  <None Remove="characters\mistral\mystery\System.txt" />
-	  <None Remove="Characters\Mistral\German\Configuration.json" />
-	  <None Remove="Characters\Mistral\German\System.txt" />
-	  <None Remove="Characters\Qwen\Configuration.json" />
-	  <None Remove="Characters\Qwen\Qwen2.5-Instruct\Configuration.json" />
-	  <None Remove="Characters\Qwen\Qwen2.5-Instruct\System.txt" />
-	  <None Remove="Characters\Qwen\System.txt" />
 	  <None Remove="LlamaBot.Configuration.json" />
 	</ItemGroup>
 	<ItemGroup>

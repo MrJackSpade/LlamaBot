@@ -8,28 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Characters\GLM\GLM4.5-Air\Configuration.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.5-Air\System.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.5\Configuration.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.5\System.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.5\Think.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4\Configuration.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4\System.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="LlamaBotAutomated.Configuration.json">
+	  <Compile Remove="Characters\**" />
+	  <EmbeddedResource Remove="Characters\**" />
+	  <None Remove="Characters\**" />
+      <Content Include="LlamaBotAutomated.Configuration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
