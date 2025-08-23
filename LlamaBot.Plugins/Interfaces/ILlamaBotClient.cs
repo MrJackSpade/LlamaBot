@@ -13,7 +13,7 @@ namespace LlamaBot.Plugins.Interfaces
 
         ChannelSettingsCollection ChannelSettings { get; set; }
 
-        string? BuildMessage(string author, string? content);
+        string? BuildMessage(string author, string? content, bool prependDefaultUser);
 
         void Clear(bool v);
 
@@ -23,7 +23,7 @@ namespace LlamaBot.Plugins.Interfaces
 
         ParsedMessage ParseMessage(IMessage checkMessage);
 
-        void SetAutoRespond(ulong channelId, string username, bool disabled);
+        void SetAutoRespond(ulong channelId, string username);
 
         void SetClearDate(ulong channelId, DateTime triggered);
 
@@ -33,6 +33,6 @@ namespace LlamaBot.Plugins.Interfaces
 
         void TryInterrupt();
 
-        void TryProcessMessageAsync(ISocketMessageChannel smc, ReadResponseSettings readResponseSettings);
+        void TryProcessMessageAsync(ISocketMessageChannel smc, ReadResponseSettings readResponseSettings, CancellationToken cancellationToken);
     }
 }

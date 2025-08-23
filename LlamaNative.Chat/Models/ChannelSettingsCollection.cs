@@ -1,4 +1,5 @@
 ﻿using LlamaBot;
+using System.Text.Json;
 
 namespace LlamaNative.Chat.Models
 {
@@ -57,6 +58,8 @@ namespace LlamaNative.Chat.Models
 
         public void SetThoughts(ulong channelId, string username, string thoughts)
         {
+            username ??= string.Empty;
+
             if (!IsLoaded(channelId))
             {
                 LoadSettings(channelId);
@@ -75,12 +78,12 @@ namespace LlamaNative.Chat.Models
 
         public string? GetUserThoughts(ulong channelId, string username)
         {
+            username ??= string.Empty;
+
             if (!IsLoaded(channelId))
             {
                 LoadSettings(channelId);
             }
-
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
 
             ChannelSettings? channelSettings = _channels[channelId];
 
@@ -112,7 +115,10 @@ namespace LlamaNative.Chat.Models
             {
                 if (channelSettings != null)
                 {
-                    string json = System.Text.Json.JsonSerializer.Serialize(channelSettings);
+                    string json = System.Text.Json.JsonSerializer.Serialize(channelSettings, new JsonSerializerOptions()
+                    {
+                        WriteIndented = true
+                    });
 
                     File.WriteAllText(path, json);
                 }

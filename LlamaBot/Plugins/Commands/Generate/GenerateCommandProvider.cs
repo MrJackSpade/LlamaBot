@@ -32,7 +32,7 @@ namespace LlamaBot.Plugins.Commands.Generate
                 _llamaBotClient.TryProcessMessageAsync(smc, new ReadResponseSettings()
                 {
                     RespondingUser = command.UserName
-                });
+                }, CancellationToken.None);
 
                 return CommandResult.Success();
             }

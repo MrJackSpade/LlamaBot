@@ -10,6 +10,8 @@ namespace LlamaNative.Chat
 
         public string BotName { get; set; } = "LlamaBot";
 
+        public string[] AlternateNames { get; set; } = new string[0];
+
         public ChatTemplate ChatTemplate { get; set; } = new ChatTemplate();
 
         public bool ConditionalResponse { get; set; }

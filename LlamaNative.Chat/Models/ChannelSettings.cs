@@ -35,7 +35,7 @@ namespace LlamaBot
 
         public string? GetUserThoughts(string username)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(username);
+            username ??= string.Empty;
 
             if (Thoughts.TryGetValue(username, out var thought) && thought is not null)
             {

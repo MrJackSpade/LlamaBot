@@ -76,7 +76,7 @@ namespace LlamaBot
                 return;
             }
 
-            _llamaBotClient.TryProcessMessageAsync(message.Channel, readResponseSettings);
+            _llamaBotClient.TryProcessMessageAsync(message.Channel, readResponseSettings, CancellationToken.None);
         }
 
         private static bool IsValidSource(IChannel channel)

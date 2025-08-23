@@ -2,6 +2,7 @@
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Models;
+using LlamaNative.Chat.Models;
 using LlamaNative.Utils;
 using AutoRespondModel = LlamaNative.Chat.Models.AutoRespond;
 
@@ -23,7 +24,7 @@ namespace LlamaBot.Plugins.Commands.AutoRespond
 
             ulong channelId = command.Channel.Id;
 
-            await command.Command.DeleteOriginalResponseAsync();
+            bool disabled = command.UserName == "_";
 
             if (command.UserName is null)
             {
@@ -34,17 +35,19 @@ namespace LlamaBot.Plugins.Commands.AutoRespond
                     return CommandResult.Success($"Default: {_llamaBotClient.BotName}");
                 }
 
-                if (autoRespond.Disabled)
+                if (autoRespond.UserName == "_")
                 {
                     return CommandResult.Success("Disabled");
                 }
-
-                return CommandResult.Success(autoRespond.UserName);
+                else
+                {
+                    return CommandResult.Success(autoRespond.UserName);
+                }
             }
 
-            _llamaBotClient.SetAutoRespond(channelId, command.UserName, command.Disabled);
+            _llamaBotClient.SetAutoRespond(channelId, command.UserName);
 
-            return CommandResult.Success();
+            return CommandResult.Success($"Autorespond set to: {(disabled ? "[DISABLED]" : command.UserName)}");
         }
 
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
