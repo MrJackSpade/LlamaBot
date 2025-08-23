@@ -1,4 +1,5 @@
 ﻿using LlamaBot;
+using System.Text.Json;
 
 namespace LlamaNative.Chat.Models
 {
@@ -114,7 +115,10 @@ namespace LlamaNative.Chat.Models
             {
                 if (channelSettings != null)
                 {
-                    string json = System.Text.Json.JsonSerializer.Serialize(channelSettings);
+                    string json = System.Text.Json.JsonSerializer.Serialize(channelSettings, new JsonSerializerOptions()
+                    {
+                        WriteIndented = true
+                    });
 
                     File.WriteAllText(path, json);
                 }

@@ -90,7 +90,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             if (_settings.Log)
             {
-                SamplingApi.SoftMax(sampleContext.OriginalCandidates, true);
+                SamplingApi.SoftMax(sampleContext.Candidates, true);
 
                 int? ts = 0;
 
