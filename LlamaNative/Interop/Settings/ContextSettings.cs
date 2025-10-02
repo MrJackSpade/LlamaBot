@@ -17,7 +17,7 @@ namespace LlamaNative.Interop.Settings
         /// <summary>
         /// Default false
         /// </summary>
-        public bool FlashAttention { get; set; }
+        public FlashAttentionType FlashAttentionType { get; set; }
 
         /// <summary>
         /// Default true

@@ -60,6 +60,11 @@ namespace LlamaNative.Interop.Structs
         public AttentionType AttentionType;
 
         /// <summary>
+        /// when to enable Flash Attention
+        /// </summary>
+        public FlashAttentionType FlashAttentionType;
+
+        /// <summary>
         /// RoPE base frequency, 0 = from model.
         /// </summary>
         public float RopeFreqBase;
@@ -140,12 +145,6 @@ namespace LlamaNative.Interop.Structs
         /// </summary>
         [MarshalAs(UnmanagedType.I1)]
         public bool OffloadKQV;
-
-        /// <summary>
-        /// Use flash attention [EXPERIMENTAL].
-        /// </summary>
-        [MarshalAs(UnmanagedType.I1)]
-        public bool FlashAttn;
 
         /// <summary>
         /// Measure performance timings.

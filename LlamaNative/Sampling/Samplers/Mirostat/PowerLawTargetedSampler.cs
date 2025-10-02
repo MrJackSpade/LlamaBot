@@ -5,6 +5,7 @@ using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Settings;
 using LlamaNative.Tokens.Extensions;
+using LlamaNative.Tokens.Models;
 using System.Diagnostics;
 using System.Text;
 
@@ -113,6 +114,11 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
 
                 Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
+            } else
+            {
+                Token token = sampleContext.GetToken(TokenMask.Undefined, selectedToken);
+
+                Debug.WriteLine($"[{selectedToken}] \"{token.GetEscapedValue()}\"");
             }
 
             if (!topOnly || _settings.FactorPreservedWords)
