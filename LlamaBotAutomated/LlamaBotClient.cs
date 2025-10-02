@@ -37,7 +37,7 @@ namespace LlamaBotAutomated
 
         private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
-        private Thread _processMessageThread;
+        private readonly Thread _processMessageThread;
 
         public string BotName => _chatSettings.BotName;
 
@@ -99,7 +99,7 @@ namespace LlamaBotAutomated
         {
             Ensure.NotNull(_chatContext);
 
-            await PrepareContext(channel);
+            await this.PrepareContext(channel);
 
             using IDisposable typingState = channel.EnterTypingState();
 
@@ -170,18 +170,18 @@ namespace LlamaBotAutomated
             {
                 Ensure.NotNull(_chatContext);
 
-                await PrepareContext(channel);
+                await this.PrepareContext(channel);
 
                 IMessage? prependMessage = null;
                 string prependMessageContent = string.Empty;
 
                 if (responseSettings.ContinueLast)
                 {
-                    prependMessage = await TryGetLastBotMessage(channel);
+                    prependMessage = await this.TryGetLastBotMessage(channel);
 
                     if (prependMessage != null)
                     {
-                        prependMessageContent = ParseMessage(prependMessage).Content;
+                        prependMessageContent = this.ParseMessage(prependMessage).Content;
                     }
                 }
 
@@ -197,7 +197,7 @@ namespace LlamaBotAutomated
                     }
                 }
 
-                ChannelSettings applicableSettings = GetApplicableSettings(channel.Id);
+                ChannelSettings applicableSettings = this.GetApplicableSettings(channel.Id);
 
                 string? applicableThoughts = applicableSettings.GetFullThoughts(responseSettings.RespondingUser ?? _chatSettings.BotName);
 
@@ -215,7 +215,7 @@ namespace LlamaBotAutomated
                         prependMessageContent = string.Empty;
                     }
 
-                    string content = BuildMessage(cm.User, cmContent, responseSettings.PrependDefaultUser);
+                    string content = this.BuildMessage(cm.User, cmContent, responseSettings.PrependDefaultUser);
 
                     content = content.Trim();
 
@@ -327,7 +327,7 @@ namespace LlamaBotAutomated
 
         private IEnumerable<ChatMessage> HandleHistoricalMessage(IMessage historicalMessage)
         {
-            ParsedMessage message = ParseMessage(historicalMessage);
+            ParsedMessage message = this.ParseMessage(historicalMessage);
 
             List<string> messageContent = [message.Content];
 
@@ -360,7 +360,7 @@ namespace LlamaBotAutomated
             Ensure.NotNull(_chatContext);
             Ensure.NotNull(_character);
 
-            ChannelSettings applicableChannelSettings = GetApplicableSettings(channelId);
+            ChannelSettings applicableChannelSettings = this.GetApplicableSettings(channelId);
 
             if (!string.IsNullOrWhiteSpace(applicableChannelSettings.Prompt))
             {
@@ -393,7 +393,7 @@ namespace LlamaBotAutomated
 
             _chatContext.Clear(false);
 
-            InsertContextHeaders(channel.GetChannelId());
+            this.InsertContextHeaders(channel.GetChannelId());
 
             int messageStart = _chatContext.MessageCount;
 
@@ -422,11 +422,11 @@ namespace LlamaBotAutomated
 
                     if (historicalMessage.Type == MessageType.ApplicationCommand)
                     {
-                        toSend.AddRange(HandleApplicationCommand(historicalMessage));
+                        toSend.AddRange(this.HandleApplicationCommand(historicalMessage));
                     }
                     else
                     {
-                        toSend.AddRange(HandleHistoricalMessage(historicalMessage));
+                        toSend.AddRange(this.HandleHistoricalMessage(historicalMessage));
                     }
 
                     DateTime thisMessageTime = historicalMessage.CreatedAt.DateTime.ToLocalTime();

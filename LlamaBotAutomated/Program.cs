@@ -32,7 +32,7 @@ namespace LlamaBotAutomated
 
         private static RecursiveConfiguration<Character>? _recursiveConfiguration;
 
-        private static Thread MessageThread;
+        private static readonly Thread MessageThread;
 
         static Program()
         {
@@ -41,7 +41,7 @@ namespace LlamaBotAutomated
             MessageThread = new Thread(async () => await MessageLoop());
         }
 
-        public static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        public static CancellationTokenSource _cancellationTokenSource = new();
 
         private static async Task MessageLoop()
         {
@@ -203,7 +203,7 @@ namespace LlamaBotAutomated
             await Task.Delay(-1);
         }
 
-        private static ManualResetEventSlim _selfMessageRecieved = new ManualResetEventSlim(false);
+        private static readonly ManualResetEventSlim _selfMessageRecieved = new(false);
 
         private static async Task MessageReceived(SocketMessage message)
         {

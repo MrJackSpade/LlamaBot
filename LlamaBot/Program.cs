@@ -39,7 +39,7 @@ namespace LlamaBot
 
         public static async Task MessageReceived(SocketMessage message)
         {
-            ReadResponseSettings readResponseSettings = new ReadResponseSettings();
+            ReadResponseSettings readResponseSettings = new();
 
             if (message.Author.Id == _discordClient.CurrentUser.Id)
             {

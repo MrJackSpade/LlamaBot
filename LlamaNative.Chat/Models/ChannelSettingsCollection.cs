@@ -5,15 +5,15 @@ namespace LlamaNative.Chat.Models
 {
     public class ChannelSettingsCollection
     {
-        private Dictionary<ulong, ChannelSettings?> _channels = [];
+        private readonly Dictionary<ulong, ChannelSettings?> _channels = [];
 
         private const string CHANNEL_SETTINGS_DIR = "ChannelSettings";
 
         public ChannelSettings? GetValue(ulong channelId)
         {
-            if (!IsLoaded(channelId))
+            if (!this.IsLoaded(channelId))
             {
-                LoadSettings(channelId);
+                this.LoadSettings(channelId);
             }
 
             _channels.TryGetValue(channelId, out ChannelSettings? channelSettings);
@@ -23,9 +23,9 @@ namespace LlamaNative.Chat.Models
 
         public void SetPrompt(ulong channelId, string prompt)
         {
-            if (!IsLoaded(channelId))
+            if (!this.IsLoaded(channelId))
             {
-                LoadSettings(channelId);
+                this.LoadSettings(channelId);
             }
 
             ChannelSettings? channelSettings = _channels[channelId];
@@ -41,9 +41,9 @@ namespace LlamaNative.Chat.Models
 
         public string? GetPrompt(ulong channelId)
         {
-            if (!IsLoaded(channelId))
+            if (!this.IsLoaded(channelId))
             {
-                LoadSettings(channelId);
+                this.LoadSettings(channelId);
             }
 
             ChannelSettings? channelSettings = _channels[channelId];
@@ -60,9 +60,9 @@ namespace LlamaNative.Chat.Models
         {
             username ??= string.Empty;
 
-            if (!IsLoaded(channelId))
+            if (!this.IsLoaded(channelId))
             {
-                LoadSettings(channelId);
+                this.LoadSettings(channelId);
             }
 
             ChannelSettings? channelSettings = _channels[channelId];
@@ -80,9 +80,9 @@ namespace LlamaNative.Chat.Models
         {
             username ??= string.Empty;
 
-            if (!IsLoaded(channelId))
+            if (!this.IsLoaded(channelId))
             {
-                LoadSettings(channelId);
+                this.LoadSettings(channelId);
             }
 
             ChannelSettings? channelSettings = _channels[channelId];
@@ -145,7 +145,6 @@ namespace LlamaNative.Chat.Models
 
                 channelSettings = System.Text.Json.JsonSerializer.Deserialize<ChannelSettings>(json!);
             }
-
 
             if (!_channels.TryAdd(channelId, channelSettings))
             {

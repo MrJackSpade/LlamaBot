@@ -196,7 +196,7 @@ namespace LlamaBot
                     }
                 }
 
-                ChannelSettings applicableSettings = GetApplicableSettings(channel.Id);
+                ChannelSettings applicableSettings = this.GetApplicableSettings(channel.Id);
 
                 string? applicableThoughts = applicableSettings.GetFullThoughts(responseSettings.RespondingUser ?? _chatSettings.BotName);
 
@@ -376,7 +376,7 @@ namespace LlamaBot
             Ensure.NotNull(_chatContext);
             Ensure.NotNull(_character);
 
-            ChannelSettings applicableChannelSettings = GetApplicableSettings(channelId);
+            ChannelSettings applicableChannelSettings = this.GetApplicableSettings(channelId);
 
             if (!string.IsNullOrWhiteSpace(applicableChannelSettings.Prompt))
             {

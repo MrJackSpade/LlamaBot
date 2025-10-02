@@ -44,7 +44,7 @@ namespace LlamaNative.Models
 
         private SamplerSet ActiveSamplerSet => _activeSamplers.Peek();
 
-        private List<ISimpleSampler> ActiveSimplerSamplers => [.. ActiveSamplerSet.SimpleSamplers];
+        private List<ISimpleSampler> ActiveSimplerSamplers => [.. ActiveSamplerSet.TypedSimpleSamplers];
 
         private ITokenSelector ActiveTokenSelector => ActiveSamplerSet.TokenSelector;
 

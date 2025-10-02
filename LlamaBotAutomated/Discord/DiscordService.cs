@@ -36,7 +36,7 @@ namespace LlamaBotAutomated.Discord
                 GatewayIntents = GatewayIntents.All
             });
 
-            _discordClient.SlashCommandExecuted += SlashCommandHandler;
+            _discordClient.SlashCommandExecuted += this.SlashCommandHandler;
 
             _discordClient.MessageReceived += async (message) =>
             {
@@ -62,7 +62,7 @@ namespace LlamaBotAutomated.Discord
 
             _commandCallbacks.Add(command, (c) => action.Invoke(CastType(c, t)));
 
-            await AddCommand(command, description, t, slashCommandOptions);
+            await this.AddCommand(command, description, t, slashCommandOptions);
         }
 
         public async Task Connect()

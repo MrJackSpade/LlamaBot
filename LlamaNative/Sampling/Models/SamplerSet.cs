@@ -13,7 +13,9 @@ namespace LlamaNative.Sampling.Models
 
         public int Push { get; set; } = -1;
 
-        public IList<ISimpleSampler> SimpleSamplers { get; set; } = [];
+        public List<SamplerSetting> SimpleSamplers { get; set; } = [];
+
+        public List<ISimpleSampler> TypedSimpleSamplers { get; set; } = [];
 
         public ITokenSelector TokenSelector { get; set; }
     }

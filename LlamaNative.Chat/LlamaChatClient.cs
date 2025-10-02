@@ -66,7 +66,7 @@ namespace LlamaNative.Chat
 
                 foreach (SamplerSetting samplerSetting in samplerSet.SimpleSamplers)
                 {
-                    newSet.SimpleSamplers.Add(SamplerDeserializer.InstantiateSimple(samplerSetting));
+                    newSet.TypedSimpleSamplers.Add(SamplerDeserializer.InstantiateSimple(samplerSetting));
                 }
 
                 if(samplerSet.Push is not null && samplerSet.Pop is not null)
