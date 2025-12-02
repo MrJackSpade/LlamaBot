@@ -9,17 +9,32 @@ namespace LlamaBot
 
         public ChannelSettings(string prompt)
         {
-            this.Prompt = prompt;
+            Prompt = prompt;
         }
 
         public ChannelSettings(string prompt, string defaultThoughts)
         {
-            this.Prompt = prompt;
+            Prompt = prompt;
 
             this.SetThoughts(string.Empty, defaultThoughts);
         }
 
-        public Dictionary<string, string> Thoughts { get; set; } = new Dictionary<string, string>();
+        public ChannelSettings Clone()
+        {
+            ChannelSettings toReturn = new()
+            {
+                Prompt = Prompt
+            };
+
+            foreach (KeyValuePair<string, string> thought in Thoughts)
+            {
+                toReturn.SetThoughts(thought.Key, thought.Value);
+            }
+
+            return toReturn;
+        }
+
+        public Dictionary<string, string> Thoughts { get; set; } = [];
 
         public string? Prompt { get; set; }
 
@@ -37,7 +52,7 @@ namespace LlamaBot
         {
             username ??= string.Empty;
 
-            if (Thoughts.TryGetValue(username, out var thought) && thought is not null)
+            if (Thoughts.TryGetValue(username, out string? thought) && thought is not null)
             {
                 return thought;
             }
@@ -58,7 +73,7 @@ namespace LlamaBot
 
             if (username != string.Empty)
             {
-                if (Thoughts.TryGetValue(username, out var thought) && thought is not null)
+                if (Thoughts.TryGetValue(username, out string? thought) && thought is not null)
                 {
                     toReturn.Append(thought);
                 }
