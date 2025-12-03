@@ -1,5 +1,6 @@
 ﻿using LlamaBot.Extensions;
 using LlamaBot.Plugins.Commands.ClearContext;
+using LlamaBot.Plugins.Commands.SystemPrompt;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
@@ -7,7 +8,7 @@ using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 using LlamaNative.Chat.Models;
 
-namespace LlamaBot.Plugins.Commands.SystemPrompt
+namespace LlamaBotAutomated.Plugins.Commands.SystemPrompt
 {
     internal class SystemPromptCommandProvider : ICommandProvider<SystemPromptCommand>
     {
@@ -52,12 +53,7 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
                 responseString = "System Prompt Updated: " + command.Prompt;
             }
 
-            if (responseString is not null && responseString.Length > 1995)
-            {
-                responseString = responseString[..1990] + "...";
-            }
-
-            return CommandResult.Success(responseString);
+            return CommandResult.Success(System.Text.Encoding.UTF8.GetBytes(responseString), "Prompt.txt");
         }
 
         public async Task<InitializationResult> OnInitialize(InitializationEventArgs args)

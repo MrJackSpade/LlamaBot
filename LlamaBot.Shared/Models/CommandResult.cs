@@ -8,6 +8,20 @@
             Message = message;
         }
 
+        private CommandResult(byte[]? fileData, string? fileName)
+        {
+            IsSuccess = true;
+            Message = string.Empty;
+            FileData = fileData;
+            FileName = fileName;
+        }
+
+        public byte[]? FileData { get; init; }
+
+        public string? FileName { get; init; }
+
+        public bool IsFile => FileData is not null;
+
         public bool IsSuccess { get; }
 
         public string Message { get; }
@@ -30,6 +44,11 @@
         public static CommandResult Success(string message)
         {
             return new(true, message);
+        }
+
+        public static CommandResult Success(byte[] data, string fileName)
+        {
+            return new(data, fileName);
         }
 
         public static Task<CommandResult> SuccessAsync(string message)

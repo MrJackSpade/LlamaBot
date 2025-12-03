@@ -264,6 +264,10 @@ namespace LlamaBot.Discord
                 {
                     await command.FollowupAsync(result.Message);
                 }
+                else if (result.FileData is not null)
+                {
+                    await command.FollowupWithFileAsync(new MemoryStream(result.FileData), result.FileName ?? "response.txt");
+                }
             }
         }
     }

@@ -15,8 +15,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LlamaBot.Plugins", "LlamaBo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LlamaBot.Shared", "LlamaBot.Shared\LlamaBot.Shared.csproj", "{D4D6D77D-4580-41CA-BC15-4770A11820C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LlamaBotAutomated", "LlamaBotAutomated\LlamaBotAutomated.csproj", "{775E7120-4AE1-45A0-978B-1188B33DCDC2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,14 +71,6 @@ Global
 		{D4D6D77D-4580-41CA-BC15-4770A11820C4}.Debug-Cuda|Any CPU.Build.0 = Debug|Any CPU
 		{D4D6D77D-4580-41CA-BC15-4770A11820C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4D6D77D-4580-41CA-BC15-4770A11820C4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{775E7120-4AE1-45A0-978B-1188B33DCDC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{775E7120-4AE1-45A0-978B-1188B33DCDC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{775E7120-4AE1-45A0-978B-1188B33DCDC2}.Debug-Cpu|Any CPU.ActiveCfg = Debug|Any CPU
-		{775E7120-4AE1-45A0-978B-1188B33DCDC2}.Debug-Cpu|Any CPU.Build.0 = Debug|Any CPU
-		{775E7120-4AE1-45A0-978B-1188B33DCDC2}.Debug-Cuda|Any CPU.ActiveCfg = Debug|Any CPU
-		{775E7120-4AE1-45A0-978B-1188B33DCDC2}.Debug-Cuda|Any CPU.Build.0 = Debug|Any CPU
-		{775E7120-4AE1-45A0-978B-1188B33DCDC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{775E7120-4AE1-45A0-978B-1188B33DCDC2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

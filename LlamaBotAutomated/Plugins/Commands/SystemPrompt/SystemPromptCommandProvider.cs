@@ -52,12 +52,7 @@ namespace LlamaBotAutomated.Plugins.Commands.SystemPrompt
                 responseString = "System Prompt Updated: " + command.Prompt;
             }
 
-            if (responseString.Length > 1995)
-            {
-                responseString = responseString[..1990] + "...";
-            }
-
-            return CommandResult.Success(responseString);
+            return CommandResult.Success(System.Text.Encoding.UTF8.GetBytes(responseString), "Prompt.txt");
         }
 
         public async Task<InitializationResult> OnInitialize(InitializationEventArgs args)
