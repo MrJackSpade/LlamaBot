@@ -5,6 +5,8 @@ namespace LlamaNative.Tokens.Models
 {
     public class TokenDataArray : IEnumerable<TokenData>
     {
+        private bool _ordered;
+
         public TokenDataArray(Span<float> logits)
         {
             List<TokenData> candidates = new(logits.Length);
@@ -17,6 +19,8 @@ namespace LlamaNative.Tokens.Models
             Data = candidates.ToArray();
             Size = (ulong)Data.Length;
         }
+
+        public bool Calculated { get; set; }
 
         public Memory<TokenData> Data { get; set; }
 
@@ -37,10 +41,6 @@ namespace LlamaNative.Tokens.Models
                 }
             }
         }
-
-        private bool _ordered;
-
-        public bool Calculated { get; set; }
 
         public ulong Size { get; set; }
 

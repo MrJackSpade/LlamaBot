@@ -165,7 +165,7 @@ namespace LlamaNative.Interop.Structs
         public bool SwaFull;
 
         /// <summary>
-        /// Use a unified buffer across the input sequences when computing the attention. 
+        /// Use a unified buffer across the input sequences when computing the attention.
         /// Try to disable when n_seq_max > 1 for improved performance when the sequences do not share a large prefix.
         /// </summary>
         [MarshalAs(UnmanagedType.I1)]

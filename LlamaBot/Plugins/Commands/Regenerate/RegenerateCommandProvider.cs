@@ -11,9 +11,9 @@ namespace LlamaBot.Plugins.Commands.Regenerate
 {
     internal class RegenerateCommandProvider : ICommandProvider<RegenerateCommand>
     {
-        private IPluginService? _pluginService;
-
         private ILlamaBotClient? _llamaBotClient;
+
+        private IPluginService? _pluginService;
 
         public string Command => "regenerate";
 
@@ -30,7 +30,7 @@ namespace LlamaBot.Plugins.Commands.Regenerate
             {
                 IMessage? rootMessage = await _llamaBotClient.TryGetLastBotMessage(smc);
 
-                if(rootMessage is null)
+                if (rootMessage is null)
                 {
                     return CommandResult.Error("No bot message found");
                 }

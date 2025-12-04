@@ -9,11 +9,6 @@ namespace LlamaNative
 {
     public static class LlamaClient
     {
-        public static Model LoadModel(ModelSettings modelSettings)
-        {
-            return NativeApi.LoadModel(modelSettings);
-        }
-
         public static INativeContext LoadContext(
             Model loadedModel,
             ContextSettings contextSettings,
@@ -26,6 +21,11 @@ namespace LlamaNative
                                      loadedModel.Handle,
                                      lparams,
                                      samplerSets);
+        }
+
+        public static Model LoadModel(ModelSettings modelSettings)
+        {
+            return NativeApi.LoadModel(modelSettings);
         }
     }
 }

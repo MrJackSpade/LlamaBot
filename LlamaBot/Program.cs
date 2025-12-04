@@ -17,7 +17,7 @@ namespace LlamaBot
     {
         private static readonly Configuration _configuration;
 
-        private static readonly DiscordService _discordClient;
+        private static readonly DiscordService _discordService;
 
         private static readonly ILogger _logger = new ConsoleLogger();
 
@@ -34,14 +34,19 @@ namespace LlamaBot
         static Program()
         {
             _configuration = StaticConfiguration.Load<Configuration>();
-            _discordClient = new(_configuration.DiscordToken);
+            _discordService = new(_configuration.DiscordToken);
         }
 
         public static async Task MessageReceived(SocketMessage message)
         {
             ReadResponseSettings readResponseSettings = new();
 
-            if (message.Author.Id == _discordClient.CurrentUser.Id)
+            if (message.Author.Id == _discordService.CurrentUser.Id)
+            {
+                return;
+            }
+
+            if (message.Author.IsWebhook)
             {
                 return;
             }
@@ -63,7 +68,6 @@ namespace LlamaBot
                 {
                     RespondingUser = autoRespond.UserName
                 };
-
             }
 
             if (!IsValidSource(message.Channel))
@@ -79,6 +83,26 @@ namespace LlamaBot
             _llamaBotClient.TryProcessMessageAsync(message.Channel, readResponseSettings, CancellationToken.None);
         }
 
+        private static async Task InitializeDiscordClient()
+        {
+            Console.WriteLine($"Connecting to Discord with token [{_configuration.DiscordToken}]...");
+
+            await _discordService.Connect();
+
+            try
+            {
+                await _discordService.SetUserName(_recursiveConfiguration.Configuration.ChatSettings.BotName);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Failed to set username: {e.Message}");
+            }
+
+            Console.WriteLine("Connected.");
+
+            _discordService.MessageReceived += MessageReceived;
+        }
+
         private static bool IsValidSource(IChannel channel)
         {
             if (channel is SocketThreadChannel socketThreadChannel)
@@ -92,8 +116,8 @@ namespace LlamaBot
                         return true;
                     }
                 }
-            } 
-            
+            }
+
             if (channel is SocketTextChannel socketTextChannel)
             {
                 if (_configuration.ChannelIds is not null)
@@ -104,7 +128,7 @@ namespace LlamaBot
                     }
                 }
             }
-            
+
             if (channel is SocketDMChannel socketDMChannel)
             {
                 if (_configuration.UserIds is not null)
@@ -119,26 +143,6 @@ namespace LlamaBot
             return false;
         }
 
-        private static async Task InitializeDiscordClient()
-        {
-            Console.WriteLine($"Connecting to Discord with token [{_configuration.DiscordToken}]...");
-
-            await _discordClient.Connect();
-
-            try
-            {
-                await _discordClient.SetUserName(_recursiveConfiguration.Configuration.ChatSettings.BotName);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Failed to set username: {e.Message}");
-            }
-
-            Console.WriteLine("Connected.");
-
-            _discordClient.MessageReceived += MessageReceived;
-        }
-
         private static async Task Main(string[] args)
         {
             _recursiveConfiguration = _recursiveConfigurationReader.Read(args[0]);
@@ -149,11 +153,12 @@ namespace LlamaBot
             await InitializeDiscordClient();
 
             _llamaBotClient = new LlamaBotClient(
-                _recursiveConfiguration.Configuration, 
-                new ChannelSettings(systemPrompt, thinkPrompt), 
-                _discordClient.CurrentUser.Id);
+                _recursiveConfiguration.Configuration,
+                _discordService,
+                new ChannelSettings(systemPrompt, thinkPrompt),
+                _discordService.CurrentUser.Id);
 
-            _pluginService = new PluginService(_logger, _discordClient, _llamaBotClient);
+            _pluginService = new PluginService(_logger, _discordService, _llamaBotClient);
 
             await _pluginService.LoadPlugins();
 
@@ -165,7 +170,7 @@ namespace LlamaBot
 
                 MethodInfo invocationMethod = commandProvider.GetType().GetMethod(nameof(ICommandProvider<object>.OnCommand))!;
 
-                await _discordClient.AddCommand(commandProvider.Command,
+                await _discordService.AddCommand(commandProvider.Command,
                                                  commandProvider.Description,
                                                  parameterType,
                                                  c =>
@@ -181,7 +186,7 @@ namespace LlamaBot
                                                  commandProvider.SlashCommandOptions);
             }
 
-            _discordClient.ReactionAdded += _pluginService.React;
+            _discordService.ReactionAdded += _pluginService.React;
 
             await Task.Delay(-1);
         }

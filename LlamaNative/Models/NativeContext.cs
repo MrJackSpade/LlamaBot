@@ -30,26 +30,6 @@ namespace LlamaNative.Models
 
         private KvCacheState<Token> _kvCache;
 
-        public uint AvailableBuffer => Size - _buffer.Pointer;
-
-        public IReadOnlyTokenCollection Buffer => new TokenCollection(_buffer);
-
-        public IReadOnlyTokenCollection Evaluated => new TokenCollection(_kvCache).Trim();
-
-        public SafeContextHandle Handle { get; private set; }
-
-        public SafeModelHandle ModelHandle { get; }
-
-        public uint Size { get; private set; }
-
-        private SamplerSet ActiveSamplerSet => _activeSamplers.Peek();
-
-        private List<ISimpleSampler> ActiveSimplerSamplers => [.. ActiveSamplerSet.TypedSimpleSamplers];
-
-        private ITokenSelector ActiveTokenSelector => ActiveSamplerSet.TokenSelector;
-
-        private Dictionary<int, string> ActiveLogitBias => ActiveSamplerSet.LogitBias;
-
         public NativeContext(SafeContextHandle handle, SafeModelHandle modelHandle, ContextParams settings, List<SamplerSet> samplerSets)
         {
             ArgumentNullException.ThrowIfNull(handle);
@@ -82,6 +62,26 @@ namespace LlamaNative.Models
         protected NativeContext()
         {
         }
+
+        public uint AvailableBuffer => Size - _buffer.Pointer;
+
+        public IReadOnlyTokenCollection Buffer => new TokenCollection(_buffer);
+
+        public IReadOnlyTokenCollection Evaluated => new TokenCollection(_kvCache).Trim();
+
+        public SafeContextHandle Handle { get; private set; }
+
+        public SafeModelHandle ModelHandle { get; }
+
+        public uint Size { get; private set; }
+
+        private Dictionary<int, string> ActiveLogitBias => ActiveSamplerSet.LogitBias;
+
+        private SamplerSet ActiveSamplerSet => _activeSamplers.Peek();
+
+        private List<ISimpleSampler> ActiveSimplerSamplers => [.. ActiveSamplerSet.TypedSimpleSamplers];
+
+        private ITokenSelector ActiveTokenSelector => ActiveSamplerSet.TokenSelector;
 
         public void Clear(bool includeCache)
         {

@@ -9,11 +9,9 @@ namespace LlamaBot.Plugins.Interfaces
     {
         string BotName { get; }
 
-        ChannelSettings DefaultChannelSettings { get; }
-
         ChannelSettingsCollection ChannelSettings { get; set; }
 
-        string? BuildMessage(string author, string? content, bool prependDefaultUser);
+        ChannelSettings DefaultChannelSettings { get; }
 
         void Clear(bool v);
 

@@ -4,7 +4,6 @@ using LlamaNative.Models;
 using LlamaNative.Sampling.Extensions;
 using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Settings;
-using LlamaNative.Tokens.Extensions;
 using LlamaNative.Utils.Extensions;
 using System.Diagnostics;
 using System.Text;

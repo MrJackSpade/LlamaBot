@@ -8,6 +8,7 @@ namespace LlamaNative.Interop
 #if WINDOWS
 
         private const string LIBRARY_NAME = "llama";
+
 #else
         private const string LIBRARY_NAME = "libllama.so";
 #endif

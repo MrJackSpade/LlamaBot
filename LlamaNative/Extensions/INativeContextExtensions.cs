@@ -1,8 +1,5 @@
 ﻿using LlamaNative.Apis;
-using LlamaNative.Extensions;
 using LlamaNative.Interfaces;
-using LlamaNative.Logit.Collections;
-using LlamaNative.Models;
 using LlamaNative.Tokens.Collections;
 using LlamaNative.Tokens.Models;
 
@@ -56,7 +53,7 @@ namespace LlamaNative.Extensions
         {
             return handler.SelectToken(null, out _);
         }
-    
+
         public static TokenCollection Tokenize(this INativeContext context, TokenMask tokenMask, string value, bool addBos = false)
         {
             TokenCollection tokens = new();

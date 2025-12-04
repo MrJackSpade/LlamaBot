@@ -2,7 +2,6 @@
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
 using LlamaBot.Shared.Models;
-using LlamaNative.Chat.Models;
 using LlamaNative.Utils;
 using AutoRespondModel = LlamaNative.Chat.Models.AutoRespond;
 

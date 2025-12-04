@@ -72,15 +72,15 @@ namespace LlamaNative.Decode.Collections
             Pointer -= count;
         }
 
+        public override string ToString()
+        {
+            return string.Join("", _backingData);
+        }
+
         public void Write(T element)
         {
             this[Pointer] = element;
             Pointer++;
-        }
-
-        public override string ToString()
-        {
-            return string.Join("", _backingData);
         }
     }
 }

@@ -19,49 +19,6 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
         protected int QueueSize { get; private set; } = queueSize;
 
-        protected List<TokenData> FilterCandidates(SampleContext sampleContext)
-        {
-            List<TokenData> toReturn = [];
-
-            Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
-
-            for (int i = 0; i < candidateSpan.Length; i++)
-            {
-                TokenData token = candidateSpan[i];
-
-                //This accounts for adjustments based on samplers
-                if (token.P < _settings.MinP)
-                {
-                    continue;
-                }
-
-                TokenData originalTokenData = sampleContext.GetOriginalData(token.Id);
-
-                //This ensures a minimum probability for the original token
-                if (originalTokenData.P < _settings.MinP)
-                {
-                    continue;
-                }
-
-                if (_settings.MinPs.TryGetValue(token.Id, out float minP))
-                {
-                    if (originalTokenData.P < minP)
-                    {
-                        continue;
-                    }
-                }
-
-                toReturn.Add(token);
-            }
-
-            if (toReturn.Count == 0)
-            {
-                toReturn.Add(sampleContext.Candidates[0]);
-            }
-
-            return toReturn;
-        }
-
         protected static void WriteToLog(SampleContext sampleContext, Span<TokenData> candidateSpan, bool topOnly, int selectedToken, StringBuilder candidateBuilder)
         {
             Dictionary<int, float> originalPs = sampleContext.OriginalCandidates.Data.ToArray().ToDictionary(x => x.Id, x => x.P);
@@ -110,6 +67,49 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             candidateBuilder.Append(']');
+        }
+
+        protected List<TokenData> FilterCandidates(SampleContext sampleContext)
+        {
+            List<TokenData> toReturn = [];
+
+            Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
+
+            for (int i = 0; i < candidateSpan.Length; i++)
+            {
+                TokenData token = candidateSpan[i];
+
+                //This accounts for adjustments based on samplers
+                if (token.P < _settings.MinP)
+                {
+                    continue;
+                }
+
+                TokenData originalTokenData = sampleContext.GetOriginalData(token.Id);
+
+                //This ensures a minimum probability for the original token
+                if (originalTokenData.P < _settings.MinP)
+                {
+                    continue;
+                }
+
+                if (_settings.MinPs.TryGetValue(token.Id, out float minP))
+                {
+                    if (originalTokenData.P < minP)
+                    {
+                        continue;
+                    }
+                }
+
+                toReturn.Add(token);
+            }
+
+            if (toReturn.Count == 0)
+            {
+                toReturn.Add(sampleContext.Candidates[0]);
+            }
+
+            return toReturn;
         }
 
         protected bool IsWordCompletion(SafeModelHandle ctx, int id)

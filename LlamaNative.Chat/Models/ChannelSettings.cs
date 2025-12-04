@@ -19,6 +19,10 @@ namespace LlamaBot
             this.SetThoughts(string.Empty, defaultThoughts);
         }
 
+        public string? Prompt { get; set; }
+
+        public Dictionary<string, string> Thoughts { get; set; } = [];
+
         public ChannelSettings Clone()
         {
             ChannelSettings toReturn = new()
@@ -32,32 +36,6 @@ namespace LlamaBot
             }
 
             return toReturn;
-        }
-
-        public Dictionary<string, string> Thoughts { get; set; } = [];
-
-        public string? Prompt { get; set; }
-
-        public void SetThoughts(string username, string thoughts)
-        {
-            username ??= string.Empty;
-
-            if (!Thoughts.TryAdd(username, thoughts))
-            {
-                Thoughts[username] = thoughts;
-            }
-        }
-
-        public string? GetUserThoughts(string username)
-        {
-            username ??= string.Empty;
-
-            if (Thoughts.TryGetValue(username, out string? thought) && thought is not null)
-            {
-                return thought;
-            }
-
-            return null;
         }
 
         public string? GetFullThoughts(string username)
@@ -80,6 +58,28 @@ namespace LlamaBot
             }
 
             return toReturn.ToString();
+        }
+
+        public string? GetUserThoughts(string username)
+        {
+            username ??= string.Empty;
+
+            if (Thoughts.TryGetValue(username, out string? thought) && thought is not null)
+            {
+                return thought;
+            }
+
+            return null;
+        }
+
+        public void SetThoughts(string username, string thoughts)
+        {
+            username ??= string.Empty;
+
+            if (!Thoughts.TryAdd(username, thoughts))
+            {
+                Thoughts[username] = thoughts;
+            }
         }
     }
 }

@@ -4,7 +4,7 @@
     {
         public static string ToDisplayString(this DateTime? dateTime)
         {
-            if(dateTime is null)
+            if (dateTime is null)
             {
                 return string.Empty;
             }

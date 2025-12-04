@@ -1,5 +1,4 @@
 ﻿using LlamaBot.Extensions;
-using LlamaBot.Plugins.Commands.ClearContext;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
@@ -12,7 +11,9 @@ namespace LlamaBot.Plugins.Commands.Clone
     internal class CloneCommandProvider : ICommandProvider<CloneCommand>
     {
         private IDiscordService? _discordClient;
+
         private ILlamaBotClient? _llamaBotClient;
+
         private IPluginService? _pluginService;
 
         public string Command => "clone";

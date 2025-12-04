@@ -12,7 +12,9 @@ namespace LlamaBot.Plugins.Commands.Generate
     internal class GenerateCommandProvider : ICommandProvider<GenerateCommand>
     {
         private IDiscordService? _discordClient;
+
         private ILlamaBotClient? _llamaBotClient;
+
         private IPluginService? _pluginService;
 
         public string Command => "Generate";

@@ -3,7 +3,6 @@ using LlamaNative.Chat.Interfaces;
 using LlamaNative.Chat.Models;
 using LlamaNative.Interfaces;
 using LlamaNative.Models;
-using LlamaNative.Sampling.Interfaces;
 using LlamaNative.Sampling.Models;
 using LlamaNative.Serialization;
 
@@ -15,7 +14,7 @@ namespace LlamaNative.Chat
         {
             Model model = LlamaClient.LoadModel(settings.ModelSettings);
 
-            if(settings.SamplerSets.Count == 0)
+            if (settings.SamplerSets.Count == 0)
             {
                 throw new ArgumentException("Samplers and logit bias must be migrated to SamplerSets");
             }
@@ -41,7 +40,8 @@ namespace LlamaNative.Chat
 
             foreach (SamplerSetConfiguration samplerSet in settings.SamplerSets)
             {
-                SamplerSet newSet = new() { 
+                SamplerSet newSet = new()
+                {
                     TokenSelector = SamplerDeserializer.InstantiateSelector(samplerSet.TokenSelector),
                     LogitBias = samplerSet.LogitBias
                 };
@@ -50,7 +50,7 @@ namespace LlamaNative.Chat
                 {
                     string token = tokenValues[i];
 
-                    if(token is null)
+                    if (token is null)
                     {
                         continue;
                     }
@@ -69,11 +69,11 @@ namespace LlamaNative.Chat
                     newSet.TypedSimpleSamplers.Add(SamplerDeserializer.InstantiateSimple(samplerSetting));
                 }
 
-                if(samplerSet.Push is not null && samplerSet.Pop is not null)
+                if (samplerSet.Push is not null && samplerSet.Pop is not null)
                 {
                     int[] pushTokens = NativeApi.Tokenize(model.Handle, samplerSet.Push, false);
 
-                    if(pushTokens.Length > 1)
+                    if (pushTokens.Length > 1)
                     {
                         throw new InvalidOperationException("Push tokens must be a single token");
                     }

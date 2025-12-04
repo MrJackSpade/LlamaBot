@@ -6,18 +6,6 @@ namespace LlamaNative.Sampling.Models
 {
     public class SamplerSetting
     {
-        [JsonPropertyName("pop")]
-        public string? Pop { get; set; }
-
-        [JsonPropertyName("push")]
-        public string? Push { get; set; }
-
-        [JsonPropertyName("settings")]
-        public JsonObject? Settings { get; set; }
-
-        [JsonPropertyName("type")]
-        public string Type { get; set; }
-
         public SamplerSetting(string type)
         {
             Type = type;
@@ -36,5 +24,17 @@ namespace LlamaNative.Sampling.Models
         [JsonConstructor]
         private SamplerSetting()
         { }
+
+        [JsonPropertyName("pop")]
+        public string? Pop { get; set; }
+
+        [JsonPropertyName("push")]
+        public string? Push { get; set; }
+
+        [JsonPropertyName("settings")]
+        public JsonObject? Settings { get; set; }
+
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
     }
 }

@@ -21,11 +21,11 @@ namespace LlamaNative.Sampling.Samplers.Repetition
 
             foreach (string s in _settings.SubSequences)
             {
-                var thisSequence = NativeApi.Tokenize(context.ModelHandle, s, false);
+                int[] thisSequence = NativeApi.Tokenize(context.ModelHandle, s, false);
                 sequenceTokenCollection.Add(thisSequence);
             }
 
-            var currentSequence = sequenceTokenCollection.FirstOrDefault(context.ContextTokens.EndsWith);
+            int[]? currentSequence = sequenceTokenCollection.FirstOrDefault(context.ContextTokens.EndsWith);
 
             if (currentSequence is null)
             {
@@ -43,7 +43,7 @@ namespace LlamaNative.Sampling.Samplers.Repetition
             {
                 bool anyMatch = false;
 
-                foreach(var checkSequence in sequenceTokenCollection)
+                foreach (int[] checkSequence in sequenceTokenCollection)
                 {
                     bool match = true;
 

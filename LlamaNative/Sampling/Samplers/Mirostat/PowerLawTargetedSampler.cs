@@ -114,7 +114,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
 
                 Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
-            } else
+            }
+            else
             {
                 Token token = sampleContext.GetToken(TokenMask.Undefined, selectedToken);
 

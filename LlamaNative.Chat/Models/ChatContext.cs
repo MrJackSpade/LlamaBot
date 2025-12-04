@@ -21,6 +21,8 @@ namespace LlamaNative.Chat.Models
 
         private readonly List<ChatMessage> _messages = [];
 
+        private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
+
         private bool _running = false;
 
         public uint AvailableBuffer
@@ -31,7 +33,7 @@ namespace LlamaNative.Chat.Models
 
                 if (string.IsNullOrWhiteSpace(context))
                 {
-                    return (uint)Settings.ContextSettings.ContextSize;   
+                    return (uint)Settings.ContextSettings.ContextSize;
                 }
 
                 TokenCollection contextTokens = NativeContext.Tokenize(TokenMask.Undefined, context);
@@ -116,7 +118,6 @@ namespace LlamaNative.Chat.Models
 
         public string PredictNextUser()
         {
-
             if (!_processingSemaphore.Wait(0))
             {
                 throw new AlreadyProcessingException();
@@ -161,8 +162,6 @@ namespace LlamaNative.Chat.Models
                 _processingSemaphore.Release();
             }
         }
-
-        private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
         public List<ChatMessage> ReadResponse(ReadResponseSettings responseSettings, CancellationToken cancellationToken)
         {
@@ -285,6 +284,13 @@ namespace LlamaNative.Chat.Models
             }
         }
 
+        public List<Token> Tokenize(string content)
+        {
+            Ensure.NotNull(NativeContext);
+
+            return [.. NativeContext.Tokenize(TokenMask.Undefined, content)];
+        }
+
         public bool TryInterrupt()
         {
             if (_running)
@@ -353,7 +359,7 @@ namespace LlamaNative.Chat.Models
 
             foreach (MaskedString ms in this.ContextToMaskedString(continueLast))
             {
-                if(!string.IsNullOrEmpty(ms.Value))
+                if (!string.IsNullOrEmpty(ms.Value))
                 {
                     NativeContext.Write(ms.Mask, ms.Value);
                 }
@@ -387,13 +393,6 @@ namespace LlamaNative.Chat.Models
             }
 
             return selection;
-        }
-
-        public List<Token> Tokenize(string content)
-        {
-            Ensure.NotNull(NativeContext);
-
-            return [.. NativeContext.Tokenize(TokenMask.Undefined, content)];
         }
     }
 }

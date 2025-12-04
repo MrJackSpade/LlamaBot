@@ -1,16 +1,15 @@
-﻿using LlamaBot;
-using LlamaNative.Chat.Models;
+﻿using LlamaNative.Chat.Models;
 using LlamaNative.Interop.Settings;
 
 namespace LlamaNative.Chat
 {
     public class ChatSettings
     {
+        public string[] AlternateNames { get; set; } = new string[0];
+
         public string BeginText { get; set; } = "";
 
         public string BotName { get; set; } = "LlamaBot";
-
-        public string[] AlternateNames { get; set; } = new string[0];
 
         public ChatTemplate ChatTemplate { get; set; } = new ChatTemplate();
 

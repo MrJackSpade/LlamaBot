@@ -1,5 +1,4 @@
 ﻿using LlamaNative.Tokens.Models;
-using System.Text.Json.Serialization;
 
 namespace LlamaNative.Chat.Models
 {

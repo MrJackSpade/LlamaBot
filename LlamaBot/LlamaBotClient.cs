@@ -3,6 +3,7 @@ using Discord.Rest;
 using Discord.WebSocket;
 using LlamaBot.Extensions;
 using LlamaBot.Plugins.Interfaces;
+using LlamaBot.Shared.Interfaces;
 using LlamaNative.Chat;
 using LlamaNative.Chat.Exceptions;
 using LlamaNative.Chat.Extensions;
@@ -14,12 +15,10 @@ using LlamaNative.Sampling.Settings;
 using LlamaNative.Tokens.Models;
 using LlamaNative.Utils;
 using Loxifi;
-using System.Threading.Channels;
 using ThreadState = System.Threading.ThreadState;
 
 namespace LlamaBot
 {
-
     internal class LlamaBotClient : ILlamaBotClient
     {
         private const char ZERO_WIDTH = (char)8203;
@@ -32,23 +31,20 @@ namespace LlamaBot
 
         private readonly ChatSettings _chatSettings;
 
+        private readonly IDiscordService _discordService;
+
         private readonly MetaData _metaData = StaticConfiguration.Load<MetaData>();
 
         private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
 
         private Thread _processMessageThread;
 
-        public string BotName => _chatSettings.BotName;
-
-        public ChannelSettings DefaultChannelSettings { get; } = new ChannelSettings();
-
-        public ChannelSettingsCollection ChannelSettings { get; set; } = new ChannelSettingsCollection();
-
-        public LlamaBotClient(Character character, ChannelSettings channelSettings, ulong botId)
+        public LlamaBotClient(Character character, IDiscordService discordService, ChannelSettings channelSettings, ulong botId)
         {
             Ensure.NotNull(character);
             Ensure.NotNull(character.ChatSettings);
 
+            _discordService = discordService;
             _chatContext = LlamaChatClient.LoadChatContext(character.ChatSettings);
 
             if (channelSettings is not null)
@@ -77,17 +73,11 @@ namespace LlamaBot
             }
         }
 
-        public string BuildMessage(string author, string content, bool prependDefaultUser)
-        {
-            string header = string.Empty;
+        public string BotName => _chatSettings.BotName;
 
-            if (author != _chatSettings.BotName || prependDefaultUser)
-            {
-                header += $"{ZERO_WIDTH}**{author}:**{ZERO_WIDTH}";
-            }
+        public ChannelSettingsCollection ChannelSettings { get; set; } = new ChannelSettingsCollection();
 
-            return header + content;
-        }
+        public ChannelSettings DefaultChannelSettings { get; } = new ChannelSettings();
 
         public void Clear(bool v)
         {
@@ -146,7 +136,7 @@ namespace LlamaBot
             {
                 toReturn.Author = name;
             }
-            else if (message.Author is IGuildUser guildUser)
+            else if (message.Author is IGuildUser guildUser && !string.IsNullOrWhiteSpace(guildUser.DisplayName))
             {
                 toReturn.Author = guildUser.DisplayName;
             }
@@ -214,13 +204,11 @@ namespace LlamaBot
                         prependMessageContent = string.Empty;
                     }
 
-                    string content = this.BuildMessage(cm.User, cmContent, responseSettings.PrependDefaultUser);
-
-                    content = content.Trim();
+                    string content = cmContent.Trim();
 
                     if (string.IsNullOrEmpty(content))
                     {
-                        await channel.SendMessageAsync("[Empty Message]");
+                        await _discordService.SendMessageAsync(channel, "[Empty Message]", responseSettings.RespondingUser, prependDefaultUser: responseSettings.PrependDefaultUser);
                     }
                     else
                     {
@@ -228,7 +216,7 @@ namespace LlamaBot
                         {
                             int chunkSize = Math.Min(1950, content.Length);
                             string chunk = content[..chunkSize];
-                            await channel.SendMessageAsync(chunk);
+                            await _discordService.SendMessageAsync(channel, chunk, responseSettings.RespondingUser, prependDefaultUser: responseSettings.PrependDefaultUser);
                             content = content[chunkSize..];
                         }
                     }
@@ -270,6 +258,13 @@ namespace LlamaBot
             StaticConfiguration.Save(_metaData);
         }
 
+        public List<Token> Tokenize(string content)
+        {
+            Ensure.NotNull(_chatContext);
+
+            return _chatContext.Tokenize(content);
+        }
+
         public async Task<IMessage?> TryGetLastBotMessage(ISocketMessageChannel channel)
         {
             await foreach (IMessage lm in channel.GetMessagesAsync(5).Flatten())
@@ -279,7 +274,7 @@ namespace LlamaBot
                     continue;
                 }
 
-                if (lm.Author.Id == _botId)
+                if (lm.Author.Id == _botId || lm.Author.IsWebhook)
                 {
                     return lm;
                 }
@@ -313,6 +308,11 @@ namespace LlamaBot
 
                 _processMessageThread.Start();
             }
+        }
+
+        private ChannelSettings GetApplicableSettings(ulong channelId)
+        {
+            return ChannelSettings.GetValue(channelId) ?? DefaultChannelSettings;
         }
 
         private IEnumerable<ChatMessage> HandleApplicationCommand(IMessage historicalMessage)
@@ -364,11 +364,6 @@ namespace LlamaBot
             {
                 yield return new ChatMessage(contentMask, message.Author, s);
             }
-        }
-
-        private ChannelSettings GetApplicableSettings(ulong channelId)
-        {
-            return ChannelSettings.GetValue(channelId) ?? DefaultChannelSettings;
         }
 
         private void InsertContextHeaders(ulong channelId)
@@ -480,13 +475,6 @@ namespace LlamaBot
 
             ChatMessage startTimeIndicator = new(TokenMask.System, _chatSettings.SystemPromptUser, $"CURRENT TIME ({lastMessageTime.ToDisplayString()})");
             _chatContext.Insert(messageStart, startTimeIndicator);
-        }
-
-        public List<Token> Tokenize(string content)
-        {
-            Ensure.NotNull(_chatContext);
-
-            return _chatContext.Tokenize(content);
         }
     }
 }

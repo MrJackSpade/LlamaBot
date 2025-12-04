@@ -2,11 +2,9 @@
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
-using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 using LlamaNative.Tokens.Models;
 using LlamaNative.Utils;
-using Newtonsoft.Json;
 using System.Text;
 
 namespace LlamaBot.Plugins.Commands.Tokenize

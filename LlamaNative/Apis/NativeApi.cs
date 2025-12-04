@@ -4,7 +4,6 @@ using LlamaNative.Interop;
 using LlamaNative.Interop.Settings;
 using LlamaNative.Interop.Structs;
 using LlamaNative.Models;
-using LlamaNative.Tokens.Models;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -154,11 +153,6 @@ namespace LlamaNative.Apis
             return ctx;
         }
 
-        private static void FreeContext(nint handle)
-        {
-            LlamaCppApi.FreeContext(handle);
-        }
-
         public static Model LoadModel(ModelSettings modelSettings)
         {
             ModelParams lparams = LlamaCppApi.ModelDefaultParams();
@@ -207,11 +201,6 @@ namespace LlamaNative.Apis
             return new(handle, vocab, nvocab);
         }
 
-        private static void FreeModel(nint handle)
-        {
-            LlamaCppApi.FreeModel(handle);
-        }
-
         public static int NVocab(SafeModelHandle handle)
         {
             nint vocab_ptr = LlamaCppApi.GetVocab(handle);
@@ -219,33 +208,21 @@ namespace LlamaNative.Apis
             return LlamaCppApi.NVocab(vocab);
         }
 
-        // Add helper to get memory handle
-        private static SafeMemoryHandle GetMemoryHandle(SafeContextHandle context)
-        {
-            IntPtr memPtr = LlamaCppApi.GetMemory(context);
-            if (memPtr == IntPtr.Zero)
-            {
-                throw new LlamaCppRuntimeError("Failed to get memory from context");
-            }
-            // Memory is owned by context, so we don't free it
-            return new SafeMemoryHandle(memPtr, _ => { });
-        }
-
         public static void RemoveCacheToken(SafeContextHandle handle, uint pos)
         {
-            using var mem = GetMemoryHandle(handle);
+            using SafeMemoryHandle mem = GetMemoryHandle(handle);
             LlamaCppApi.RemoveCacheTokens(mem, -1, (int)pos, (int)(pos + 1));
         }
 
         public static void RemoveCacheTokens(SafeContextHandle handle, uint startPos, uint endPos)
         {
-            using var mem = GetMemoryHandle(handle);
+            using SafeMemoryHandle mem = GetMemoryHandle(handle);
             LlamaCppApi.RemoveCacheTokens(mem, -1, (int)startPos, (int)endPos);
         }
 
         public static void ShiftCacheTokens(SafeContextHandle handle, uint sequenceId, uint startPos, uint endPos, int delta)
         {
-            using var mem = GetMemoryHandle(handle);
+            using SafeMemoryHandle mem = GetMemoryHandle(handle);
             LlamaCppApi.ShiftCacheTokens(mem, (int)sequenceId, (int)startPos, (int)endPos, delta);
         }
 
@@ -304,6 +281,28 @@ namespace LlamaNative.Apis
             string toReturn = System.Text.Encoding.UTF8.GetString(buffer, 0, result);
 
             return toReturn;
+        }
+
+        private static void FreeContext(nint handle)
+        {
+            LlamaCppApi.FreeContext(handle);
+        }
+
+        private static void FreeModel(nint handle)
+        {
+            LlamaCppApi.FreeModel(handle);
+        }
+
+        // Add helper to get memory handle
+        private static SafeMemoryHandle GetMemoryHandle(SafeContextHandle context)
+        {
+            IntPtr memPtr = LlamaCppApi.GetMemory(context);
+            if (memPtr == IntPtr.Zero)
+            {
+                throw new LlamaCppRuntimeError("Failed to get memory from context");
+            }
+            // Memory is owned by context, so we don't free it
+            return new SafeMemoryHandle(memPtr, _ => { });
         }
 
         private static void Log(string method, params object[] args)

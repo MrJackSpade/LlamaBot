@@ -1,8 +1,4 @@
-﻿using LlamaNative.Tokens.Collections;
-using LlamaNative.Tokens.Interfaces;
-using LlamaNative.Tokens.Models;
-
-namespace LlamaNative.Tokens.Extensions
+﻿namespace LlamaNative.Tokens.Extensions
 {
     public static class ITokenCollectionExtensions
     {

@@ -32,7 +32,7 @@ namespace LlamaBot.Plugins.Commands.Send
             {
                 await command.Command.DeleteOriginalResponseAsync();
 
-                await smc.SendMessageAsync($"{ZERO_WIDTH}**{command.UserName}:**{ZERO_WIDTH} {command.Content}");
+                await _discordClient!.SendMessageAsync(smc, command.Content, command.UserName);
 
                 return CommandResult.Success();
             }

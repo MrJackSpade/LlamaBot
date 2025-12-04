@@ -25,8 +25,8 @@ namespace LlamaNative.Chat.Interfaces
 
         void SendMessage(ChatMessage message);
 
-        bool TryInterrupt();
-
         List<Token> Tokenize(string content);
+
+        bool TryInterrupt();
     }
 }

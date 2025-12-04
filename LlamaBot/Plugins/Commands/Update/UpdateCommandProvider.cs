@@ -13,7 +13,7 @@ namespace LlamaBot.Plugins.Commands.Update
 {
     internal class UpdateCommandProvider : ICommandProvider<UpdateCommand>
     {
-        private IDiscordService? _discordClient;
+        private IDiscordService? _discordService;
 
         private ILlamaBotClient? _llamaBotClient;
 
@@ -55,10 +55,9 @@ namespace LlamaBot.Plugins.Commands.Update
 
                     if (parsed.Author != _llamaBotClient.BotName)
                     {
-                        newContent = _llamaBotClient.BuildMessage(parsed.Author, $" {command.Content?.Trim()}", false);
+                        newContent = _discordService.BuildMessage(parsed.Author, $" {command.Content?.Trim()}", false);
+                    }
 
-                    }                        
-                    
                     newContent = newContent?.Replace("\\n", "\n");
 
                     await um.ModifyAsync(m => m.Content = newContent);
@@ -76,7 +75,7 @@ namespace LlamaBot.Plugins.Commands.Update
         public Task<InitializationResult> OnInitialize(InitializationEventArgs args)
         {
             _pluginService = args.PluginService;
-            _discordClient = args.DiscordService;
+            _discordService = args.DiscordService;
             _llamaBotClient = args.LlamaBotClient;
             return InitializationResult.SuccessAsync();
         }

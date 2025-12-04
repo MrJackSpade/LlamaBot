@@ -22,11 +22,6 @@ namespace LlamaNative.Decode.Interfaces
             _relocated = new HashSet<uint>(_backingData.Length);
         }
 
-        public override string ToString()
-        {
-            return string.Join("", _backingData);
-        }
-
         public KvCacheState(uint size, T defaultToken) : this(new T[size], defaultToken)
         {
             for (int i = 0; i < size; i++)
@@ -116,6 +111,11 @@ namespace LlamaNative.Decode.Interfaces
 
             _relocated.Add(index);
             _transformations[index] = new KvCacheTransformation<T>(_backingData[index], index);
+        }
+
+        public override string ToString()
+        {
+            return string.Join("", _backingData);
         }
     }
 }

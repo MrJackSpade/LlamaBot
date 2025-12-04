@@ -7,14 +7,6 @@ namespace LlamaNative.Tokens.Extensions
 {
     public static class TokenDataArrayExtensions
     {
-        public static float GetProbability(this TokenDataArray tokens, int tokenId)
-        {
-            Span<TokenData> span = tokens.Data.Span;
-            int index = tokens.GetTokenIndex(tokenId);
-            TokenData existing = span[index];
-            return existing.Logit;
-        }
-
         public static TokenData GetMostLikely(this TokenDataArray tokens)
         {
             if (!tokens.Calculated)
@@ -22,13 +14,13 @@ namespace LlamaNative.Tokens.Extensions
                 SamplingApi.SoftMax(tokens, false);
             }
 
-            if(tokens.Ordered)
+            if (tokens.Ordered)
             {
                 return tokens.Data.Span[0];
             }
             else
             {
-                var span = tokens.Data.Span;
+                Span<TokenData> span = tokens.Data.Span;
 
                 TokenData mostLikely = span[0];
 
@@ -38,15 +30,22 @@ namespace LlamaNative.Tokens.Extensions
 
                     if (check.P > mostLikely.P)
                     {
-
                         mostLikely = check;
                     }
                 }
 
                 return mostLikely;
-
             }
         }
+
+        public static float GetProbability(this TokenDataArray tokens, int tokenId)
+        {
+            Span<TokenData> span = tokens.Data.Span;
+            int index = tokens.GetTokenIndex(tokenId);
+            TokenData existing = span[index];
+            return existing.Logit;
+        }
+
         public static TokenData GetTokenData(this TokenDataArray tokens, int tokenId)
         {
             for (int i = 0; i < tokens.Data.Span.Length; i++)

@@ -6,10 +6,15 @@
     public enum RopeScalingType : short
     {
         Unspecified = -1,
+
         None = 0,
+
         Linear = 1,
+
         Yarn = 2,
+
         LongRope = 3,
+
         MAxValue = LongRope
     }
 }

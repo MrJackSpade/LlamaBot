@@ -6,6 +6,14 @@ namespace LlamaNative.Chat.Models
 {
     public class ChatTemplate
     {
+        private string _startAssistantHeader = string.Empty;
+
+        private string _startSystemHeader = string.Empty;
+
+        private string _startUserHeader = string.Empty;
+
+        private string? _thinkHeader = null;
+
         public string EndHeader { get; set; } = ": ";
 
         public string EndMessage { get; set; } = "\n";
@@ -16,9 +24,29 @@ namespace LlamaNative.Chat.Models
 
         public string NewHeaderPadding { get; set; } = string.Empty;
 
+        public string NewThinkHeader { get; set; } = "";
+
+        public string StartAssistantHeader
+        {
+            get => _startAssistantHeader ?? StartHeader;
+            set => _startAssistantHeader = value;
+        }
+
         public string StartHeader { get; set; } = "|";
 
-        public string NewThinkHeader { get; set; } = "";
+        public string StartSystemHeader
+        {
+            get => _startSystemHeader ?? StartHeader;
+            set => _startSystemHeader = value;
+        }
+
+        public string StartUserHeader
+        {
+            get => _startUserHeader ?? StartHeader;
+            set => _startUserHeader = value;
+        }
+
+        public int[] StopTokenIds { get; set; } = [];
 
         public string ThinkHeader
         {
@@ -33,34 +61,6 @@ namespace LlamaNative.Chat.Models
             }
             set => _thinkHeader = value;
         }
-
-        private string? _thinkHeader = null;
-
-        public string StartUserHeader
-        {
-            get => _startUserHeader ?? StartHeader;
-            set => _startUserHeader = value;
-        }
-
-        public string StartSystemHeader
-        {
-            get => _startSystemHeader ?? StartHeader;
-            set => _startSystemHeader = value;
-        }
-
-        public string StartAssistantHeader
-        {
-            get => _startAssistantHeader ?? StartHeader;
-            set => _startAssistantHeader = value;
-        }
-
-        private string _startAssistantHeader = string.Empty;
-
-        private string _startSystemHeader = string.Empty;
-
-        private string _startUserHeader = string.Empty;
-
-        public int[] StopTokenIds { get; set; } = [];
 
         public MaskedString ToHeader(string userName, bool newHeader, HeaderType headerType, string? responsePrepend = null)
         {

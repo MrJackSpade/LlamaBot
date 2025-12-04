@@ -1,6 +1,5 @@
 ﻿using LlamaBot.Extensions;
 using LlamaBot.Plugins.Commands.ClearContext;
-using LlamaBot.Plugins.Commands.SystemPrompt;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
@@ -8,12 +7,14 @@ using LlamaBot.Shared.Interfaces;
 using LlamaBot.Shared.Models;
 using LlamaNative.Chat.Models;
 
-namespace LlamaBotAutomated.Plugins.Commands.SystemPrompt
+namespace LlamaBot.Plugins.Commands.SystemPrompt
 {
     internal class SystemPromptCommandProvider : ICommandProvider<SystemPromptCommand>
     {
         private IDiscordService? _discordClient;
+
         private ILlamaBotClient? _llamaBotClient;
+
         private IPluginService? _pluginService;
 
         public string Command => "prompt";

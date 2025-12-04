@@ -6,10 +6,10 @@
 
         public required string ModelPath { get; set; }
 
+        public string? TensorBufferTypeOverrides { get; set; }
+
         public bool UseMemoryLock { get; set; } = true;
 
         public bool UseMemoryMap { get; set; } = false;
-
-        public string? TensorBufferTypeOverrides { get; set; }
     }
 }

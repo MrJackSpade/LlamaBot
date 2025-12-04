@@ -266,7 +266,7 @@ namespace LlamaNative.Interop.Apis
                 {
                     TokenData check = candidates[i];
 
-                    if(check.Logit < lastHighest && check.Logit > thisHighest.Logit)
+                    if (check.Logit < lastHighest && check.Logit > thisHighest.Logit)
                     {
                         thisHighest = check;
                     }
@@ -274,7 +274,7 @@ namespace LlamaNative.Interop.Apis
 
                 sum += thisHighest.P;
 
-                if(sum >= r)
+                if (sum >= r)
                 {
                     return thisHighest.Id;
                 }
