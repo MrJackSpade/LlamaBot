@@ -35,6 +35,11 @@ namespace LlamaBot
                 toReturn.SetThoughts(thought.Key, thought.Value);
             }
 
+            foreach (KeyValuePair<ulong, string> overrideName in NameOverrides)
+            {
+                toReturn.SetNameOverride(overrideName.Key, overrideName.Value);
+            }
+
             return toReturn;
         }
 
@@ -70,6 +75,26 @@ namespace LlamaBot
             }
 
             return null;
+        }
+
+        public Dictionary<ulong, string> NameOverrides { get; set; } = [];
+
+        public string? GetNameOverride(ulong userId)
+        {
+            if (NameOverrides.TryGetValue(userId, out string? name) && name is not null)
+            {
+                return name;
+            }
+
+            return null;
+        }
+
+        public void SetNameOverride(ulong userId, string name)
+        {
+            if (!NameOverrides.TryAdd(userId, name))
+            {
+                NameOverrides[userId] = name;
+            }
         }
 
         public void SetThoughts(string username, string thoughts)

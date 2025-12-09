@@ -132,6 +132,10 @@ namespace LlamaBot
             {
                 toReturn.Author = _chatSettings.BotName;
             }
+            else if (this.GetApplicableSettings(message.Channel.Id).GetNameOverride(message.Author.Id) is string nameOverride && !string.IsNullOrWhiteSpace(nameOverride))
+            {
+                toReturn.Author = nameOverride;
+            }
             else if (_character.NameOverride.TryGetValue(message.Author.Username, out string? name))
             {
                 toReturn.Author = name;
@@ -349,14 +353,13 @@ namespace LlamaBot
 
             if (_chatSettings.SplitSettings?.DoubleNewlineSplit ?? false)
             {
-                messageContent = message.Content.Split("\n\n")
+                messageContent = [.. message.Content.Split("\n\n")
                                                 .Select(s => s.Trim())
                                                 .Where(s => !string.IsNullOrWhiteSpace(s))
-                                                .Reverse()
-                                                .ToList();
+                                                .Reverse()];
             }
 
-            TokenMask contentMask = historicalMessage.Author.Id == _botId ?
+            TokenMask contentMask = historicalMessage.Author.Id == _botId || historicalMessage.Author.IsWebhook ?
                                                         TokenMask.Bot :
                                                         TokenMask.User;
 

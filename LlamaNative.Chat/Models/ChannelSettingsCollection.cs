@@ -137,6 +137,41 @@ namespace LlamaNative.Chat.Models
             channelSettings.Prompt = prompt;
         }
 
+        public void SetNameOverride(ulong channelId, ulong userId, string name)
+        {
+            if (!this.IsLoaded(channelId))
+            {
+                this.LoadSettings(channelId);
+            }
+
+            ChannelSettings? channelSettings = _channels[channelId];
+
+            if (channelSettings == null)
+            {
+                channelSettings = new ChannelSettings();
+                _channels[channelId] = channelSettings;
+            }
+
+            channelSettings.SetNameOverride(userId, name);
+        }
+
+        public string? GetNameOverride(ulong channelId, ulong userId)
+        {
+            if (!this.IsLoaded(channelId))
+            {
+                this.LoadSettings(channelId);
+            }
+
+            ChannelSettings? channelSettings = _channels[channelId];
+
+            if (channelSettings == null)
+            {
+                return null;
+            }
+
+            return channelSettings.GetNameOverride(userId);
+        }
+
         public void SetThoughts(ulong channelId, string username, string thoughts)
         {
             username ??= string.Empty;
