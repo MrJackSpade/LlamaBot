@@ -2,17 +2,20 @@
 {
     public class PowerLawTargetedSamplerSettings : TargetedEntropySamplerSettings
     {
-        public float DistributionWidth { get; set; } = 0.2f;
+        public float DistributionWidth { get; set; } = 0.3f;
 
         /// <summary>
         /// Write token values to the output window
         /// </summary>
         public bool Log { get; set; }
 
-        public float PeakLogitValue { get; set; } = 3.0f;
+        public float PeakLogitValue { get; set; } = 5.0f;
 
-        public float TailHeaviness { get; set; } = 3.0f; // Lower values = heavier tails, 2.0 = Cauchy
+        public float TailDecay { get; set; } = 0.5f;
 
-        // Peak value for the bell curve
+        /// <summary>
+        /// Lower values = heavier tails, 2.0 = Cauchy
+        /// </summary>
+        public float TailHeaviness { get; set; } = 2.0f; 
     }
 }

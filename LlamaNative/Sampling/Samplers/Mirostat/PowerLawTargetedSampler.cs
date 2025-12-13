@@ -40,7 +40,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         /// <returns>The target probability (0.0 to 1.0) for the next token.</returns>
         public float CalculateNextTarget()
         {
-            return this.ComputeTarget(_settings.MinTarget, _settings.MaxTarget, 0.5f);
+            return this.ComputeTarget(_settings.MinTarget, _settings.MaxTarget, _settings.TailDecay);
         }
 
         public int SampleNext(SampleContext sampleContext)
@@ -111,7 +111,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             if (_settings.Log)
             {
-                this.LogPowerLawState(sampleContext, target, _settings.MinTarget, _settings.MaxTarget, 0.5f, selectedToken, topOnly, topOnlyReason);
+                this.LogPowerLawState(sampleContext, target, _settings.MinTarget, _settings.MaxTarget, _settings.TailDecay, selectedToken, topOnly, topOnlyReason);
             }
             else
             {
