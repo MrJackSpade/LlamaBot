@@ -1,7 +1,16 @@
-﻿namespace LlamaNative.Sampling.Settings
+﻿using System.Text.Json.Serialization;
+
+namespace LlamaNative.Sampling.Settings
 {
     public class TargetedTemperatureSamplerSettings : BaseDynamicSamplerSettings
     {
+        /// <summary>
+        /// Current computed target for next token selection.
+        /// Runtime state, not serialized.
+        /// </summary>
+        [JsonIgnore]
+        public float CurrentTarget { get; set; } = 1f;
+
         /// <summary>
         ///
         /// </summary>
@@ -10,7 +19,7 @@
         /// <summary>
         /// Min probability across all tokens
         /// </summary>
-        public float MinP { get; set; } = 0.05f;
+        public new float MinP { get; set; } = 0.05f;
 
         /// <summary>
         ///
@@ -36,5 +45,9 @@
         /// Default 0.95
         /// </summary>
         public float Tfs { get; set; } = 0.95f;
+
+        // ============================================
+        // Runtime state fields - not persisted to JSON
+        // ============================================
     }
 }

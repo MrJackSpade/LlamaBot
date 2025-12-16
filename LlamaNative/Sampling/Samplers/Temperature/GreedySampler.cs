@@ -6,13 +6,13 @@ using System.Diagnostics;
 
 namespace LlamaNative.Sampling.Samplers.Temperature
 {
-    public class GreedySampler : ITokenSelector
+    /// <summary>
+    /// A simple greedy sampler that always selects the highest probability token.
+    /// Uses an empty settings object since no configuration is needed.
+    /// </summary>
+    public class GreedySampler : ITokenSelector<GreedySamplerSettings>
     {
-        public GreedySampler()
-        {
-        }
-
-        public int SampleNext(SampleContext sampleContext)
+        public int SampleNext(SampleContext sampleContext, GreedySamplerSettings settings)
         {
             int toReturn = SamplingApi.TokenGreedy(sampleContext.Candidates);
 
@@ -20,5 +20,12 @@ namespace LlamaNative.Sampling.Samplers.Temperature
 
             return toReturn;
         }
+    }
+
+    /// <summary>
+    /// Empty settings class for GreedySampler (no configuration needed).
+    /// </summary>
+    public class GreedySamplerSettings
+    {
     }
 }

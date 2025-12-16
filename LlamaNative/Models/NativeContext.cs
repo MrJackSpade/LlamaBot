@@ -108,7 +108,7 @@ namespace LlamaNative.Models
             _synchronizer.Sync(_kvCache, _buffer);
         }
 
-        public virtual Token SelectToken(LogitRuleCollection? logitRules, out SampleContext sampleContext)
+        public virtual Token SelectToken(LogitRuleCollection? logitRules, object samplerSettings, out SampleContext sampleContext)
         {
             logitRules ??= [];
 
@@ -145,7 +145,9 @@ namespace LlamaNative.Models
 
             logitRules.ApplyClamp(sampleContext.Candidates);
 
-            int tokenId = ActiveTokenSelector.SampleNext(sampleContext);
+            // Validate settings before sampling
+            ActiveTokenSelector.ValidateSettings(samplerSettings);
+            int tokenId = ActiveTokenSelector.SampleNext(sampleContext, samplerSettings);
 
             Token toReturn = this.GetToken(TokenMask.Bot, tokenId);
 

@@ -7,11 +7,15 @@ using System.Text;
 
 namespace LlamaNative.Sampling.Samplers.Temperature
 {
-    public class TemperatureTokenSampler(TemperatureTokenSamplerSettings temperatureSamplerSettings) : BaseDynamicSampler<TemperatureTokenSamplerSettings>(0, temperatureSamplerSettings), ITokenSelector
+    public class TemperatureTokenSampler : BaseDynamicSampler<TemperatureTokenSamplerSettings>, ITokenSelector<TemperatureTokenSamplerSettings>
     {
-        public int SampleNext(SampleContext sampleContext)
+        public TemperatureTokenSampler() : base()
         {
-            int token = this.SelectToken(sampleContext, _settings.Temperature <= 0, out _);
+        }
+
+        public int SampleNext(SampleContext sampleContext, TemperatureTokenSamplerSettings settings)
+        {
+            int token = this.SelectToken(sampleContext, settings, settings.Temperature <= 0, out _);
 
             StringBuilder sb = new();
 

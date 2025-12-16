@@ -26,11 +26,11 @@ namespace LlamaBot.Plugins.Commands.Name
 
             if (string.IsNullOrWhiteSpace(command.Username))
             {
-               // If empty, maybe clear it? But the command param is required usually if not nullable. 
-               // Assuming user wants to set it. 
-               // The request implied "set the name", so let's set it.
-               // We could allow clearing if they send a specific char, but standard behavior is usually overwrite.
-               // Let's assume non-empty for now as per DTO.
+                // If empty, maybe clear it? But the command param is required usually if not nullable.
+                // Assuming user wants to set it.
+                // The request implied "set the name", so let's set it.
+                // We could allow clearing if they send a specific char, but standard behavior is usually overwrite.
+                // Let's assume non-empty for now as per DTO.
             }
 
             csi.SetNameOverride(channelId, userId, command.Username);

@@ -10,23 +10,13 @@ using System.Text;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public class TargetedTemperatureSampler : BaseDynamicSampler<TargetedTemperatureSamplerSettings>, ITokenSelector
+    public class TargetedTemperatureSampler : BaseDynamicSampler<TargetedTemperatureSamplerSettings>, ITokenSelector<TargetedTemperatureSamplerSettings>
     {
-        private readonly TargetedTemperatureSamplerSettings _settings;
-
-        private float _target = 1f;
-
-        public TargetedTemperatureSampler(TargetedTemperatureSamplerSettings settings) : base(settings.QueueSize, settings)
+        public TargetedTemperatureSampler() : base()
         {
-            _settings = settings;
-
-            foreach (int id in _settings.GreedyExclude)
-            {
-                _isWords.Add(id, true);
-            }
         }
 
-        public void ApplyOriginalMinP(SampleContext context)
+        public void ApplyOriginalMinP(SampleContext context, TargetedTemperatureSamplerSettings settings)
         {
             SamplingApi.SoftMax(context.Candidates, true);
 
@@ -42,9 +32,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             foreach (TokenData token in context.OriginalCandidates)
             {
-                float minP = _settings.MinP;
+                float minP = settings.MinP;
 
-                if (_settings.MinPs.TryGetValue(token.Id, out float cminp))
+                if (settings.MinPs.TryGetValue(token.Id, out float cminp))
                 {
                     minP = Math.Max(minP, cminp);
                 }
@@ -62,24 +52,30 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
         }
 
-        public float CalculateNextTarget()
+        public float CalculateNextTarget(TargetedTemperatureSamplerSettings settings)
         {
-            if (SelectionHistory == null || SelectionHistory.Count == 0)
+            if (settings.SelectionHistory == null || settings.SelectionHistory.Count == 0)
             {
                 throw new ArgumentException("Values list cannot be null or empty.");
             }
 
             // Calculate the sum of the values excluding the first element
-            float sumExcludingFirst = SelectionHistory.Skip(1).Sum(l => l.P);
+            float sumExcludingFirst = settings.SelectionHistory.Skip(1).Sum(l => l.P);
 
             // Calculate the next value needed to achieve the target average
-            float nextValue = (_settings.Target * QueueSize) - sumExcludingFirst;
+            float nextValue = (settings.Target * settings.QueueSize) - sumExcludingFirst;
 
             return nextValue;
         }
 
-        public int SampleNext(SampleContext sampleContext)
+        public int SampleNext(SampleContext sampleContext, TargetedTemperatureSamplerSettings settings)
         {
+            // Initialize word cache from settings
+            foreach (int id in settings.GreedyExclude)
+            {
+                settings.IsWordsCache.TryAdd(id, true);
+            }
+
             int? ts = 0;
 
             for (int i = 0; i < sampleContext.Candidates.Data.Length; i++)
@@ -93,19 +89,20 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             //SoftMax for backup
-            this.ApplyOriginalMinP(sampleContext);
+            this.ApplyOriginalMinP(sampleContext, settings);
             SamplingApi.SoftMax(sampleContext.Candidates, true);
 
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
 
-            float sampleTemp = _settings.Temperature;
+            float sampleTemp = settings.Temperature;
+            float average = 0f;
 
-            if (this.TryGetQueueAverage(out float average) &&
-                _settings.Temperature > 0)
+            if (this.TryGetQueueAverage(settings, out average) &&
+                settings.Temperature > 0)
             {
                 float totalDiff = 0;
 
-                float c_target = _target;
+                float c_target = settings.CurrentTarget;
                 float c_min = float.MaxValue;
                 float c_max = float.MinValue;
 
@@ -116,7 +113,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 {
                     TokenData token = candidateSpan[i];
 
-                    if (token.P > _settings.MinP)
+                    if (token.P > settings.MinP)
                     {
                         c_min = Math.Min(token.P, c_min);
                     }
@@ -137,13 +134,13 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 }
 
                 //Now calculate the proportion of the distance and apply scaling
-                float scaledTotalDiff = totalDiff * (float)Math.Exp(1 - _settings.Scale);
+                float scaledTotalDiff = totalDiff * (float)Math.Exp(1 - settings.Scale);
                 for (int i = 0; i < candidateSpan.Length; i++)
                 {
                     TokenData token = candidateSpan[i];
                     float diff = token.P - c_target;
                     float absDiff = Math.Abs(diff);
-                    float scaledDiff = absDiff * (float)Math.Exp(1 - _settings.Scale);
+                    float scaledDiff = absDiff * (float)Math.Exp(1 - settings.Scale);
                     float perDiff = scaledDiff / scaledTotalDiff;
                     float perInvDiff = 1 - perDiff;
                     float adjTemp = sampleTemp / perInvDiff;
@@ -155,9 +152,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 SamplingApi.Temperature(sampleContext.Candidates, sampleTemp);
             }
 
-            SamplingApi.TailFree(sampleContext.Candidates, _settings.Tfs, 1);
+            SamplingApi.TailFree(sampleContext.Candidates, settings.Tfs, 1);
 
-            int selectedToken = this.SelectToken(sampleContext, _settings.Temperature <= 0, out bool topOnly);
+            int selectedToken = this.SelectToken(sampleContext, settings, settings.Temperature <= 0, out bool topOnly);
 
             // Compute error as the difference between observed surprise and target surprise value
 
@@ -165,22 +162,22 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
 
-            if (!topOnly || _settings.FactorPreservedWords)
+            if (!topOnly || settings.FactorPreservedWords)
             {
-                if (this.TryGetQueueAverage(out average))
+                if (this.TryGetQueueAverage(settings, out average))
                 {
-                    _target = this.CalculateNextTarget();
-                    _target = Math.Clamp(_target, _settings.MinTarget, _settings.MaxTarget);
+                    settings.CurrentTarget = this.CalculateNextTarget(settings);
+                    settings.CurrentTarget = Math.Clamp(settings.CurrentTarget, settings.MinTarget, settings.MaxTarget);
                 }
 
-                this.Push(sampleContext.GetOriginalData(selectedToken));
+                this.Push(sampleContext.GetOriginalData(selectedToken), settings);
             }
 
-            Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {_target:0.00}; Avg: {average:0.00}; {candidateBuilder}");
+            Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {settings.CurrentTarget:0.00}; Avg: {average:0.00}; {candidateBuilder}");
 
             TokenData originalP = sampleContext.GetOriginalData(selectedToken);
 
-            if (originalP.P < _settings.MinP)
+            if (originalP.P < settings.MinP)
             {
                 Debug.WriteLine("Token below min-p selected");
             }

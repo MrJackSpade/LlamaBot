@@ -10,34 +10,36 @@ using System.Text;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public class TargetedEntropySampler : BaseDynamicSampler<TargetedEntropySamplerSettings>, ITokenSelector
+    public class TargetedEntropySampler : BaseDynamicSampler<TargetedEntropySamplerSettings>, ITokenSelector<TargetedEntropySamplerSettings>
     {
-        public TargetedEntropySampler(TargetedEntropySamplerSettings settings) : base(settings.QueueSize, settings)
+        public TargetedEntropySampler() : base()
         {
-            foreach (int id in _settings.GreedyExclude)
-            {
-                _isWords.Add(id, true);
-            }
         }
 
-        public float CalculateNextTarget()
+        public float CalculateNextTarget(TargetedEntropySamplerSettings settings)
         {
-            if (SelectionHistory == null || SelectionHistory.Count == 0)
+            if (settings.SelectionHistory == null || settings.SelectionHistory.Count == 0)
             {
-                return _settings.Target;
+                return settings.Target;
             }
 
             // Calculate the sum of the values excluding the first element
-            float sumExcludingFirst = SelectionHistory.Skip(1).Sum(l => l.P);
+            float sumExcludingFirst = settings.SelectionHistory.Skip(1).Sum(l => l.P);
 
             // Calculate the next value needed to achieve the target average
-            float nextValue = (_settings.Target * QueueSize) - sumExcludingFirst;
+            float nextValue = (settings.Target * settings.QueueSize) - sumExcludingFirst;
 
-            return Math.Clamp(nextValue, _settings.MinTarget, _settings.MaxTarget);
+            return Math.Clamp(nextValue, settings.MinTarget, settings.MaxTarget);
         }
 
-        public int SampleNext(SampleContext sampleContext)
+        public int SampleNext(SampleContext sampleContext, TargetedEntropySamplerSettings settings)
         {
+            // Initialize word cache from settings
+            foreach (int id in settings.GreedyExclude)
+            {
+                settings.IsWordsCache.TryAdd(id, true);
+            }
+
             SamplingApi.SoftMax(sampleContext.Candidates, true);
             SamplingApi.SoftMax(sampleContext.OriginalCandidates, true);
 
@@ -56,8 +58,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
 
             List<TokenData> candidates = [.. candidateSpan.Where(c =>
-                c.P >= _settings.MinP &&
-                sampleContext.GetOriginalData(c.Id).P >= _settings.MinP
+                c.P >= settings.MinP &&
+                sampleContext.GetOriginalData(c.Id).P >= settings.MinP
             )];
 
             if (candidates.Count == 0)
@@ -65,26 +67,26 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 candidates.Add(candidateSpan[0]);
             }
 
-            float target = this.CalculateNextTarget();
+            float target = this.CalculateNextTarget(settings);
 
             candidates = [.. candidates.OrderBy(c => Math.Abs(c.P - target))];
 
-            int selectedToken = this.SelectToken(candidates, sampleContext, out bool topOnly);
+            int selectedToken = this.SelectToken(candidates, sampleContext, settings, out bool topOnly);
 
             StringBuilder? candidateBuilder = new();
 
             WriteToLog(sampleContext, candidateSpan, topOnly, selectedToken, candidateBuilder);
 
-            if (!topOnly || _settings.FactorPreservedWords)
+            if (!topOnly || settings.FactorPreservedWords)
             {
-                this.Push(sampleContext.GetOriginalData(selectedToken));
+                this.Push(sampleContext.GetOriginalData(selectedToken), settings);
             }
 
             Debug.WriteLine($"[{sampleContext.ContextTokens.Trim().Count:00000}] [{ts}] ({selectedToken}) T: {target:0.00}; {candidateBuilder}");
 
             TokenData originalP = sampleContext.GetOriginalData(selectedToken);
 
-            if (originalP.P < _settings.MinP)
+            if (originalP.P < settings.MinP)
             {
                 Debug.WriteLine("Token below min-p selected");
             }
@@ -92,7 +94,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             return selectedToken;
         }
 
-        protected int SelectToken(List<TokenData> candidates, SampleContext sampleContext, out bool topOnly)
+        protected int SelectToken(List<TokenData> candidates, SampleContext sampleContext, TargetedEntropySamplerSettings settings, out bool topOnly)
         {
             SamplingApi.SoftMax(sampleContext.OriginalCandidates, true);
 
@@ -100,19 +102,19 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             TokenData topToken = sampleContext.OriginalCandidates[0];
 
-            if (!_settings.GreedyExclude.Contains(topToken.Id))
+            if (!settings.GreedyExclude.Contains(topToken.Id))
             {
-                if (_settings.GreedyInclude.Contains(topToken.Id))
+                if (settings.GreedyInclude.Contains(topToken.Id))
                 {
                     topOnly = true;
                 }
-                else if (_settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
+                else if (settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
                 {
                     topOnly = true;
                 }
-                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id))
+                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id, settings))
                 {
-                    if (topToken.P > _settings.PreserveWordMaxP)
+                    if (topToken.P > settings.PreserveWordMaxP)
                     {
                         topOnly = true;
                     }

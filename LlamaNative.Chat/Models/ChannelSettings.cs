@@ -19,7 +19,14 @@ namespace LlamaBot
             this.SetThoughts(string.Empty, defaultThoughts);
         }
 
+        public Dictionary<ulong, string> NameOverrides { get; set; } = [];
+
         public string? Prompt { get; set; }
+
+        /// <summary>
+        /// JSON-serialized sampler settings for this channel. Must be deserialized with the appropriate settings type.
+        /// </summary>
+        public string? SamplerSettingsJson { get; set; }
 
         public Dictionary<string, string> Thoughts { get; set; } = [];
 
@@ -65,6 +72,16 @@ namespace LlamaBot
             return toReturn.ToString();
         }
 
+        public string? GetNameOverride(ulong userId)
+        {
+            if (NameOverrides.TryGetValue(userId, out string? name) && name is not null)
+            {
+                return name;
+            }
+
+            return null;
+        }
+
         public string? GetUserThoughts(string username)
         {
             username ??= string.Empty;
@@ -72,18 +89,6 @@ namespace LlamaBot
             if (Thoughts.TryGetValue(username, out string? thought) && thought is not null)
             {
                 return thought;
-            }
-
-            return null;
-        }
-
-        public Dictionary<ulong, string> NameOverrides { get; set; } = [];
-
-        public string? GetNameOverride(ulong userId)
-        {
-            if (NameOverrides.TryGetValue(userId, out string? name) && name is not null)
-            {
-                return name;
             }
 
             return null;

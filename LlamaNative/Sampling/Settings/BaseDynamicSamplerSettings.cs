@@ -1,4 +1,7 @@
-﻿namespace LlamaNative.Sampling.Settings
+﻿using LlamaNative.Interop.Structs;
+using System.Text.Json.Serialization;
+
+namespace LlamaNative.Sampling.Settings
 {
     public class BaseDynamicSamplerSettings
     {
@@ -18,6 +21,13 @@
         /// Include specific tokens in greedy sampling
         /// </summary>
         public int[] GreedyInclude { get; set; } = [];
+
+        /// <summary>
+        /// Cache of token IDs that are known to be word continuations.
+        /// Runtime state, not serialized.
+        /// </summary>
+        [JsonIgnore]
+        public Dictionary<int, bool> IsWordsCache { get; } = [];
 
         /// <summary>
         /// Maximum value before token is greedy sampled
@@ -48,5 +58,15 @@
         /// Size of the token queue for dynamic adjustment
         /// </summary>
         public virtual int QueueSize { get; set; } = 10;
+
+        // ============================================
+        // Runtime state fields - not persisted to JSON
+        // ============================================
+        /// <summary>
+        /// History of recently selected tokens for dynamic adjustment.
+        /// Runtime state, not serialized.
+        /// </summary>
+        [JsonIgnore]
+        public Queue<TokenData> SelectionHistory { get; } = new();
     }
 }

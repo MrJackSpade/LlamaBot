@@ -14,90 +14,90 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
     /// <summary>
     /// A sampler that dynamically adjusts probabilities to target a specific "surprise" (entropy) level,
     /// using a Power Law (Lorentzian) distribution to reshape the candidates.
+    /// State is stored in the settings object for per-channel isolation.
     /// </summary>
-    public class PowerLawTargetedSampler : BaseDynamicSampler<PowerLawTargetedSamplerSettings>, ITokenSelector
+    public class PowerLawTargetedSampler : BaseDynamicSampler<PowerLawTargetedSamplerSettings>, ITokenSelector<PowerLawTargetedSamplerSettings>
     {
-        private float _weightedSum = 0.0f;
-        private float _totalWeight = 0.0f;
-
-        public PowerLawTargetedSampler(PowerLawTargetedSamplerSettings settings) : base(settings.QueueSize, settings)
+        public PowerLawTargetedSampler() : base()
         {
-            foreach (int id in _settings.GreedyExclude)
-            {
-                _isWords.Add(id, true);
-            }
         }
 
         /// <summary>
         /// Computes the adapted target probability for the current sampling step.
         /// Uses negative feedback: target = 2 * base_target - running_average
         /// </summary>
-        public float CalculateNextTarget()
+        public float CalculateNextTarget(PowerLawTargetedSamplerSettings settings)
         {
-            float baseTarget = _settings.Target;
+            float baseTarget = settings.Target;
 
-            if (_totalWeight == 0.0f)
+            if (settings.TotalWeight == 0.0f)
             {
                 return baseTarget;
             }
 
-            float target = 2.0f * baseTarget - (_weightedSum / _totalWeight);
-            return Math.Clamp(target, _settings.MinTarget, _settings.MaxTarget);
+            float target = 2.0f * baseTarget - (settings.WeightedSum / settings.TotalWeight);
+            return Math.Clamp(target, settings.MinTarget, settings.MaxTarget);
         }
 
-        public int SampleNext(SampleContext sampleContext)
+        public int SampleNext(SampleContext sampleContext, PowerLawTargetedSamplerSettings settings)
         {
+            // Initialize word cache from settings
+            foreach (int id in settings.GreedyExclude)
+            {
+                settings.IsWordsCache.TryAdd(id, true);
+            }
+
             // Softmax and prepare candidates
             SamplingApi.SoftMax(sampleContext.Candidates, false);
             SamplingApi.SoftMax(sampleContext.OriginalCandidates, false);
 
-            List<TokenData> candidates = this.FilterCandidates(sampleContext);
-            float computedTarget = this.CalculateNextTarget();
+            List<TokenData> candidates = this.FilterCandidates(sampleContext, settings);
+            float computedTarget = this.CalculateNextTarget(settings);
 
             // Check for "Top Only" bypass conditions
             bool topOnly = false;
             string topOnlyReason = "";
             TokenData topToken = sampleContext.OriginalCandidates.GetMostLikely();
 
-            if (!_settings.GreedyExclude.Contains(topToken.Id))
+            if (!settings.GreedyExclude.Contains(topToken.Id))
             {
-                if (_settings.GreedyInclude.Contains(topToken.Id))
+                if (settings.GreedyInclude.Contains(topToken.Id))
                 {
                     topOnly = true;
                     topOnlyReason = "Greedy Include (Forced)";
                 }
-                else if (_settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
+                else if (settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
                 {
                     topOnly = true;
                     topOnlyReason = $"Max Probability Exceeded ({topToken.P:F4} >= {maxP:F4})";
                 }
-                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id) && topToken.P > _settings.PreserveWordMaxP)
+                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id, settings) && topToken.P > settings.PreserveWordMaxP)
                 {
                     topOnly = true;
-                    topOnlyReason = $"Word Preservation ({topToken.P:F4} > {_settings.PreserveWordMaxP:F4})";
+                    topOnlyReason = $"Word Preservation ({topToken.P:F4} > {settings.PreserveWordMaxP:F4})";
                 }
             }
 
             int selectedToken = topOnly
                 ? topToken.Id
-                : this.ApplyPowerLawDistribution(candidates, computedTarget, sampleContext);
+                : this.ApplyPowerLawDistribution(candidates, computedTarget, sampleContext, settings);
 
             float originalP = sampleContext.GetOriginalData(selectedToken).P;
 
             // Logging (gated behind flag, grouped output)
-            if (_settings.Log)
+            if (settings.Log)
             {
-                this.LogPowerLawState(sampleContext, computedTarget, selectedToken, originalP, topOnly, topOnlyReason);
+                this.LogPowerLawState(sampleContext, settings, computedTarget, selectedToken, originalP, topOnly, topOnlyReason);
             }
 
-            // Update running history with exponential decay
-            if (!topOnly || _settings.FactorPreservedWords)
+            // Update running history with exponential decay (using settings state)
+            if (!topOnly || settings.FactorPreservedWords)
             {
-                _weightedSum = originalP + _settings.TailDecay * _weightedSum;
-                _totalWeight = 1.0f + _settings.TailDecay * _totalWeight;
+                settings.WeightedSum = originalP + settings.TailDecay * settings.WeightedSum;
+                settings.TotalWeight = 1.0f + settings.TailDecay * settings.TotalWeight;
 
                 TokenData originalData = sampleContext.GetOriginalData(selectedToken);
-                this.Push(originalData);
+                this.Push(originalData, settings);
             }
 
             return selectedToken;
@@ -106,7 +106,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         /// <summary>
         /// Applies Power Law (Lorentzian) distribution to reshape candidates around the target probability.
         /// </summary>
-        private int ApplyPowerLawDistribution(List<TokenData> candidates, float target, SampleContext context)
+        private int ApplyPowerLawDistribution(List<TokenData> candidates, float target, SampleContext context, PowerLawTargetedSamplerSettings settings)
         {
             TokenDataArray candidatesArray = context.Candidates;
             Span<TokenData> candidatesSpan = candidatesArray.Data.Span;
@@ -133,7 +133,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                     maxPTokenId = candidate.Id;
                 }
 
-                if (candidate.P >= _settings.MinP)
+                if (candidate.P >= settings.MinP)
                 {
                     anyTokenAboveMinP = true;
                 }
@@ -153,11 +153,11 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             // Power law transform (Lorentzian): logit = peak / (1 + dist²)
-            float invWidth = 1.0f / Math.Max(0.001f, _settings.DistributionWidth);
+            float invWidth = 1.0f / Math.Max(0.001f, settings.DistributionWidth);
 
             foreach (TokenData candidate in candidates)
             {
-                if (candidate.P < _settings.MinP)
+                if (candidate.P < settings.MinP)
                 {
                     continue;
                 }
@@ -174,15 +174,15 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
                 if (tokenIdx >= 0)
                 {
-                    if (_settings.DistributionWidth <= float.Epsilon)
+                    if (settings.DistributionWidth <= float.Epsilon)
                     {
                         // Dirac delta case
-                        candidatesSpan[tokenIdx].Logit = candidate.Id == closestTokenId ? _settings.PeakLogitValue : -100.0f;
+                        candidatesSpan[tokenIdx].Logit = candidate.Id == closestTokenId ? settings.PeakLogitValue : -100.0f;
                     }
                     else
                     {
                         float dist = (candidate.P - target) * invWidth;
-                        candidatesSpan[tokenIdx].Logit = _settings.PeakLogitValue / (1.0f + dist * dist);
+                        candidatesSpan[tokenIdx].Logit = settings.PeakLogitValue / (1.0f + dist * dist);
                     }
                 }
             }
@@ -193,7 +193,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             return SamplingApi.Token(candidatesArray);
         }
 
-        private void LogPowerLawState(SampleContext ctx, float computedTarget, int selectedIdx, float originalP, bool topOnly, string topOnlyReason)
+        private void LogPowerLawState(SampleContext ctx, PowerLawTargetedSamplerSettings settings, float computedTarget, int selectedIdx, float originalP, bool topOnly, string topOnlyReason)
         {
             StringBuilder sb = new();
             sb.AppendLine("======================== PowerLaw Sampler ========================");
@@ -205,9 +205,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
 
             // Target computation
-            float runningAvg = _totalWeight > 0 ? _weightedSum / _totalWeight : _settings.Target;
-            sb.AppendLine($"  Target: base={_settings.Target:F4}, running_avg={runningAvg:F4}, computed={computedTarget:F4}");
-            sb.AppendLine($"  State:  weighted_sum={_weightedSum:F4}, total_weight={_totalWeight:F4}, decay={_settings.TailDecay:F4}");
+            float runningAvg = settings.TotalWeight > 0 ? settings.WeightedSum / settings.TotalWeight : settings.Target;
+            sb.AppendLine($"  Target: base={settings.Target:F4}, running_avg={runningAvg:F4}, computed={computedTarget:F4}");
+            sb.AppendLine($"  State:  weighted_sum={settings.WeightedSum:F4}, total_weight={settings.TotalWeight:F4}, decay={settings.TailDecay:F4}");
 
             // Top candidates
             int topN = (int)Math.Min(4ul, ctx.OriginalCandidates.Size);
@@ -230,8 +230,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             sb.AppendLine($"  Selected: [{selectedIdx}]\"{selectedTok.GetEscapedValue()}\" p={originalP:F4}");
 
             // Post-update state
-            float newWeightedSum = originalP + _settings.TailDecay * _weightedSum;
-            float newTotalWeight = 1.0f + _settings.TailDecay * _totalWeight;
+            float newWeightedSum = originalP + settings.TailDecay * settings.WeightedSum;
+            float newTotalWeight = 1.0f + settings.TailDecay * settings.TotalWeight;
             float newRunningAvg = newWeightedSum / newTotalWeight;
             sb.AppendLine($"  After:  weighted_sum={newWeightedSum:F4}, total_weight={newTotalWeight:F4}, running_avg={newRunningAvg:F4}");
             sb.AppendLine("==================================================================");

@@ -46,22 +46,6 @@ namespace LlamaBot.Discord
 
         private bool _connected;
 
-        public void SetAvatarUrl(ulong channelId, string username, string avatarUrl)
-        {
-            lock (_avatarCacheLock)
-            {
-                this.LoadAvatarCacheIfNeeded();
-                if (!_avatarUrlCache.TryGetValue(channelId, out Dictionary<string, string>? channelCache))
-                {
-                    channelCache = [];
-                    _avatarUrlCache[channelId] = channelCache;
-                }
-
-                channelCache[username] = avatarUrl;
-                this.SaveAvatarCache();
-            }
-        }
-
         public DiscordService(string? discordToken)
         {
             Ensure.NotNullOrWhiteSpace(discordToken);
@@ -176,6 +160,22 @@ namespace LlamaBot.Discord
                 {
                     await channel.SendMessageAsync(this.BuildMessage(username, content, prependDefaultUser));
                 }
+            }
+        }
+
+        public void SetAvatarUrl(ulong channelId, string username, string avatarUrl)
+        {
+            lock (_avatarCacheLock)
+            {
+                this.LoadAvatarCacheIfNeeded();
+                if (!_avatarUrlCache.TryGetValue(channelId, out Dictionary<string, string>? channelCache))
+                {
+                    channelCache = [];
+                    _avatarUrlCache[channelId] = channelCache;
+                }
+
+                channelCache[username] = avatarUrl;
+                this.SaveAvatarCache();
             }
         }
 
@@ -317,6 +317,26 @@ namespace LlamaBot.Discord
             }
         }
 
+        private void ClearWebhookCache(IMessageChannel channel)
+        {
+            ulong cacheKey;
+
+            if (channel is SocketThreadChannel socketThread &&
+                socketThread.ParentChannel is IChannel parentChannel)
+            {
+                cacheKey = parentChannel.Id;
+            }
+            else
+            {
+                cacheKey = channel.Id;
+            }
+
+            lock (_webhookCacheLock)
+            {
+                _webhookCache.Remove(cacheKey);
+            }
+        }
+
         private async Task<(IWebhook? Webhook, ulong? ThreadId)> GetOrCreateWebhookAsync(IMessageChannel channel)
         {
             ulong? threadId = null;
@@ -390,26 +410,6 @@ namespace LlamaBot.Discord
             {
                 Debug.WriteLine($"Failed to get/create webhook for channel {parentChannelId}: {ex.Message}");
                 return (null, null);
-            }
-        }
-
-        private void ClearWebhookCache(IMessageChannel channel)
-        {
-            ulong cacheKey;
-
-            if (channel is SocketThreadChannel socketThread &&
-                socketThread.ParentChannel is IChannel parentChannel)
-            {
-                cacheKey = parentChannel.Id;
-            }
-            else
-            {
-                cacheKey = channel.Id;
-            }
-
-            lock (_webhookCacheLock)
-            {
-                _webhookCache.Remove(cacheKey);
             }
         }
 

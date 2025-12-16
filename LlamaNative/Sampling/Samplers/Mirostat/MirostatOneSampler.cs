@@ -8,14 +8,12 @@ using System.Diagnostics;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public class MirostatOneSampler(MirostatSamplerSettings settings) : ITokenSelector
+    /// <summary>
+    /// Mirostat v1 sampler implementation.
+    /// State is stored in the settings object for per-channel isolation.
+    /// </summary>
+    public class MirostatOneSampler : ITokenSelector<MirostatSamplerSettings>
     {
-        private readonly Dictionary<int, bool> _isWords = [];
-
-        private readonly MirostatSamplerSettings _settings = settings;
-
-        private float _mu = settings.InitialMu;
-
         public static int Clamp(float k)
         {
             if (k <= 0)
@@ -32,15 +30,22 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             }
         }
 
-        public int SampleNext(SampleContext sampleContext)
+        public int SampleNext(SampleContext sampleContext, MirostatSamplerSettings settings)
         {
+            // Initialize mu on first call with these settings
+            if (!settings.MuInitialized)
+            {
+                settings.Mu = settings.InitialMu;
+                settings.MuInitialized = true;
+            }
+
             Span<TokenData> candidateSpan = sampleContext.Candidates.Data.Span;
 
-            SamplingApi.Temperature(sampleContext.Candidates, _settings.Temperature);
+            SamplingApi.Temperature(sampleContext.Candidates, settings.Temperature);
 
-            float tau = _settings.Tau;
-            float eta = _settings.Eta;
-            float m = _settings.M;
+            float tau = settings.Tau;
+            float eta = settings.Eta;
+            float m = settings.M;
 
             float n = sampleContext.Candidates.Data.Length;
 
@@ -63,17 +68,17 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             // Compute k from the estimated s_hat and target surprise value
             float epsilon_hat = hat - 1;
 
-            float k = (float)Math.Pow(epsilon_hat * Math.Pow(2, _mu) / (1 - Math.Pow(n, -epsilon_hat)), 1 / hat);
+            float k = (float)Math.Pow(epsilon_hat * Math.Pow(2, settings.Mu) / (1 - Math.Pow(n, -epsilon_hat)), 1 / hat);
 
             Debug.WriteLine($"k: {k}");
 
             bool topOnly = false;
             int top_x = 0;
 
-            if (_settings.PreserveWords)
+            if (settings.PreserveWords)
             {
                 top_x = SamplingApi.TokenGreedy(sampleContext.Candidates);
-                topOnly = !this.CheckIfWord(sampleContext.ModelHandle, top_x);
+                topOnly = !this.CheckIfWord(sampleContext.ModelHandle, top_x, settings);
             }
 
             int x;
@@ -105,21 +110,21 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             float observed_surprise = -(float)(Math.Log(sampleContext.Candidates.Data.Span[x_idx].P) / Math.Log(2));
             float e = observed_surprise - tau;
 
-            // Update mu using the learning rate and error
-            _mu -= eta * e;
+            // Update mu using the learning rate and error (in settings for persistence)
+            settings.Mu -= eta * e;
 
-            Debug.WriteLine($"mu: {_mu}");
+            Debug.WriteLine($"mu: {settings.Mu}");
 
             return x;
         }
 
-        private bool CheckIfWord(SafeModelHandle ctx, int id)
+        private bool CheckIfWord(SafeModelHandle ctx, int id, MirostatSamplerSettings settings)
         {
-            if (!_isWords.TryGetValue(id, out bool word))
+            if (!settings.IsWordsCache.TryGetValue(id, out bool word))
             {
                 string value = ctx.TokenToPiece(id);
                 word = !string.IsNullOrWhiteSpace(value) && value[0] == ' ';
-                _isWords.Add(id, word);
+                settings.IsWordsCache.Add(id, word);
             }
 
             return word;

@@ -12,6 +12,7 @@ using LlamaNative.Chat.Models;
 using LlamaNative.Sampling.Models;
 using LlamaNative.Sampling.Samplers.Repetition;
 using LlamaNative.Sampling.Settings;
+using LlamaNative.Serialization;
 using LlamaNative.Tokens.Models;
 using LlamaNative.Utils;
 using Loxifi;
@@ -31,11 +32,21 @@ namespace LlamaBot
 
         private readonly ChatSettings _chatSettings;
 
+        /// <summary>
+        /// Default sampler settings object (from launch configuration).
+        /// </summary>
+        private readonly object _defaultSamplerSettings;
+
         private readonly IDiscordService _discordService;
 
         private readonly MetaData _metaData = StaticConfiguration.Load<MetaData>();
 
         private readonly SemaphoreSlim _processingSemaphore = new(1, 1);
+
+        /// <summary>
+        /// Type of the sampler settings for deserialization.
+        /// </summary>
+        private readonly Type _samplerSettingsType;
 
         private Thread _processMessageThread;
 
@@ -56,12 +67,24 @@ namespace LlamaBot
             _character = character;
             _botId = botId;
 
+            // Extract default sampler settings from configuration
+            SamplerSetConfiguration defaultSamplerSet = _chatSettings.SamplerSets.GetDefault()
+                                                        ?? throw new ArgumentException("No default sampler set found");
+
+            if (defaultSamplerSet.TokenSelector != null)
+            {
+                _defaultSamplerSettings = defaultSamplerSet.TokenSelector.InstantiateSelectorSettings();
+                _samplerSettingsType = SamplerDeserializer.GetSelectorSettingsType(defaultSamplerSet.TokenSelector.Type)
+                                       ?? throw new ArgumentException($"Unknown token selector type: {defaultSamplerSet.TokenSelector.Type}");
+            }
+            else
+            {
+                throw new ArgumentException("No TokenSelector configured in default sampler set");
+            }
+
             if (_chatSettings.ResponseStartBlock > 0)
             {
-                SamplerSetConfiguration defaultSet = _chatSettings.SamplerSets.GetDefault()
-                                                     ?? throw new ArgumentException("No default sampler set found");
-
-                defaultSet.SimpleSamplers.Add(
+                defaultSamplerSet.SimpleSamplers.Add(
                     new SamplerSetting(
                         nameof(SubsequenceBlockingSampler),
                         new SubsequenceBlockingSamplerSettings()
@@ -92,9 +115,13 @@ namespace LlamaBot
 
             using IDisposable typingState = channel.EnterTypingState();
 
+            // Get channel-specific sampler settings
+            object samplerSettings = ChannelSettings.GetSamplerSettings(channel.Id, _defaultSamplerSettings, _samplerSettingsType);
+
             return _chatContext.ReadResponse(new ReadResponseSettings()
             {
                 RespondingUser = user,
+                SamplerSettings = samplerSettings,
             }, CancellationToken.None).First().Content;
         }
 
@@ -182,7 +209,9 @@ namespace LlamaBot
                     string.IsNullOrWhiteSpace(responseSettings.RespondingUser) &&
                     !responseSettings.ContinueLast)
                 {
-                    string nextUser = _chatContext.PredictNextUser().Trim();
+                    // Get channel-specific sampler settings for prediction
+                    object predictionSettings = ChannelSettings.GetSamplerSettings(channel.Id, _defaultSamplerSettings, _samplerSettingsType);
+                    string nextUser = _chatContext.PredictNextUser(predictionSettings).Trim();
 
                     if (nextUser != _chatSettings.BotName && !string.IsNullOrEmpty(nextUser))
                     {
@@ -195,6 +224,9 @@ namespace LlamaBot
                 string? applicableThoughts = applicableSettings.GetFullThoughts(responseSettings.RespondingUser ?? _chatSettings.BotName);
 
                 responseSettings.ResponsePrepend = string.Format(_chatSettings.ChatTemplate.NewThinkHeader, applicableThoughts);
+
+                // Set sampler settings for this request
+                responseSettings.SamplerSettings = ChannelSettings.GetSamplerSettings(channel.Id, _defaultSamplerSettings, _samplerSettingsType);
 
                 using IDisposable typingState = channel.EnterTypingState();
 

@@ -17,7 +17,11 @@ namespace LlamaNative.Chat.Interfaces
 
         void Insert(int index, ChatMessage message);
 
-        string PredictNextUser();
+        /// <summary>
+        /// Predicts the next user based on the current context.
+        /// </summary>
+        /// <param name="samplerSettings">The sampler settings to use for prediction.</param>
+        string PredictNextUser(object samplerSettings);
 
         List<ChatMessage> ReadResponse(ReadResponseSettings responseSettings, CancellationToken cancellationToken);
 

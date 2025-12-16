@@ -5,15 +5,13 @@ using LlamaNative.Sampling.Settings;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public class MirostatTwoSampler(MirostatSamplerSettings settings) : ITokenSelector
+    public class MirostatTwoSampler : ITokenSelector<MirostatSamplerSettings>
     {
-        private readonly MirostatSamplerSettings _settings = settings;
-
-        public int SampleNext(SampleContext sampleContext)
+        public int SampleNext(SampleContext sampleContext, MirostatSamplerSettings settings)
         {
-            float mu = _settings.InitialMu;
-            SamplingApi.Temperature(sampleContext.Candidates, _settings.Temperature);
-            return SamplingApi.TokenMirostatV2(sampleContext.ContextHandle, sampleContext.Candidates, _settings.Tau, _settings.Eta, ref mu);
+            float mu = settings.InitialMu;
+            SamplingApi.Temperature(sampleContext.Candidates, settings.Temperature);
+            return SamplingApi.TokenMirostatV2(sampleContext.ContextHandle, sampleContext.Candidates, settings.Tau, settings.Eta, ref mu);
         }
     }
 }

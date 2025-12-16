@@ -49,10 +49,8 @@ namespace LlamaNative.Extensions
             }
         }
 
-        public static Token SelectToken(this INativeContext handler)
-        {
-            return handler.SelectToken(null, out _);
-        }
+        // Removed: SelectToken extension without settings parameter
+        // All token selection now requires sampler settings to be explicitly passed
 
         public static TokenCollection Tokenize(this INativeContext context, TokenMask tokenMask, string value, bool addBos = false)
         {

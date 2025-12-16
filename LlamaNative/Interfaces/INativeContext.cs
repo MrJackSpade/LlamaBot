@@ -26,7 +26,7 @@ namespace LlamaNative.Interfaces
 
         void Evaluate(int count = -1);
 
-        Token SelectToken(LogitRuleCollection? logitBias, out SampleContext context);
+        Token SelectToken(LogitRuleCollection? logitBias, object samplerSettings, out SampleContext context);
 
         void SetBufferPointer(uint startIndex);
 

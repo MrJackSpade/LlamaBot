@@ -9,15 +9,15 @@ using System.Text;
 
 namespace LlamaNative.Sampling.Samplers.Mirostat
 {
-    public abstract class BaseDynamicSampler<TSettings>(int queueSize, TSettings settings) where TSettings : BaseDynamicSamplerSettings
+    /// <summary>
+    /// Base class for dynamic samplers that maintain state (selection history, word cache).
+    /// State is now stored in the settings object for per-channel isolation.
+    /// </summary>
+    public abstract class BaseDynamicSampler<TSettings> where TSettings : BaseDynamicSamplerSettings
     {
-        protected readonly Dictionary<int, bool> _isWords = [];
-
-        protected readonly TSettings _settings = settings;
-
-        protected readonly Queue<TokenData> SelectionHistory = new();
-
-        protected int QueueSize { get; private set; } = queueSize;
+        protected BaseDynamicSampler()
+        {
+        }
 
         protected static void WriteToLog(SampleContext sampleContext, Span<TokenData> candidateSpan, bool topOnly, int selectedToken, StringBuilder candidateBuilder)
         {
@@ -69,7 +69,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             candidateBuilder.Append(']');
         }
 
-        protected List<TokenData> FilterCandidates(SampleContext sampleContext)
+        protected List<TokenData> FilterCandidates(SampleContext sampleContext, TSettings settings)
         {
             List<TokenData> toReturn = [];
 
@@ -80,7 +80,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 TokenData token = candidateSpan[i];
 
                 //This accounts for adjustments based on samplers
-                if (token.P < _settings.MinP)
+                if (token.P < settings.MinP)
                 {
                     continue;
                 }
@@ -88,12 +88,12 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                 TokenData originalTokenData = sampleContext.GetOriginalData(token.Id);
 
                 //This ensures a minimum probability for the original token
-                if (originalTokenData.P < _settings.MinP)
+                if (originalTokenData.P < settings.MinP)
                 {
                     continue;
                 }
 
-                if (_settings.MinPs.TryGetValue(token.Id, out float minP))
+                if (settings.MinPs.TryGetValue(token.Id, out float minP))
                 {
                     if (originalTokenData.P < minP)
                     {
@@ -112,9 +112,13 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             return toReturn;
         }
 
-        protected bool IsWordCompletion(SafeModelHandle ctx, int id)
+        /// <summary>
+        /// Checks if a token is a word completion (continuation of a word).
+        /// Uses the settings object's IsWordsCache for per-channel isolation.
+        /// </summary>
+        protected bool IsWordCompletion(SafeModelHandle ctx, int id, TSettings settings)
         {
-            if (!_isWords.TryGetValue(id, out bool newWordStart))
+            if (!settings.IsWordsCache.TryGetValue(id, out bool newWordStart))
             {
                 string value = ctx.TokenToPiece(id);
                 bool emptyToken = string.IsNullOrWhiteSpace(value);
@@ -125,28 +129,31 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
                 newWordStart = emptyToken || nonLetterStart || pascalCase;
 
-                _isWords[id] = newWordStart;
+                settings.IsWordsCache[id] = newWordStart;
             }
 
             return !newWordStart;
         }
 
-        protected void Push(TokenData token)
+        /// <summary>
+        /// Pushes a token to the selection history in the settings object.
+        /// </summary>
+        protected void Push(TokenData token, TSettings settings)
         {
-            SelectionHistory.Enqueue(token);
+            settings.SelectionHistory.Enqueue(token);
 
-            if (SelectionHistory.Count > QueueSize)
+            if (settings.SelectionHistory.Count > settings.QueueSize)
             {
-                SelectionHistory.Dequeue();
+                settings.SelectionHistory.Dequeue();
             }
         }
 
-        protected int SelectToken(SampleContext sampleContext, bool greedy)
+        protected int SelectToken(SampleContext sampleContext, TSettings settings, bool greedy)
         {
-            return this.SelectToken(sampleContext, greedy, out _);
+            return this.SelectToken(sampleContext, settings, greedy, out _);
         }
 
-        protected int SelectToken(SampleContext sampleContext, bool greedy, out bool topOnly)
+        protected int SelectToken(SampleContext sampleContext, TSettings settings, bool greedy, out bool topOnly)
         {
             SamplingApi.SoftMax(sampleContext.Candidates, false);
             SamplingApi.SoftMax(sampleContext.OriginalCandidates, false);
@@ -155,19 +162,19 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
 
             TokenData topToken = sampleContext.OriginalCandidates.GetMostLikely();
 
-            if (!_settings.GreedyExclude.Contains(topToken.Id))
+            if (!settings.GreedyExclude.Contains(topToken.Id))
             {
-                if (_settings.GreedyInclude.Contains(topToken.Id))
+                if (settings.GreedyInclude.Contains(topToken.Id))
                 {
                     topOnly = true;
                 }
-                else if (_settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
+                else if (settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
                 {
                     topOnly = true;
                 }
-                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id))
+                else if (this.IsWordCompletion(sampleContext.ModelHandle, topToken.Id, settings))
                 {
-                    if (topToken.P > _settings.PreserveWordMaxP)
+                    if (topToken.P > settings.PreserveWordMaxP)
                     {
                         topOnly = true;
                     }
@@ -176,9 +183,9 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
                         TokenData newTop = sampleContext.Candidates.Data.Span[0];
                         //We cant min-p unless there's at least one leftover token, which isn't
                         //true unless the top token has a high prob
-                        if (newTop.P > _settings.PreserveWordMinP)
+                        if (newTop.P > settings.PreserveWordMinP)
                         {
-                            SamplingApi.MinP(sampleContext.Candidates, _settings.PreserveWordMinP);
+                            SamplingApi.MinP(sampleContext.Candidates, settings.PreserveWordMinP);
                         }
                     }
                 }
@@ -205,16 +212,16 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             return selectedToken;
         }
 
-        protected bool TryGetQueueAverage(out float avg)
+        protected bool TryGetQueueAverage(TSettings settings, out float avg)
         {
             avg = 0f;
-            if (SelectionHistory.Count < QueueSize)
+            if (settings.SelectionHistory.Count < settings.QueueSize)
             {
                 return false;
             }
             else
             {
-                avg = SelectionHistory.Average(l => l.P);
+                avg = settings.SelectionHistory.Average(l => l.P);
                 return true;
             }
         }

@@ -116,7 +116,7 @@ namespace LlamaNative.Chat.Models
             }
         }
 
-        public string PredictNextUser()
+        public string PredictNextUser(object samplerSettings)
         {
             if (!_processingSemaphore.Wait(0))
             {
@@ -138,7 +138,7 @@ namespace LlamaNative.Chat.Models
 
                 do
                 {
-                    Token token = NativeContext.SelectToken();
+                    Token token = NativeContext.SelectToken(null, samplerSettings, out _);
 
                     if (token.Value.Contains(Settings.ChatTemplate.EndHeader))
                     {
@@ -198,7 +198,13 @@ namespace LlamaNative.Chat.Models
                         break;
                     }
 
-                    Token token = NativeContext.SelectToken(logitRules, out SampleContext sampleContext);
+                    // SamplerSettings must be provided via ReadResponseSettings
+                    if (responseSettings.SamplerSettings == null)
+                    {
+                        throw new InvalidOperationException("SamplerSettings must be provided in ReadResponseSettings");
+                    }
+
+                    Token token = NativeContext.SelectToken(logitRules, responseSettings.SamplerSettings, out SampleContext sampleContext);
 
                     bool contentGenerated = string.Join("", response.Select(r => r.SelectedToken)).Trim().Length > 0;
 
