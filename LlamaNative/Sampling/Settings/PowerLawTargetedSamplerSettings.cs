@@ -11,7 +11,7 @@
 
         public float PeakLogitValue { get; set; } = 5.0f;
 
-        public float TailDecay { get; set; } = 0.5f;
+        public float TailDecay { get; set; } = 0.65f;
 
         /// <summary>
         /// Lower values = heavier tails, 2.0 = Cauchy
