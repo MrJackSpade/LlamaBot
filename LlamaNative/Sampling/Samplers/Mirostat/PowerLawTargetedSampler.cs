@@ -26,7 +26,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         /// Computes the adapted target probability for the current sampling step.
         /// Uses negative feedback: target = 2 * base_target - running_average
         /// </summary>
-        public float CalculateNextTarget(PowerLawTargetedSamplerSettings settings)
+        public static float CalculateNextTarget(PowerLawTargetedSamplerSettings settings)
         {
             float baseTarget = settings.Target;
 
@@ -52,7 +52,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             SamplingApi.SoftMax(sampleContext.OriginalCandidates, false);
 
             List<TokenData> candidates = this.FilterCandidates(sampleContext, settings);
-            float computedTarget = this.CalculateNextTarget(settings);
+            float computedTarget = CalculateNextTarget(settings);
 
             // Check for "Top Only" bypass conditions
             bool topOnly = false;

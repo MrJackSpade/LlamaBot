@@ -6,6 +6,7 @@ using LlamaBot.Shared.Models;
 using LlamaNative.Chat.Models;
 using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace LlamaBot.Plugins.Commands.Setting
 {
@@ -42,24 +43,19 @@ namespace LlamaBot.Plugins.Commands.Setting
                 return Task.FromResult(CommandResult.Success(FormatSettings(currentSettings)));
             }
 
-            // Find the property to modify (case-insensitive)
+            // Find the property to modify (case-insensitive, must be settable)
             PropertyInfo? property = _samplerSettingsType.GetProperties()
-                .FirstOrDefault(p => p.Name.Equals(command.Name, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(p => p.Name.Equals(command.Name, StringComparison.OrdinalIgnoreCase) && IsSettableProperty(p));
 
             if (property == null)
             {
                 StringBuilder validSettings = new();
                 validSettings.AppendLine("Unknown setting. Valid settings:");
-                foreach (PropertyInfo prop in _samplerSettingsType.GetProperties().Where(p => p.CanWrite))
+                foreach (PropertyInfo prop in GetSettableProperties(_samplerSettingsType))
                 {
                     validSettings.AppendLine($"  • {prop.Name} ({prop.PropertyType.Name})");
                 }
                 return Task.FromResult(CommandResult.Error(validSettings.ToString()));
-            }
-
-            if (!property.CanWrite)
-            {
-                return Task.FromResult(CommandResult.Error($"Setting '{property.Name}' is read-only"));
             }
 
             // If no value specified, show current value
@@ -150,12 +146,59 @@ namespace LlamaBot.Plugins.Commands.Setting
             throw new NotSupportedException($"Cannot convert to type {targetType.Name}");
         }
 
+        /// <summary>
+        /// Gets all properties that can be set via the /setting command.
+        /// Excludes read-only properties and those with [JsonIgnore].
+        /// </summary>
+        private static IEnumerable<PropertyInfo> GetSettableProperties(Type type)
+        {
+            return type.GetProperties().Where(IsSettableProperty);
+        }
+
+        /// <summary>
+        /// Checks if a property can be set via the /setting command.
+        /// Must have a setter, not have [JsonIgnore], and be a supported primitive type.
+        /// </summary>
+        private static bool IsSettableProperty(PropertyInfo prop)
+        {
+            if (!prop.CanWrite)
+            {
+                return false;
+            }
+
+            // Exclude properties marked with JsonIgnore (runtime state)
+            if (prop.GetCustomAttribute<JsonIgnoreAttribute>() != null)
+            {
+                return false;
+            }
+
+            // Only include types we can actually parse
+            if (!IsSupportedType(prop.PropertyType))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if a type is supported for setting via the /setting command.
+        /// </summary>
+        private static bool IsSupportedType(Type type)
+        {
+            return type == typeof(float) ||
+                   type == typeof(double) ||
+                   type == typeof(int) ||
+                   type == typeof(bool) ||
+                   type == typeof(string);
+        }
+
         private static string FormatSettings(object settings)
         {
             StringBuilder sb = new();
             sb.AppendLine("**Current Sampler Settings:**");
 
-            foreach (PropertyInfo prop in settings.GetType().GetProperties())
+            foreach (PropertyInfo prop in GetSettableProperties(settings.GetType()))
             {
                 object? value = prop.GetValue(settings);
                 sb.AppendLine($"• **{prop.Name}**: {value}");
