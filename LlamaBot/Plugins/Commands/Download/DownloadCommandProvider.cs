@@ -80,11 +80,13 @@ namespace LlamaBot.Plugins.Commands.Download
             foreach (IMessage message in messages)
             {
                 ParsedMessage parsed = _llamaBotClient.ParseMessage(message);
+
                 if (content.Length > 0)
                 {
                     content.AppendLine();
                     content.AppendLine();
                 }
+
                 content.Append(parsed.Content);
             }
 

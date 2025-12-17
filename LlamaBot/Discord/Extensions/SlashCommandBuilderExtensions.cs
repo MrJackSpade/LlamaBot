@@ -89,6 +89,7 @@ namespace LlamaBot.Discord.Extensions
                     nameof(UInt32) => optionBuilder.WithType(ApplicationCommandOptionType.Integer),
                     nameof(Decimal) => optionBuilder.WithType(ApplicationCommandOptionType.Number),
                     nameof(Boolean) => optionBuilder.WithType(ApplicationCommandOptionType.Boolean),
+                    nameof(CommandAttachment) => optionBuilder.WithType(ApplicationCommandOptionType.Attachment),
                     _ => throw new NotImplementedException(),
                 };
             }

@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using LlamaBot.Shared.Models;
 using System.ComponentModel;
 
 namespace LlamaBot.Plugins.Commands.SystemPrompt
@@ -10,5 +11,8 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
 
         [Description("The new system prompt")]
         public string Prompt { get; set; }
+
+        [Description("Upload a text file containing the prompt")]
+        public CommandAttachment? PromptFile { get; set; }
     }
 }

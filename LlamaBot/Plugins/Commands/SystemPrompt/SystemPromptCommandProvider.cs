@@ -39,19 +39,28 @@ namespace LlamaBot.Plugins.Commands.SystemPrompt
 
             string? responseString;
 
-            if (command.Prompt is null)
+            // Determine prompt source: file takes priority over string
+            string? promptContent = null;
+            if (command.PromptFile is not null)
+            {
+                promptContent = System.Text.Encoding.UTF8.GetString(command.PromptFile.Data);
+            }
+            else if (command.Prompt is not null)
+            {
+                promptContent = command.Prompt.Replace("\\n", "\n");
+            }
+
+            if (promptContent is null)
             {
                 responseString = csi.GetPrompt(channelId);
             }
             else
             {
-                string prompt = command.Prompt.Replace("\\n", "\n");
-
-                csi.SetPrompt(channelId, prompt);
+                csi.SetPrompt(channelId, promptContent);
 
                 csi.SaveSettings(channelId);
 
-                responseString = "System Prompt Updated: " + command.Prompt;
+                responseString = "System Prompt Updated: " + promptContent;
             }
 
             return CommandResult.Success(System.Text.Encoding.UTF8.GetBytes(responseString), "Prompt.txt");

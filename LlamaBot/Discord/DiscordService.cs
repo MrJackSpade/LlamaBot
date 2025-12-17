@@ -245,6 +245,23 @@ namespace LlamaBot.Discord
 
                             prop.SetValue(payload, b != "false");
                         }
+                        else if (prop.PropertyType == typeof(CommandAttachment))
+                        {
+                            if (option.Value is IAttachment attachment)
+                            {
+                                using HttpClient httpClient = new();
+                                byte[] data = httpClient.GetByteArrayAsync(attachment.Url).GetAwaiter().GetResult();
+
+                                CommandAttachment commandAttachment = new()
+                                {
+                                    FileName = attachment.Filename,
+                                    Data = data,
+                                    ContentType = attachment.ContentType
+                                };
+
+                                prop.SetValue(payload, commandAttachment);
+                            }
+                        }
                         else if (prop.PropertyType.IsEnum)
                         {
                             if (!Enum.TryParse(prop.PropertyType, option.Value.ToString(), out object value))
