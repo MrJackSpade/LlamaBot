@@ -31,8 +31,81 @@ namespace LlamaBot.Plugins.Commands.Download
                 return CommandResult.Error($"Requested channel is not {nameof(ISocketMessageChannel)}");
             }
 
+            if (command.FullHistory)
+            {
+                return await DownloadFullHistory(smc);
+            }
+            else
+            {
+                return await DownloadLastResponse(smc);
+            }
+        }
+
+        private async Task<CommandResult> DownloadFullHistory(ISocketMessageChannel smc)
+        {
+            DateTime? clearDate = _llamaBotClient!.GetClearDate(smc.Id);
+
+            List<IMessage> messages = [];
+
+            await foreach (IReadOnlyCollection<IMessage> historicalMessages in smc.GetMessagesAsync(1000))
+            {
+                bool done = false;
+
+                foreach (IMessage historicalMessage in historicalMessages)
+                {
+                    if (historicalMessage.Type == MessageType.ApplicationCommand)
+                    {
+                        continue;
+                    }
+
+                    if (clearDate.HasValue && historicalMessage.CreatedAt.DateTime < clearDate.Value)
+                    {
+                        done = true;
+                        break;
+                    }
+
+                    messages.Add(historicalMessage);
+                }
+
+                if (done)
+                {
+                    break;
+                }
+            }
+
+            if (messages.Count == 0)
+            {
+                return CommandResult.Error("No messages found to download");
+            }
+
+            // Reverse to get chronological order (oldest first)
+            messages.Reverse();
+
+            // Build content in format "Name: Message" with single newlines
+            StringBuilder content = new();
+            foreach (IMessage message in messages)
+            {
+                ParsedMessage parsed = _llamaBotClient.ParseMessage(message);
+
+                if (content.Length > 0)
+                {
+                    content.AppendLine();
+                }
+
+                content.Append($"{parsed.Author}: {parsed.Content}");
+            }
+
+            // Convert to bytes and return as file
+            byte[] fileData = Encoding.UTF8.GetBytes(content.ToString());
+            string fileName = $"history_{smc.Id}.txt";
+
+            return CommandResult.Success(fileData, fileName);
+        }
+
+        private async Task<CommandResult> DownloadLastResponse(ISocketMessageChannel smc)
+        {
             // Get the last bot message
-            IMessage? rootMessage = await _llamaBotClient.TryGetLastBotMessage(smc);
+            IMessage? rootMessage = await _llamaBotClient!.TryGetLastBotMessage(smc);
 
             if (rootMessage is null)
             {

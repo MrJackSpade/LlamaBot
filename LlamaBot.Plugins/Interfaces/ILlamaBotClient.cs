@@ -23,6 +23,8 @@ namespace LlamaBot.Plugins.Interfaces
 
         void SetAutoRespond(ulong channelId, string username);
 
+        DateTime? GetClearDate(ulong channelId);
+
         void SetClearDate(ulong channelId, DateTime triggered);
 
         List<Token> Tokenize(string content);

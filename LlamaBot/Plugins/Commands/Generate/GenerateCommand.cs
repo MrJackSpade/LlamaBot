@@ -11,8 +11,7 @@ namespace LlamaBot.Plugins.Commands.Generate
         {
         }
 
-        [Required]
         [Description("The user name to generate the message with")]
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
     }
 }

@@ -27,6 +27,7 @@ namespace LlamaNative.Serialization
             RegisterSelector<TemperatureTokenSampler, TemperatureTokenSamplerSettings>();
             RegisterSelector<GreedySampler, GreedySamplerSettings>();
             RegisterSelector<PowerLawTargetedSampler, PowerLawTargetedSamplerSettings>();
+            RegisterSelector<UnboundedQuadraticSampler, UnboundedQuadraticSamplerSettings>();
 
             RegisterSimple<RepetitionSampler>();
             RegisterSimple<TemperatureSampler>();

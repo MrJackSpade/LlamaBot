@@ -41,26 +41,33 @@ namespace LlamaBot.Plugins.Commands.Update
                     {
                         return CommandResult.Error("Last found message does not belong to bot. Please provide message id");
                     }
+
+                    // Delete and resend when no specific message ID is provided
+                    ParsedMessage parsed = _llamaBotClient.ParseMessage(message);
+                    string? newContent = command.Content?.Replace("\\n", "\n");
+
+                    await message.DeleteAsync();
+                    await _discordService!.SendMessageAsync(smc, newContent ?? string.Empty, parsed.Author);
                 }
                 else
                 {
                     message = await smc.GetMessageAsync(command.MessageId);
-                }
 
-                if (message is IUserMessage um)
-                {
-                    ParsedMessage parsed = _llamaBotClient.ParseMessage(message);
-
-                    string? newContent = command.Content;
-
-                    if (parsed.Author != _llamaBotClient.BotName)
+                    if (message is IUserMessage um)
                     {
-                        newContent = _discordService.BuildMessage(parsed.Author, $" {command.Content?.Trim()}", false);
+                        ParsedMessage parsed = _llamaBotClient.ParseMessage(message);
+
+                        string? newContent = command.Content;
+
+                        if (parsed.Author != _llamaBotClient.BotName)
+                        {
+                            newContent = _discordService!.BuildMessage(parsed.Author, $" {command.Content?.Trim()}", false);
+                        }
+
+                        newContent = newContent?.Replace("\\n", "\n");
+
+                        await um.ModifyAsync(m => m.Content = newContent);
                     }
-
-                    newContent = newContent?.Replace("\\n", "\n");
-
-                    await um.ModifyAsync(m => m.Content = newContent);
                 }
 
                 await command.Command.DeleteOriginalResponseAsync();

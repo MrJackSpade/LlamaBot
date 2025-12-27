@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using LlamaBot.Plugins.EventArgs;
 using LlamaBot.Plugins.EventResults;
 using LlamaBot.Plugins.Interfaces;
@@ -29,11 +30,24 @@ namespace LlamaBot.Plugins.Commands.Generate
 
             if (command.Channel is ISocketMessageChannel smc)
             {
+                string? userName = command.UserName;
+
+                // If no username provided, use the author of the last bot message
+                if (string.IsNullOrWhiteSpace(userName))
+                {
+                    IMessage? lastBotMessage = await _llamaBotClient.TryGetLastBotMessage(smc);
+                    if (lastBotMessage is not null)
+                    {
+                        ParsedMessage parsed = _llamaBotClient.ParseMessage(lastBotMessage);
+                        userName = parsed.Author;
+                    }
+                }
+
                 await command.Command.DeleteOriginalResponseAsync();
 
                 _llamaBotClient.TryProcessMessageAsync(smc, new ReadResponseSettings()
                 {
-                    RespondingUser = command.UserName
+                    RespondingUser = userName
                 }, CancellationToken.None);
 
                 return CommandResult.Success();

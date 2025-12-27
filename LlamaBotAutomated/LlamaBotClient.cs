@@ -296,6 +296,16 @@ namespace LlamaBotAutomated
             StaticConfiguration.Save(_metaData);
         }
 
+        public DateTime? GetClearDate(ulong channelId)
+        {
+            if (_metaData.ClearValues.TryGetValue(channelId, out DateTime clearDate))
+            {
+                return clearDate;
+            }
+
+            return null;
+        }
+
         public void SetClearDate(ulong channelId, DateTime triggered)
         {
             _metaData.ClearValues[channelId] = triggered;
