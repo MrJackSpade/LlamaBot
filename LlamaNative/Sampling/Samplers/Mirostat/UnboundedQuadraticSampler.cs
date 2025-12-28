@@ -26,6 +26,8 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
     /// </summary>
     public class UnboundedQuadraticSampler : BaseDynamicSampler<UnboundedQuadraticSamplerSettings>, ITokenSelector<UnboundedQuadraticSamplerSettings>
     {
+        private static readonly string _logTimestamp = DateTime.Now.ToString("yyyy-MM-dd HHmmss");
+
         public UnboundedQuadraticSampler() : base()
         {
         }
@@ -38,9 +40,15 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         {
             float baseTarget = settings.Target;
 
+            // Initialize backing fields with defaults if not yet set
+            // Formulas from llama_sampler_init_adaptive_p:
+            // weighted_sum = target / (1.0f - decay)
+            // total_weight = 1.0f / (1.0f - decay)
             if (settings.TotalWeight == 0.0f)
             {
-                return baseTarget;
+                float clampedDecay = Math.Clamp(settings.TailDecay, 0.0f, 0.99f);
+                settings.TotalWeight = 1.0f / (1.0f - clampedDecay);
+                settings.WeightedSum = baseTarget / (1.0f - clampedDecay);
             }
 
             float target = 2.0f * baseTarget - (settings.WeightedSum / settings.TotalWeight);
@@ -219,48 +227,70 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
         private void LogUnboundedQuadraticState(SampleContext ctx, UnboundedQuadraticSamplerSettings settings, float computedTarget, int selectedIdx, float originalP, bool topOnly, string topOnlyReason)
         {
             StringBuilder sb = new();
-            sb.AppendLine("==================== Unbounded Quadratic Sampler ====================");
+            sb.AppendLine("========================================");
 
             // Bypass info
             if (topOnly)
             {
-                sb.AppendLine($"  BYPASS: {topOnlyReason}");
+                sb.AppendLine($"[UNBOUNDED-QUADRATIC] BYPASS: {topOnlyReason}");
             }
 
-            // Target computation
-            float runningAvg = settings.TotalWeight > 0 ? settings.WeightedSum / settings.TotalWeight : settings.Target;
-            sb.AppendLine($"  Target: base={settings.Target:F4}, running_avg={runningAvg:F4}, computed={computedTarget:F4}");
-            sb.AppendLine($"  State:  weighted_sum={settings.WeightedSum:F4}, total_weight={settings.TotalWeight:F4}, decay={settings.TailDecay:F4}");
-            sb.AppendLine($"  Params: sharpness={settings.Sharpness:F4}, width={settings.DistributionWidth:F4}, peak={settings.PeakLogitValue:F4}");
+            // Settings section
+            sb.AppendLine("[UNBOUNDED-QUADRATIC] SETTINGS:");
+            sb.AppendLine($"  target (setting):       {settings.Target:F6}");
+            sb.AppendLine($"  decay (setting):        {settings.TailDecay:F6}");
+            sb.AppendLine($"  weighted_sum:           {settings.WeightedSum:F6}");
+            sb.AppendLine($"  total_weight:           {settings.TotalWeight:F6}");
+            sb.AppendLine($"  sharpness:              {settings.Sharpness:F6}");
+            sb.AppendLine($"  width:                  {settings.DistributionWidth:F6}");
+            sb.AppendLine($"  peak:                   {settings.PeakLogitValue:F6}");
+            sb.AppendLine("----------------------------------------");
 
-            // Top candidates
-            int topN = (int)Math.Min(4ul, ctx.OriginalCandidates.Size);
-            Span<TokenData> topCandidates = ctx.OriginalCandidates.Data.Span[..topN];
-            sb.Append($"  Top {topN}: ");
-            for (int i = 0; i < topN; ++i)
+            // Input probabilities (p > 0.01)
+            sb.AppendLine("[UNBOUNDED-QUADRATIC] INPUT PROBABILITIES (p > 0.01):");
+            Span<TokenData> originalSpan = ctx.OriginalCandidates.Data.Span;
+            for (int i = 0; i < originalSpan.Length && originalSpan[i].P > 0.01f; i++)
             {
-                Token token = ctx.GetToken(TokenMask.Undefined, topCandidates[i].Id);
-                sb.Append($"[{topCandidates[i].Id}]\"{token.GetEscapedValue()}\"={topCandidates[i].P:F4}");
-                if (i < topN - 1)
+                sb.AppendLine($"  token {originalSpan[i].Id,6}: {originalSpan[i].P:F6}");
+            }
+            sb.AppendLine("----------------------------------------");
+
+            // Post-transform probabilities for same tokens
+            sb.AppendLine("[UNBOUNDED-QUADRATIC] POST-TRANSFORM PROBABILITIES (same tokens):");
+            Span<TokenData> transformedSpan = ctx.Candidates.Data.Span;
+            for (int i = 0; i < originalSpan.Length && originalSpan[i].P > 0.01f; i++)
+            {
+                int tokenId = originalSpan[i].Id;
+                // Find this token in the transformed candidates
+                for (int j = 0; j < transformedSpan.Length; j++)
                 {
-                    sb.Append(", ");
+                    if (transformedSpan[j].Id == tokenId)
+                    {
+                        sb.AppendLine($"  token {tokenId,6}: {transformedSpan[j].P:F6}");
+                        break;
+                    }
                 }
             }
+            sb.AppendLine("----------------------------------------");
 
-            sb.AppendLine();
+            // Target values
+            float runningAvg = settings.TotalWeight > 0 ? settings.WeightedSum / settings.TotalWeight : settings.Target;
+            float rawTarget = 2.0f * settings.Target - runningAvg;
+            sb.AppendLine($"[UNBOUNDED-QUADRATIC] TARGET (calculated):     {rawTarget:F6}");
+            sb.AppendLine($"[UNBOUNDED-QUADRATIC] TARGET (clipped):        {computedTarget:F6}");
+            sb.AppendLine("----------------------------------------");
 
             // Selected token
-            Token selectedTok = ctx.GetToken(TokenMask.Undefined, selectedIdx);
-            sb.AppendLine($"  Selected: [{selectedIdx}]\"{selectedTok.GetEscapedValue()}\" p={originalP:F4}");
+            Token selectedToken = ctx.GetToken(TokenMask.Undefined, selectedIdx);
+            sb.AppendLine($"[UNBOUNDED-QUADRATIC] SELECTED TOKEN ID:       {selectedIdx}");
+            sb.AppendLine($"[UNBOUNDED-QUADRATIC] SELECTED TOKEN TEXT:     \"{selectedToken.GetEscapedValue()}\"");
+            sb.AppendLine("========================================");
 
-            // Post-update state
-            float newWeightedSum = originalP + settings.TailDecay * settings.WeightedSum;
-            float newTotalWeight = 1.0f + settings.TailDecay * settings.TotalWeight;
-            float newRunningAvg = newWeightedSum / newTotalWeight;
-            sb.AppendLine($"  After:  weighted_sum={newWeightedSum:F4}, total_weight={newTotalWeight:F4}, running_avg={newRunningAvg:F4}");
-            sb.AppendLine("======================================================================");
-
-            Debug.Write(sb.ToString());
+            // Write to file
+            string logDir = Path.Combine("logs", "UnboundedQuadraticSampler", _logTimestamp);
+            Directory.CreateDirectory(logDir);
+            string logPath = Path.Combine(logDir, "sampler.log");
+            File.AppendAllText(logPath, sb.ToString());
         }
     }
 }
