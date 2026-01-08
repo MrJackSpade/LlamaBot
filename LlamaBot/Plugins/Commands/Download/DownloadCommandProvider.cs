@@ -11,6 +11,12 @@ namespace LlamaBot.Plugins.Commands.Download
 {
     internal class DownloadCommandProvider : ICommandProvider<DownloadCommand>
     {
+        /// <summary>
+        /// Word Joiner character used to pad message splits.
+        /// This prevents Discord from trimming whitespace at message boundaries.
+        /// </summary>
+        private const char WORD_JOINER = '\u2060';
+
         private ILlamaBotClient? _llamaBotClient;
 
         public string Command => "download";
@@ -92,7 +98,8 @@ namespace LlamaBot.Plugins.Commands.Download
                     content.AppendLine();
                 }
 
-                content.Append($"{parsed.Author}: {parsed.Content}");
+                // Strip word joiner markers used for message split preservation
+                content.Append($"{parsed.Author}: {parsed.Content.Trim(WORD_JOINER)}");
             }
 
             // Convert to bytes and return as file
@@ -160,7 +167,8 @@ namespace LlamaBot.Plugins.Commands.Download
                     content.AppendLine();
                 }
 
-                content.Append(parsed.Content);
+                // Strip word joiner markers used for message split preservation
+                content.Append(parsed.Content.Trim(WORD_JOINER));
             }
 
             // Convert to bytes and return as file

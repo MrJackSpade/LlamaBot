@@ -80,14 +80,21 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             // Check for "Top Only" bypass conditions
             bool topOnly = false;
             string topOnlyReason = "";
+            string greedyExcludeReason = "";
+            string greedyIncludeReason = "";
             TokenData topToken = sampleContext.OriginalCandidates.GetMostLikely();
 
-            if (!settings.GreedyExclude.Contains(topToken.Id))
+            if (settings.GreedyExclude.Contains(topToken.Id))
+            {
+                greedyExcludeReason = $"Top token {topToken.Id} is in GreedyExclude";
+            }
+            else
             {
                 if (settings.GreedyInclude.Contains(topToken.Id))
                 {
                     topOnly = true;
                     topOnlyReason = "Greedy Include (Forced)";
+                    greedyIncludeReason = $"Top token {topToken.Id} is in GreedyInclude";
                 }
                 else if (settings.MaxPs.TryGetValue(topToken.Id, out float maxP) && topToken.P >= maxP)
                 {
@@ -110,7 +117,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             // Logging (gated behind flag, grouped output)
             if (settings.Log)
             {
-                this.LogUnboundedQuadraticState(sampleContext, settings, computedTarget, selectedToken, originalP, topOnly, topOnlyReason);
+                this.LogUnboundedQuadraticState(sampleContext, settings, computedTarget, selectedToken, originalP, topOnly, topOnlyReason, greedyExcludeReason, greedyIncludeReason);
             }
 
             // Update running history with exponential decay (using settings state)
@@ -224,7 +231,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             return SamplingApi.Token(candidatesArray);
         }
 
-        private void LogUnboundedQuadraticState(SampleContext ctx, UnboundedQuadraticSamplerSettings settings, float computedTarget, int selectedIdx, float originalP, bool topOnly, string topOnlyReason)
+        private void LogUnboundedQuadraticState(SampleContext ctx, UnboundedQuadraticSamplerSettings settings, float computedTarget, int selectedIdx, float originalP, bool topOnly, string topOnlyReason, string greedyExcludeReason, string greedyIncludeReason)
         {
             StringBuilder sb = new();
             sb.AppendLine("========================================");
@@ -233,6 +240,18 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             if (topOnly)
             {
                 sb.AppendLine($"[UNBOUNDED-QUADRATIC] BYPASS: {topOnlyReason}");
+            }
+            
+            // Greedy exclude info
+            if (!string.IsNullOrEmpty(greedyExcludeReason))
+            {
+                sb.AppendLine($"[UNBOUNDED-QUADRATIC] GREEDY EXCLUDE: {greedyExcludeReason}");
+            }
+            
+            // Greedy include info
+            if (!string.IsNullOrEmpty(greedyIncludeReason))
+            {
+                sb.AppendLine($"[UNBOUNDED-QUADRATIC] GREEDY INCLUDE: {greedyIncludeReason}");
             }
 
             // Settings section
@@ -249,28 +268,43 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             // Input probabilities (p > 0.01)
             sb.AppendLine("[UNBOUNDED-QUADRATIC] INPUT PROBABILITIES (p > 0.01):");
             Span<TokenData> originalSpan = ctx.OriginalCandidates.Data.Span;
-            for (int i = 0; i < originalSpan.Length && originalSpan[i].P > 0.01f; i++)
+            for (int i = 0; i < originalSpan.Length; i++)
             {
+                if (originalSpan[i].P < 0.01f)
+                {
+                    continue;
+                }
+
                 sb.AppendLine($"  token {originalSpan[i].Id,6}: {originalSpan[i].P:F6}");
             }
+
             sb.AppendLine("----------------------------------------");
 
             // Post-transform probabilities for same tokens
             sb.AppendLine("[UNBOUNDED-QUADRATIC] POST-TRANSFORM PROBABILITIES (same tokens):");
             Span<TokenData> transformedSpan = ctx.Candidates.Data.Span;
-            for (int i = 0; i < originalSpan.Length && originalSpan[i].P > 0.01f; i++)
+            
+            // Build dictionary for O(1) lookups instead of O(n²)
+            Dictionary<int, TokenData> transformedById = new(transformedSpan.Length);
+            for (int j = 0; j < transformedSpan.Length; j++)
             {
-                int tokenId = originalSpan[i].Id;
-                // Find this token in the transformed candidates
-                for (int j = 0; j < transformedSpan.Length; j++)
+                transformedById[transformedSpan[j].Id] = transformedSpan[j];
+            }
+            
+            for (int i = 0; i < originalSpan.Length; i++)
+            {
+                if (originalSpan[i].P < 0.01f)
                 {
-                    if (transformedSpan[j].Id == tokenId)
-                    {
-                        sb.AppendLine($"  token {tokenId,6}: {transformedSpan[j].P:F6}");
-                        break;
-                    }
+                    continue;
+                }
+
+                int tokenId = originalSpan[i].Id;
+                if (transformedById.TryGetValue(tokenId, out TokenData transformed))
+                {
+                    sb.AppendLine($"  token {tokenId,6}: {transformed.P:F6}");
                 }
             }
+
             sb.AppendLine("----------------------------------------");
 
             // Target values

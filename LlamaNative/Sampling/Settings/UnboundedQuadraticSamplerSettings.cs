@@ -32,7 +32,7 @@ namespace LlamaNative.Sampling.Settings
         /// Can be higher than Power Law since the tail is gentler (linear vs quadratic).
         /// Default: 4.0
         /// </summary>
-        public float Sharpness { get; set; } = 4.0f;
+        public float Sharpness { get; set; } = 10f;
 
         /// <summary>
         /// Decay factor for the exponential weighted average of selected probabilities.

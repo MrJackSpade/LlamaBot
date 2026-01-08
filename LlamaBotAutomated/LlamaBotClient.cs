@@ -26,6 +26,12 @@ namespace LlamaBotAutomated
     {
         private const char ZERO_WIDTH = (char)8203;
 
+        /// <summary>
+        /// Word Joiner character used to pad message splits.
+        /// This prevents Discord from trimming whitespace at message boundaries.
+        /// </summary>
+        private const char WORD_JOINER = '\u2060';
+
         private readonly ulong _botId;
 
         private readonly Character? _character;
@@ -208,7 +214,8 @@ namespace LlamaBotAutomated
 
                     if (prependMessage != null)
                     {
-                        prependMessageContent = this.ParseMessage(prependMessage).Content;
+                        // Strip word joiner markers used for message split preservation
+                        prependMessageContent = this.ParseMessage(prependMessage).Content.Trim(WORD_JOINER);
                     }
                 }
 
@@ -257,12 +264,31 @@ namespace LlamaBotAutomated
                     }
                     else
                     {
+                        // Reserve space for word joiner markers
+                        int effectiveMaxLength = 1948;
+                        bool isFirstChunk = true;
+
                         while (content.Length > 0)
                         {
-                            int chunkSize = Math.Min(1950, content.Length);
+                            int chunkSize = Math.Min(effectiveMaxLength, content.Length);
                             string chunk = content[..chunkSize];
+                            bool isLastChunk = chunkSize >= content.Length;
+
+                            // Add word joiner padding for multi-chunk messages
+                            if (!isLastChunk)
+                            {
+                                // Not the last chunk - add word joiner at end
+                                chunk = isFirstChunk ? chunk + WORD_JOINER : WORD_JOINER + chunk + WORD_JOINER;
+                            }
+                            else if (!isFirstChunk)
+                            {
+                                // Last chunk but not first - add word joiner at start
+                                chunk = WORD_JOINER + chunk;
+                            }
+
                             await channel.SendMessageAsync(chunk);
                             content = content[chunkSize..];
+                            isFirstChunk = false;
                         }
                     }
                 }

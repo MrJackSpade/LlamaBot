@@ -14,6 +14,12 @@ namespace LlamaBot.Plugins.Commands.Resend
     {
         private const int MAX_MESSAGE_LENGTH = 1950;
 
+        /// <summary>
+        /// Word Joiner character used to pad message splits.
+        /// This prevents Discord from trimming whitespace at message boundaries.
+        /// </summary>
+        private const char WORD_JOINER = '\u2060';
+
         private IDiscordService? _discordService;
 
         private ILlamaBotClient? _llamaBotClient;
@@ -78,12 +84,14 @@ namespace LlamaBot.Plugins.Commands.Resend
             // Reverse to get chronological order (oldest first)
             messages.Reverse();
 
-            // Concatenate all message content
+            // Concatenate all message content, stripping word joiner markers
             StringBuilder fullContent = new();
             foreach (IMessage message in messages)
             {
                 ParsedMessage parsed = _llamaBotClient.ParseMessage(message);
-                fullContent.Append(parsed.Content);
+                // Strip word joiner markers used to preserve whitespace
+                string messageContent = parsed.Content.Trim(WORD_JOINER);
+                fullContent.Append(messageContent);
             }
 
             string content = fullContent.ToString();
@@ -121,19 +129,37 @@ namespace LlamaBot.Plugins.Commands.Resend
         /// </summary>
         private static IEnumerable<string> SmartSplit(string content, int maxLength)
         {
+            // Reserve space for word joiner markers on both sides
+            int effectiveMaxLength = maxLength - 2;
+            bool isFirstChunk = true;
+
             while (content.Length > 0)
             {
-                if (content.Length <= maxLength)
+                if (content.Length <= effectiveMaxLength)
                 {
-                    yield return content;
+                    // Last chunk - add word joiner at start if not first chunk
+                    string finalChunk = isFirstChunk ? content : WORD_JOINER + content;
+                    yield return finalChunk;
                     break;
                 }
 
                 // Try to find the best split point within maxLength
-                int splitIndex = FindBestSplitPoint(content, maxLength);
+                int splitIndex = FindBestSplitPoint(content, effectiveMaxLength);
                 
                 string chunk = content[..splitIndex].TrimEnd();
+                
+                // Add word joiner at start (if not first chunk) and end
+                if (isFirstChunk)
+                {
+                    chunk = chunk + WORD_JOINER;
+                }
+                else
+                {
+                    chunk = WORD_JOINER + chunk + WORD_JOINER;
+                }
+                
                 yield return chunk;
+                isFirstChunk = false;
 
                 // Move past the split point, trimming any leading whitespace
                 content = content[splitIndex..].TrimStart();
