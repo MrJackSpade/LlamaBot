@@ -19,3 +19,6 @@ LlamaBotAutomated/Characters/
 LlamaBotAutomated/obj/
 LlamaBotAutomated/bin/
 LlamaBotAutomated/LlamaBotAutomated.Configuration.json
+LlamaBot.SamplerTest/bin/
+LlamaBot.SamplerTest/obj/Debug/net8.0/LlamaBot.SamplerTest.GlobalUsings.g.cs
+LlamaBot.SamplerTest/obj/

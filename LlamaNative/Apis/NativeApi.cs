@@ -127,6 +127,8 @@ namespace LlamaNative.Apis
             lparams.FlashAttentionType = contextSettings.FlashAttentionType;
             lparams.YarnOrigCtx = contextSettings.YarnOrigCtx ?? contextSettings.ContextSize ?? lparams.NCtx;
 
+            Console.WriteLine($"Context Params: Context Size: {lparams.NCtx}, Batch Size: {lparams.NBatch}, Threads: {lparams.NThreads}, TypeK: {lparams.TypeK}, TypeV: {lparams.TypeV}, FlashAttentionType: {lparams.FlashAttentionType}, OffloadKQV: {lparams.OffloadKQV}");
+            
             if (lparams.TypeV != GgmlType.GGML_TYPE_F16 && lparams.FlashAttentionType == FlashAttentionType.Disabled)
             {
                 throw new ArgumentException("V cache quantization requires flash_attn");

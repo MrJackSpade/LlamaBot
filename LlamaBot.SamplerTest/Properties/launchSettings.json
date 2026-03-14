@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LlamaBot.SamplerTest": {
+      "commandName": "Project",
+      "commandLineArgs": "GLM4.6V"
+    }
+  }
+}

@@ -10,8 +10,6 @@
 
         GGML_TYPE_Q4_1 = 3,
 
-        // GGML_TYPE_Q4_2 = 4, support has been removed
-        // GGML_TYPE_Q4_3 = 5, support has been removed
         GGML_TYPE_Q5_0 = 6,
 
         GGML_TYPE_Q5_1 = 7,

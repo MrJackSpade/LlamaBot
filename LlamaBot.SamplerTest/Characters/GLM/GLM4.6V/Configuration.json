@@ -1,0 +1,62 @@
+{
+  "ChatSettings": {
+    "SystemPromptUser": "",
+    "BotName": "Miyako",
+    "BeginText": "[gMASK]<sop>",
+    "ModelSettings": {
+      "ModelPath": "F:\\zai-org_GLM-4.6V-Q5_K_L-00001-of-00003.gguf",
+      "GpuLayerCount": 100,
+      "TensorBufferTypeOverrides": "(6|7|8|9|\\d{2})\\.ffn_(up|down|gate)_exps=CPU",
+      "UseMemoryMap": true,
+      "UseMemoryLock": false
+    },
+    "ContextSettings": {
+      "ContextSize": 32000,
+      "ThreadCount": 8,
+      "FlashAttentionType": "Enabled",
+      "BatchSize": 512
+    },
+    "ChatTemplate": {
+      "EndHeader": ":",
+      "EndMessage": "",
+      "ThinkHeader": "",
+      "NewThinkHeader": "<think>{0}</think>",
+      "StartAssistantHeader": "<|assistant|>",
+      "StartSystemHeader": "<|system|>",
+      "StartUserHeader": "<|user|>",
+      "MessagePrefix": " ",
+      "NewHeaderPadding": "",
+      "StopTokenIds": [ 151336, 151351, 151350 ]
+    },
+    "SamplerSets": [
+      {
+        "TokenSelector": {
+          "type": "UnboundedQuadraticSampler",
+          "settings": {
+            "MinTarget": 0.00,
+            "Target": 0.60,
+            "TailDecay": 0.8,
+            "MinP": 0.03,
+            "PreserveWordMaxP": 0.9,
+            "MinPs": {
+            },
+            "MaxPs": {
+            },
+            "GreedyExclude": [],
+            "GreedyInclude": []
+          }
+        },
+        "LogitBias": {
+          //"151351": "-inf", // </think>
+          //"151350": "-inf" // <think>
+        },
+        "CharBias": {
+          "—": "-inf"
+        }
+      }
+    ]
+  },
+  "NameOverride": {
+    "loxifi": "Shork"
+  }
+}
