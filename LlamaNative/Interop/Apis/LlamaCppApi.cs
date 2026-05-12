@@ -137,17 +137,6 @@ namespace LlamaNative.Interop
         public static partial void InitBackend();
 
         /// <summary>
-        /// Various functions for loading a ggml llama model.
-        /// Allocate (almost) all memory needed for the model.
-        /// Return NULL on failure
-        /// </summary>
-        /// <param name="path_model"></param>
-        /// <param name="params_"></param>
-        /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_init_from_file", CharSet = CharSet.Unicode)]
-        public static extern IntPtr InitFromFile(string path_model, ContextParams params_);
-
-        /// <summary>
         /// Removes all tokens that do not belong to the specified sequence.
         /// </summary>
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_memory_seq_keep")]
