@@ -168,7 +168,7 @@ namespace LlamaNative.Interop
         /// <param name="path_model"></param>
         /// <param name="params_"></param>
         /// <returns></returns>
-        [DllImport(LIBRARY_NAME, EntryPoint = "llama_load_model_from_file", CharSet = CharSet.Ansi)]
+        [DllImport(LIBRARY_NAME, EntryPoint = "llama_model_load_from_file", CharSet = CharSet.Ansi)]
         public static extern IntPtr LoadModelFromFile(string path_model, ModelParams params_);
 
         /// <summary>
