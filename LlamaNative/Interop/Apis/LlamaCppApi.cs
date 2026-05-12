@@ -243,14 +243,6 @@ namespace LlamaNative.Interop
         public static partial bool SaveSessionFile(SafeContextHandle ctx, string path_session, [In] int[] tokens, ulong n_token_count);
 
         /// <summary>
-        /// Sets the current rng seed.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="seed"></param>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_set_rng_seed")]
-        public static partial void SetRngSeed(SafeContextHandle ctx, int seed);
-
-        /// <summary>
         /// Set the state reading from the specified address
         /// Returns the number of bytes read
         /// </summary>
