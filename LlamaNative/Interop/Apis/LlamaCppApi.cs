@@ -15,7 +15,7 @@ namespace LlamaNative.Interop
 
         static LlamaCppApi()
         {
-            InitBackend(false);
+            InitBackend();
         }
 
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_memory")]
@@ -140,8 +140,9 @@ namespace LlamaNative.Interop
         /// Initialize the llama + ggml backend
         /// Call once at the start of the program
         /// </summary>
+        // llama_backend_init takes no arguments; NUMA init moved to llama_numa_init(enum ggml_numa_strategy).
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_backend_init")]
-        public static partial void InitBackend([MarshalAs(UnmanagedType.Bool)] bool numa);
+        public static partial void InitBackend();
 
         /// <summary>
         /// Various functions for loading a ggml llama model.
