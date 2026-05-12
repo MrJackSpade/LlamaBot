@@ -27,9 +27,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_tail_free")]
         public static partial void SampleTailFree(SafeContextHandle ctx, IntPtr candidates, float z, ulong min_keep);
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_temperature")]
-        public static partial void SampleTemperature(SafeContextHandle ctx, IntPtr candidates, float temp);
-
         /// <summary>
         /// Top-K sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751
         /// </summary>
