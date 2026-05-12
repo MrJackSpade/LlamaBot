@@ -275,9 +275,6 @@ namespace LlamaNative.Interop
             [MarshalAs(UnmanagedType.Bool)] bool addBos,
             [MarshalAs(UnmanagedType.Bool)] bool special);
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_nl")]
-        public static partial int TokenNl();
-
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_to_piece")]
         public static partial int TokenToPiece(SafeVocabHandle vocab,
                                                int token,
