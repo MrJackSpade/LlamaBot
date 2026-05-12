@@ -371,26 +371,43 @@ namespace LlamaNative.Interop.Apis
         }
 
         /// <summary>
-        /// Nucleus sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751
+        /// Nucleus (top-p) sampling — "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751.
+        /// Managed reimplementation; the native llama_sample_top_p was removed upstream.
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">Pointer to TokenDataArray</param>
-        /// <param name="p"></param>
-        /// <param name="min_keep"></param>
-        public static void TopP(SafeContextHandle ctx, TokenDataArray candidates, float p, ulong min_keep)
+        /// <param name="candidates">Candidate tokens (logits required; probabilities are computed here).</param>
+        /// <param name="p">Cumulative-probability cutoff.</param>
+        /// <param name="minKeep">Minimum number of candidates to keep.</param>
+        public static void TopP(TokenDataArray candidates, float p, int minKeep = 1)
         {
-            System.Buffers.MemoryHandle handle = candidates.Data.Pin();
-            TokenDataArrayNative st = new()
+            if (p >= 1.0f)
             {
-                data = new nint(handle.Pointer),
-                size = candidates.Size,
-                sorted = candidates.Ordered
-            };
+                return;
+            }
 
-            LlamaCppApi.SampleTopP(ctx, new nint(&st), p, min_keep);
+            SoftMax(candidates, true); // probabilities, sorted descending
 
-            candidates.Size = st.size;
-            candidates.Ordered = st.sorted;
+            Span<TokenData> data = candidates.Data.Span;
+            int size = (int)candidates.Size;
+
+            float cumSum = 0f;
+            int lastIdx = size;
+            for (int i = 0; i < size; i++)
+            {
+                cumSum += data[i].P;
+                if (cumSum >= p && (i + 1) >= minKeep)
+                {
+                    lastIdx = i + 1;
+                    break;
+                }
+            }
+
+            for (int i = lastIdx; i < data.Length; i++)
+            {
+                data[i].Logit = float.NegativeInfinity;
+            }
+
+            candidates.Size = (ulong)lastIdx;
+            candidates.Calculated = false; // logits changed; force re-soft-max over the truncated set
         }
 
         public static bool TryTokenToPiece(SafeModelHandle handle, int tokenId, out string? result)
