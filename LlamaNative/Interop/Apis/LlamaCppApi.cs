@@ -80,14 +80,6 @@ namespace LlamaNative.Interop
         public static partial void FreeModel(IntPtr ctx);
 
         /// <summary>
-        /// Returns the number of tokens in the KV cache
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cache_token_count")]
-        public static partial int GetCacheTokenCount(SafeContextHandle ctx);
-
-        /// <summary>
         /// Get the embeddings for the input
         /// shape: [n_embd] (1-dimensional)
         /// </summary>
