@@ -3,8 +3,16 @@
 namespace LlamaNative.Interop.Structs
 {
     /// <summary>
-    /// Represents a batch of data for llama.
+    /// Represents a batch of input data for llama (passed by value to <c>llama_decode</c> / <c>llama_encode</c>).
+    /// All pointer fields point to caller-owned arrays of length <see cref="NTokens"/> (except <see cref="SeqId"/>,
+    /// which is an array of <c>llama_seq_id*</c>).
     /// </summary>
+    /// <remarks>
+    /// <b>NATIVE_STRUCT</b> — mirrors the C struct <c>llama_batch</c> declared in llama.cpp <c>include/llama.h</c>.
+    /// Field order, types and sizes must match the native struct exactly. Re-validate against <c>include/llama.h</c>
+    /// whenever the bundled native libraries are updated. (Search the codebase for <c>NATIVE_STRUCT</c> to find every interop struct.)
+    /// Last validated: 2026-05-11 — llama.cpp commit 6650c1551 (build 9129).
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
     public struct LlamaBatchNative
     {
@@ -39,23 +47,8 @@ namespace LlamaNative.Interop.Structs
         public nint SeqId;
 
         /// <summary>
-        /// Pointer to the logits array.
+        /// Pointer to the logits/output array.
         /// </summary>
         public nint Logits;
-
-        /// <summary>
-        /// Used if pos is NULL. See struct comments for more details.
-        /// </summary>
-        public int AllPos0;
-
-        /// <summary>
-        /// Used if pos is NULL. See struct comments for more details.
-        /// </summary>
-        public int AllPos1;
-
-        /// <summary>
-        /// Used if seq_id is NULL. See struct comments for more details.
-        /// </summary>
-        public int AllSeqId;
     }
 }

@@ -6,8 +6,15 @@ namespace LlamaNative.Interop.Structs
     public delegate bool LlamaProgressCallback(float progress, IntPtr ctx);
 
     /// <summary>
-    /// Represents the model parameters for llama.
+    /// Represents the model parameters for llama (passed by value to <c>llama_model_load_from_file</c>,
+    /// returned by value from <c>llama_model_default_params</c>).
     /// </summary>
+    /// <remarks>
+    /// <b>NATIVE_STRUCT</b> — mirrors the C struct <c>llama_model_params</c> declared in llama.cpp <c>include/llama.h</c>.
+    /// Field order, types and sizes must match the native struct exactly. Re-validate against <c>include/llama.h</c>
+    /// whenever the bundled native libraries are updated. (Search the codebase for <c>NATIVE_STRUCT</c> to find every interop struct.)
+    /// Last validated: 2026-05-11 — llama.cpp commit 6650c1551 (build 9129).
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
     public struct ModelParams
     {
@@ -71,6 +78,12 @@ namespace LlamaNative.Interop.Structs
         public bool UseMmap;
 
         /// <summary>
+        /// Use direct io, takes precedence over use_mmap when supported.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool UseDirectIo;
+
+        /// <summary>
         /// Force system to keep model in RAM.
         /// </summary>
         [MarshalAs(UnmanagedType.I1)]
@@ -87,5 +100,17 @@ namespace LlamaNative.Interop.Structs
         /// </summary>
         [MarshalAs(UnmanagedType.I1)]
         public bool UseExtraBufferTypes;
+
+        /// <summary>
+        /// Bypass host buffer allowing extra buffers to be used.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool NoHost;
+
+        /// <summary>
+        /// Only load metadata and simulate memory allocations.
+        /// </summary>
+        [MarshalAs(UnmanagedType.I1)]
+        public bool NoAlloc;
     }
 }

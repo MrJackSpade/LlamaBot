@@ -1,5 +1,14 @@
 ﻿namespace LlamaNative.Interop.Structs
 {
+    /// <summary>
+    /// ggml tensor element type (used for the KV-cache <c>type_k</c>/<c>type_v</c> in <see cref="ContextParams"/>).
+    /// </summary>
+    /// <remarks>
+    /// <b>NATIVE_STRUCT</b> — mirrors the C enum <c>ggml_type</c> in <c>ggml/include/ggml.h</c>. 4-byte <c>int</c>.
+    /// ⚠ This list may lag upstream (newer types and a shifted <c>GGML_TYPE_COUNT</c> get added over time); the values
+    /// actually used for the KV cache (F32/F16/BF16/Q8_0/Q5_0/Q5_1/Q4_0/Q4_1) are stable. Re-check against <c>ggml.h</c> when updating.
+    /// Last validated: 2026-05-11 — llama.cpp commit 6650c1551 (build 9129).
+    /// </remarks>
     public enum GgmlType
     {
         GGML_TYPE_F32 = 0,

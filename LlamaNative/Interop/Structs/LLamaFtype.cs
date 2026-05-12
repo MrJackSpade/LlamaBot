@@ -1,5 +1,13 @@
 ﻿namespace LlamaNative.Interop.Structs
 {
+    /// <summary>
+    /// Model file quantization type (passed to <c>llama_model_quantize</c>).
+    /// </summary>
+    /// <remarks>
+    /// <b>NATIVE_STRUCT</b> — mirrors the C enum <c>llama_ftype</c> in llama.cpp <c>include/llama.h</c>. 4-byte <c>int</c>.
+    /// ⚠ Only a small legacy subset is listed here — upstream has many more (Q2_K…Q6_K, IQ*, MXFP4, etc.). Add entries from
+    /// <c>include/llama.h</c> as needed before using them. Last validated: 2026-05-11 — llama.cpp commit 6650c1551 (build 9129).
+    /// </remarks>
     public enum LlamaFtype
     {
         LLAMA_FTYPE_ALL_F32 = 0,

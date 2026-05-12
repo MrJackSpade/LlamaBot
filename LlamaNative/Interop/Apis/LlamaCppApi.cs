@@ -105,16 +105,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_embeddings")]
         public static partial float* GetEmbeddings(SafeContextHandle ctx);
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cells")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static partial bool GetKvCells(SafeContextHandle ctx, out uint size, out IntPtr cellsPtr);
-
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cell_seq_id_count")]
-        public static partial IntPtr GetKVCellSeqIdCount(IntPtr cell);
-
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_kv_cell_seq_ids")]
-        public static partial void GetKvCellSeqIds(IntPtr cell, [Out] int[] seqIds);
-
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_create_tensor_buffer_type_overrides")]
         public static partial IntPtr CreateTensorBufferTypeOverrides([MarshalAs(UnmanagedType.LPUTF8Str)] string overridesStr);
 

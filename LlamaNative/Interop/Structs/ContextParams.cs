@@ -9,8 +9,15 @@ namespace LlamaNative.Interop.Structs
     public delegate bool GgmlBackendSchedEvalCallback(IntPtr tensor, bool ask, IntPtr userData);
 
     /// <summary>
-    /// Represents the parameters for a llama context.
+    /// Represents the parameters for a llama context (passed by value to <c>llama_init_from_model</c>,
+    /// returned by value from <c>llama_context_default_params</c>).
     /// </summary>
+    /// <remarks>
+    /// <b>NATIVE_STRUCT</b> — mirrors the C struct <c>llama_context_params</c> declared in llama.cpp <c>include/llama.h</c>.
+    /// Field order, types and sizes must match the native struct exactly. Re-validate against <c>include/llama.h</c>
+    /// whenever the bundled native libraries are updated. (Search the codebase for <c>NATIVE_STRUCT</c> to find every interop struct.)
+    /// Last validated: 2026-05-11 — llama.cpp commit 6650c1551 (build 9129).
+    /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
     public struct ContextParams
     {
@@ -170,5 +177,16 @@ namespace LlamaNative.Interop.Structs
         /// </summary>
         [MarshalAs(UnmanagedType.I1)]
         public bool KvUnified;
+
+        /// <summary>
+        /// [EXPERIMENTAL] Backend sampler chain configuration (pointer to llama_sampler_seq_config[]).
+        /// The caller must keep the sampler chains alive. Samplers must be sampler chains (llama_sampler_chain_init).
+        /// </summary>
+        public IntPtr Samplers;
+
+        /// <summary>
+        /// [EXPERIMENTAL] Number of entries in <see cref="Samplers"/> (size_t on the native side).
+        /// </summary>
+        public nuint NSamplers;
     }
 }

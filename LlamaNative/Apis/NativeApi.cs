@@ -385,12 +385,5 @@ namespace LlamaNative.Apis
             // Now you can set the pointer in your structure.
             param.TensorSplit = tensorSplitPtr;
         }
-
-        private class CellDefinition
-        {
-            public KvCell Cell { get; set; }
-
-            public int Index { get; set; }
-        }
     }
 }
