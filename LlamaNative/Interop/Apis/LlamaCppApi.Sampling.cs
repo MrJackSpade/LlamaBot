@@ -31,15 +31,6 @@ namespace LlamaNative.Interop
         public static partial void SampleTemperature(SafeContextHandle ctx, IntPtr candidates, float temp);
 
         /// <summary>
-        /// Randomly selects a token from the candidates based on their probabilities.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">Pointer to TokenDataArray</param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_token")]
-        public static partial int SampleToken(SafeContextHandle ctx, IntPtr candidates);
-
-        /// <summary>
         /// Selects the token with the highest probability.
         /// </summary>
         /// <param name="ctx"></param>
