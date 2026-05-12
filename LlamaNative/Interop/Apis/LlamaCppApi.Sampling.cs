@@ -49,19 +49,6 @@ namespace LlamaNative.Interop
         public static partial int SampleTokenGreedy(SafeContextHandle ctx, IntPtr candidates);
 
         /// <summary>
-        /// Mirostat 1.0 algorithm described in the paper https://arxiv.org/abs/2007.14966. Uses tokens instead of words.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">A vector of `int_data` containing the candidate tokens, their probabilities (p), and log-odds (logit) for the current position in the generated text.</param>
-        /// <param name="tau">The target cross-entropy (or surprise) value you want to achieve for the generated text. A higher value corresponds to more surprising or less predictable text, while a lower value corresponds to less surprising or more predictable text.</param>
-        /// <param name="eta">The learning rate used to update `mu` based on the error between the target and observed surprisal of the sampled word. A larger learning rate will cause `mu` to be updated more quickly, while a smaller learning rate will result in slower updates.</param>
-        /// <param name="m">The number of tokens considered in the estimation of `s_hat`. This is an arbitrary value that is used to calculate `s_hat`, which in turn helps to calculate the value of `k`. In the paper, they use `m = 100`, but you can experiment with different values to see how it affects the performance of the algorithm.</param>
-        /// <param name="mu">Maximum cross-entropy. This value is initialized to be twice the target cross-entropy (`2 * tau`) and is updated in the algorithm based on the error between the target and observed surprisal.</param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_token_mirostat")]
-        public static partial int SampleTokenMirostat(SafeContextHandle ctx, IntPtr candidates, float tau, float eta, int m, float* mu);
-
-        /// <summary>
         /// Top-K sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751
         /// </summary>
         /// <param name="ctx"></param>
