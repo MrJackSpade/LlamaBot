@@ -172,9 +172,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_n_ctx")]
         public static partial int NCtx(SafeContextHandle ctx);
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_n_embd")]
-        public static partial int NEmbd(SafeContextHandle ctx);
-
         /// <summary>
         /// Various functions for loading a ggml llama model.
         /// Allocate (almost) all memory needed for the model.
