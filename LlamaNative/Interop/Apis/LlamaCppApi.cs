@@ -169,9 +169,6 @@ namespace LlamaNative.Interop
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_model_default_params")]
         public static extern ModelParams ModelDefaultParams();
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_n_ctx")]
-        public static partial int NCtx(SafeContextHandle ctx);
-
         /// <summary>
         /// Various functions for loading a ggml llama model.
         /// Allocate (almost) all memory needed for the model.
