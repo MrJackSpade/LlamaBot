@@ -31,15 +31,6 @@ namespace LlamaNative.Interop
         public static partial void SampleTemperature(SafeContextHandle ctx, IntPtr candidates, float temp);
 
         /// <summary>
-        /// Selects the token with the highest probability.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">Pointer to TokenDataArray</param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_token_greedy")]
-        public static partial int SampleTokenGreedy(SafeContextHandle ctx, IntPtr candidates);
-
-        /// <summary>
         /// Top-K sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751
         /// </summary>
         /// <param name="ctx"></param>
