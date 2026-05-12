@@ -177,14 +177,6 @@ namespace LlamaNative.Interop
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool LoadSessionFile(SafeContextHandle ctx, string path_session, [Out] int[] tokens_out, ulong n_token_capacity, ulong* n_token_count_out);
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_mlock_supported")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static partial bool MlockSupported();
-
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_mmap_supported")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static partial bool MmapSupported();
-
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_model_default_params")]
         public static extern ModelParams ModelDefaultParams();
 
