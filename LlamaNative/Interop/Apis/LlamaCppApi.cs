@@ -233,9 +233,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_memory_seq_add")]
         public static partial void ShiftCacheTokens(SafeMemoryHandle handle, int sequenceId, int startPos, int endPos, int delta);
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_bos")]
-        public static partial int TokenBos();
-
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_eos")]
         public static partial int TokenEos();
 
