@@ -279,7 +279,7 @@ namespace LlamaBot.Discord
                             {
                                 prop.SetValue(payload, option.Value);
                             }
-                            catch (Exception ex)
+                            catch
                             {
                                 throw new CommandPropertyValidationException(option.Name, $"Could not assign value '{option.Value}' type '{option.Value?.GetType()}' to type '{prop.PropertyType}'");
                             }

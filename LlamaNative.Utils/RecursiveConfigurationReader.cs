@@ -128,13 +128,20 @@ namespace LlamaNative.Utils
 
             Stack<string> directories = new();
 
-            DirectoryInfo characterDirectoryInfo = new(characterDirectory);
+            // Find() resolves the root against AppContext.BaseDirectory, so the stop condition must too —
+            // otherwise (e.g. when the working directory != the exe directory) the walk never matches the
+            // root, runs off the top of the drive, and NREs on the null Parent.
+            string rootDirectory = new DirectoryInfo(Path.Combine(AppContext.BaseDirectory, _root)).FullName;
+
+            DirectoryInfo? characterDirectoryInfo = new(characterDirectory);
 
             do
             {
                 directories.Push(characterDirectoryInfo.FullName);
                 characterDirectoryInfo = characterDirectoryInfo.Parent;
-            } while (characterDirectoryInfo.Parent.FullName != new DirectoryInfo(_root).FullName);
+            } while (characterDirectoryInfo is not null
+                     && characterDirectoryInfo.Parent is not null
+                     && characterDirectoryInfo.Parent.FullName != rootDirectory);
 
             Dictionary<string, string> resources = [];
 
