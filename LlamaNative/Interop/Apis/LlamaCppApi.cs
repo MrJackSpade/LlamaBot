@@ -295,13 +295,5 @@ namespace LlamaNative.Interop
                                                int ltrim,
                                                [MarshalAs(UnmanagedType.Bool)] bool special);
 
-        /// <summary>
-        /// Token Id -> String. Uses the vocabulary in the provided context
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="token"></param>
-        /// <returns>Pointer to a string.</returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_token_get_text")]
-        public static partial IntPtr TokenToStr(SafeContextHandle ctx, int token);
     }
 }
