@@ -118,14 +118,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_logits_ith")]
         public static partial float* GetLogitsIth(SafeContextHandle ctx, int idx);
 
-        /// <summary>
-        /// Returns the maximum size in bytes of the state (rng, logits, embedding
-        /// and kv_cache) - will often be smaller after compacting tokens
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_state_size")]
-        public static partial ulong GetStateSize(SafeContextHandle ctx);
 
         /// <summary>
         /// not great API - very likely to change.
