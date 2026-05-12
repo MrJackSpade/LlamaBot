@@ -323,30 +323,60 @@ namespace LlamaNative.Interop.Apis
         }
 
         /// <summary>
-        /// Mirostat 2.0 algorithm described in the paper https://arxiv.org/abs/2007.14966. Uses tokens instead of words.
+        /// Mirostat 2.0 (https://arxiv.org/abs/2007.14966), uses tokens instead of words.
+        /// Managed reimplementation — the native llama_sample_token_mirostat_v2 was removed upstream
+        /// in favour of the sampler-chain API.
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">A vector of `TokenData` containing the candidate tokens, their probabilities (p), and log-odds (logit) for the current position in the generated text.</param>
-        /// <param name="tau">The target cross-entropy (or surprise) value you want to achieve for the generated text. A higher value corresponds to more surprising or less predictable text, while a lower value corresponds to less surprising or more predictable text.</param>
-        /// <param name="eta">The learning rate used to update `mu` based on the error between the target and observed surprisal of the sampled word. A larger learning rate will cause `mu` to be updated more quickly, while a smaller learning rate will result in slower updates.</param>
-        /// <param name="mu">Maximum cross-entropy. This value is initialized to be twice the target cross-entropy (`2 * tau`) and is updated in the algorithm based on the error between the target and observed surprisal.</param>
-        /// <returns></returns>
-        public static int TokenMirostatV2(SafeContextHandle ctx, TokenDataArray candidates, float tau, float eta, ref float mu)
+        /// <param name="candidates">Candidate tokens for the current position (logits required; probabilities are (re)computed here).</param>
+        /// <param name="tau">Target cross-entropy / surprise.</param>
+        /// <param name="eta">Learning rate for updating <paramref name="mu"/>.</param>
+        /// <param name="mu">Maximum cross-entropy. Initialised to <c>2 * tau</c> and updated each call.</param>
+        /// <returns>The selected token id.</returns>
+        public static int TokenMirostatV2(TokenDataArray candidates, float tau, float eta, ref float mu)
         {
-            System.Buffers.MemoryHandle handle = candidates.Data.Pin();
-            TokenDataArrayNative st = new()
+            // probabilities, sorted descending
+            SoftMax(candidates, true);
+
+            // Truncate: keep the prefix of tokens whose surprise (-log2 p) does not exceed mu.
+            Span<TokenData> data = candidates.Data.Span;
+            int max = (int)candidates.Size;
+            int keep = 0;
+            while (keep < max && -MathF.Log2(data[keep].P) <= mu)
             {
-                data = new nint(handle.Pointer),
-                size = candidates.Size,
-                sorted = candidates.Ordered
-            };
-            int res;
-            fixed (float* pmu = &mu)
-            {
-                res = LlamaCppApi.SampleTokenMirostatV2(ctx, new nint(&st), tau, eta, pmu);
+                keep++;
             }
 
-            return res;
+            if (keep == 0)
+            {
+                keep = 1;
+            }
+
+            // Zero out the dropped tail so the renormalised soft-max ignores it, then sample multinomially.
+            for (int i = keep; i < data.Length; i++)
+            {
+                data[i].Logit = float.NegativeInfinity;
+            }
+
+            candidates.Size = (ulong)keep;
+            candidates.Ordered = false; // also clears Calculated so SoftMax re-runs over the truncated set
+
+            int x = Token(candidates);
+
+            // Update mu from the observed surprise of the chosen token.
+            float px = 0f;
+            foreach (TokenData td in candidates.Data.Span)
+            {
+                if (td.Id == x)
+                {
+                    px = td.P;
+                    break;
+                }
+            }
+
+            float observedSurprise = -MathF.Log2(px);
+            mu -= eta * (observedSurprise - tau);
+
+            return x;
         }
 
         /// <summary>

@@ -62,18 +62,6 @@ namespace LlamaNative.Interop
         public static partial int SampleTokenMirostat(SafeContextHandle ctx, IntPtr candidates, float tau, float eta, int m, float* mu);
 
         /// <summary>
-        /// Mirostat 2.0 algorithm described in the paper https://arxiv.org/abs/2007.14966. Uses tokens instead of words.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">A vector of `int_data` containing the candidate tokens, their probabilities (p), and log-odds (logit) for the current position in the generated text.</param>
-        /// <param name="tau">The target cross-entropy (or surprise) value you want to achieve for the generated text. A higher value corresponds to more surprising or less predictable text, while a lower value corresponds to less surprising or more predictable text.</param>
-        /// <param name="eta">The learning rate used to update `mu` based on the error between the target and observed surprisal of the sampled word. A larger learning rate will cause `mu` to be updated more quickly, while a smaller learning rate will result in slower updates.</param>
-        /// <param name="mu">Maximum cross-entropy. This value is initialized to be twice the target cross-entropy (`2 * tau`) and is updated in the algorithm based on the error between the target and observed surprisal.</param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_token_mirostat_v2")]
-        public static partial int SampleTokenMirostatV2(SafeContextHandle ctx, IntPtr candidates, float tau, float eta, float* mu);
-
-        /// <summary>
         /// Top-K sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751
         /// </summary>
         /// <param name="ctx"></param>
