@@ -436,26 +436,74 @@ namespace LlamaNative.Interop.Apis
         }
 
         /// <summary>
-        /// Locally Typical Sampling implementation described in the paper https://arxiv.org/abs/2202.00666.
+        /// Locally Typical Sampling (https://arxiv.org/abs/2202.00666).
+        /// Managed reimplementation; the native llama_sample_typical was removed upstream.
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">Pointer to TokenDataArray</param>
-        /// <param name="p"></param>
-        /// <param name="min_keep"></param>
-        public static void Typical(SafeContextHandle ctx, TokenDataArray candidates, float p, ulong min_keep)
+        /// <param name="candidates">Candidate tokens (logits required; probabilities are computed here).</param>
+        /// <param name="p">Typical-mass cutoff.</param>
+        /// <param name="minKeep">Minimum number of candidates to keep.</param>
+        public static void Typical(TokenDataArray candidates, float p, int minKeep = 1)
         {
-            System.Buffers.MemoryHandle handle = candidates.Data.Pin();
-            TokenDataArrayNative st = new()
+            if (p >= 1.0f)
             {
-                data = new nint(handle.Pointer),
-                size = candidates.Size,
-                sorted = candidates.Ordered
-            };
+                return;
+            }
 
-            LlamaCppApi.SampleTypical(ctx, new nint(&st), p, min_keep);
+            SoftMax(candidates, false); // probabilities; order doesn't matter yet
 
-            candidates.Size = st.size;
-            candidates.Ordered = st.sorted;
+            int size = (int)candidates.Size;
+            Span<TokenData> data = candidates.Data.Span;
+
+            // Shannon entropy of the distribution.
+            float entropy = 0f;
+            for (int i = 0; i < size; i++)
+            {
+                entropy += -data[i].P * MathF.Log(data[i].P);
+            }
+
+            // Order candidates by |(-log p) - entropy| ascending (closest to "typical" first).
+            int[] order = new int[size];
+            float[] deviation = new float[size];
+            for (int i = 0; i < size; i++)
+            {
+                order[i] = i;
+                deviation[i] = MathF.Abs(-MathF.Log(data[i].P) - entropy);
+            }
+
+            Array.Sort(order, (a, b) => deviation[a].CompareTo(deviation[b]));
+
+            // Keep the prefix (in typicality order) whose cumulative probability first exceeds p.
+            float cumSum = 0f;
+            int lastIdx = size;
+            for (int i = 0; i < size; i++)
+            {
+                cumSum += data[order[i]].P;
+                if (cumSum > p && (i + 1) >= minKeep)
+                {
+                    lastIdx = i + 1;
+                    break;
+                }
+            }
+
+            // Rewrite [0, size) in typicality order; mark everything past lastIdx as impossible.
+            TokenData[] reordered = new TokenData[size];
+            for (int i = 0; i < size; i++)
+            {
+                reordered[i] = data[order[i]];
+                if (i >= lastIdx)
+                {
+                    reordered[i].Logit = float.NegativeInfinity;
+                }
+            }
+
+            for (int i = 0; i < size; i++)
+            {
+                data[i] = reordered[i];
+            }
+
+            candidates.Size = (ulong)lastIdx;
+            candidates.Ordered = false;       // no longer logit-sorted
+            candidates.Calculated = false;    // force re-soft-max over the truncated set
         }
 
         // Assumptions:

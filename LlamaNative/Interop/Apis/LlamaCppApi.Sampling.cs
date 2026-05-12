@@ -58,14 +58,5 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_top_k")]
         public static partial void SampleTopK(SafeContextHandle ctx, IntPtr candidates, int k, ulong min_keep);
 
-        /// <summary>
-        /// Locally Typical Sampling implementation described in the paper https://arxiv.org/abs/2202.00666.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">Pointer to TokenDataArray</param>
-        /// <param name="p"></param>
-        /// <param name="min_keep"></param>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_typical")]
-        public static partial void SampleTypical(SafeContextHandle ctx, IntPtr candidates, float p, ulong min_keep);
     }
 }
