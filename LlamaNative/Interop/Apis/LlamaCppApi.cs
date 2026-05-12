@@ -215,9 +215,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_print_system_info")]
         public static partial IntPtr PrintSystemInfo();
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_print_timings")]
-        public static partial void PrintTimings(SafeContextHandle ctx);
-
         /// <summary>
         /// Removes all tokens that belong to the specified sequence and have positions in [startPos, endPos)
         /// startPos < 0 : [0,  endPos]
