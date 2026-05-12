@@ -18,16 +18,6 @@ namespace LlamaNative.Interop
         public static partial void RepetitionPenalties(SafeContextHandle ctx, IntPtr candidates, [In] int[] lastTokens, ulong last_tokens_size, float penaltyRepeat, float penaltyFreq, float penaltyPresent);
 
         /// <summary>
-        /// Tail Free Sampling described in https://www.trentonbricken.com/Tail-Free-Sampling/.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="candidates">Pointer to TokenDataArray</param>
-        /// <param name="z"></param>
-        /// <param name="min_keep"></param>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_sample_tail_free")]
-        public static partial void SampleTailFree(SafeContextHandle ctx, IntPtr candidates, float z, ulong min_keep);
-
-        /// <summary>
         /// Top-K sampling described in academic paper "The Curious Case of Neural Text Degeneration" https://arxiv.org/abs/1904.09751
         /// </summary>
         /// <param name="ctx"></param>
