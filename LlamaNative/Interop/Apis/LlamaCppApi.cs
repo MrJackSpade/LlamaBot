@@ -51,17 +51,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_memory_seq_cp")]
         public static partial void CopyCacheTokens(SafeMemoryHandle handle, int sourceSequenceId, int destinationSequenceId, int startPos, int endPos);
 
-        /// <summary>
-        /// Copies the state to the specified destination address.
-        /// Destination needs to have allocated enough memory.
-        /// Returns the number of bytes copied
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="dest"></param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_copy_state_data")]
-        public static partial ulong CopyStateData(SafeContextHandle ctx, [Out] byte[] dest);
-
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_decode")]
         public static partial int Decode(SafeContextHandle ctx, LlamaBatchNative batch);
 
