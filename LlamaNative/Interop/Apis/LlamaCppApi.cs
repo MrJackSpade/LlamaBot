@@ -187,18 +187,6 @@ namespace LlamaNative.Interop
         public static partial bool RemoveCacheTokens(SafeMemoryHandle handle, int sequenceId, int startPos, int endPos);
 
         /// <summary>
-        /// Save session file
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="path_session"></param>
-        /// <param name="tokens"></param>
-        /// <param name="n_token_count"></param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_save_session_file", StringMarshalling = StringMarshalling.Utf8)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static partial bool SaveSessionFile(SafeContextHandle ctx, string path_session, [In] int[] tokens, ulong n_token_count);
-
-        /// <summary>
         /// Set the state reading from the specified address
         /// Returns the number of bytes read
         /// </summary>
