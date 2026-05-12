@@ -68,15 +68,6 @@ namespace LlamaNative.Interop
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_model_free")]
         public static partial void FreeModel(IntPtr ctx);
 
-        /// <summary>
-        /// Get the embeddings for the input
-        /// shape: [n_embd] (1-dimensional)
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_get_embeddings")]
-        public static partial float* GetEmbeddings(SafeContextHandle ctx);
-
         [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_create_tensor_buffer_type_overrides")]
         public static partial IntPtr CreateTensorBufferTypeOverrides([MarshalAs(UnmanagedType.LPUTF8Str)] string overridesStr);
 
