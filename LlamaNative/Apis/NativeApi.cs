@@ -138,8 +138,13 @@ namespace LlamaNative.Apis
 
             if (!string.IsNullOrEmpty(contextSettings.LoraAdapter))
             {
-                int err = LlamaCppApi.ApplyLoraFromFile(ctx, contextSettings.LoraAdapter, string.IsNullOrEmpty(contextSettings.LoraBase) ? null : contextSettings.LoraBase, (int)contextSettings.ThreadCount);
-                if (err != 0)
+                nint adapterPtr = LlamaCppApi.AdapterLoraInit(model, contextSettings.LoraAdapter);
+                if (adapterPtr == nint.Zero)
+                {
+                    throw new LlamaCppRuntimeError("Failed to load lora adapter.");
+                }
+
+                if (LlamaCppApi.SetAdapterLora(ctx, adapterPtr, contextSettings.LoraScale) != 0)
                 {
                     throw new LlamaCppRuntimeError("Failed to apply lora adapter.");
                 }

@@ -22,19 +22,22 @@ namespace LlamaNative.Interop
         public static partial IntPtr GetMemory(SafeContextHandle ctx);
 
         /// <summary>
-        /// Apply a LoRA adapter to a loaded model
-        /// path_base_model is the path to a higher quality model to use as a base for
-        /// the layers modified by the adapter. Can be NULL to use the current loaded model.
-        /// The model needs to be reloaded before applying a new adapter, otherwise the adapter
-        /// will be applied on top of the previous one
+        /// Load a LoRA adapter from file. Returns the adapter pointer, or <see cref="IntPtr.Zero"/> on failure.
         /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="path_lora"></param>
-        /// <param name="path_base_model"></param>
-        /// <param name="n_threads"></param>
-        /// <returns>Returns 0 on success</returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_apply_lora_from_file", StringMarshalling = StringMarshalling.Utf8)]
-        public static partial int ApplyLoraFromFile(SafeContextHandle ctx, string path_lora, string path_base_model, int n_threads);
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_adapter_lora_init", StringMarshalling = StringMarshalling.Utf8)]
+        public static partial IntPtr AdapterLoraInit(SafeModelHandle model, string path_lora);
+
+        /// <summary>
+        /// Add a loaded LoRA adapter to the context with the given scale. Returns 0 on success.
+        /// </summary>
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_set_adapter_lora")]
+        public static partial int SetAdapterLora(SafeContextHandle ctx, IntPtr adapter, float scale);
+
+        /// <summary>
+        /// Free a LoRA adapter previously loaded with <see cref="AdapterLoraInit"/> (only after the context using it is freed).
+        /// </summary>
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_adapter_lora_free")]
+        public static partial void AdapterLoraFree(IntPtr adapter);
 
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_context_default_params")]
         public static extern ContextParams ContextDefaultParams();

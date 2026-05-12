@@ -35,9 +35,9 @@ namespace LlamaNative.Interop.Settings
         public string LoraAdapter { get; set; } = string.Empty;
 
         /// <summary>
-        /// Default empty string
+        /// Scale applied to the LoRA adapter (only used when <see cref="LoraAdapter"/> is set). Default 1.0
         /// </summary>
-        public string LoraBase { get; set; } = string.Empty;
+        public float LoraScale { get; set; } = 1.0f;
 
         /// <summary>
         /// Default GGML_TYPE_F16
