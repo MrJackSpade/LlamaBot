@@ -29,6 +29,10 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>llama.dll</TargetPath>
 		</Content>
+		<Content Include="Binaries\CUDA\llama-common.dll">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<TargetPath>llama-common.dll</TargetPath>
+		</Content>
 		<Content Include="Binaries\CUDA\ggml.dll">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<TargetPath>ggml.dll</TargetPath>

@@ -30,6 +30,15 @@ namespace LlamaNative.Interop.Settings
         public uint? ContextSize { get; set; }
 
         /// <summary>
+        /// When automatically fitting GPU layers (<see cref="ModelSettings.GpuLayerCount"/> == <see cref="ModelSettings.AutoGpuLayerCount"/>),
+        /// the smallest context size the fitter is allowed to fall back to if the model does not otherwise fit in VRAM.
+        /// When null (the default) the context size is <b>not</b> reduced: the fitter sizes the GPU layer count for the full
+        /// <see cref="ContextSize"/> (or, if <see cref="ContextSize"/> is also null, the model's trained context length).
+        /// Has no effect when GPU layers are selected manually.
+        /// </summary>
+        public uint? FitMinContextSize { get; set; }
+
+        /// <summary>
         /// Default empty string
         /// </summary>
         public string LoraAdapter { get; set; } = string.Empty;

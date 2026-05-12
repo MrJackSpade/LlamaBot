@@ -12,7 +12,7 @@ namespace LlamaNative.Chat
     {
         public static IChatContext LoadChatContext(ChatSettings settings)
         {
-            Model model = LlamaClient.LoadModel(settings.ModelSettings);
+            Model model = LlamaClient.LoadModel(settings.ModelSettings, settings.ContextSettings);
 
             if (settings.SamplerSets.Count == 0)
             {

@@ -23,9 +23,9 @@ namespace LlamaNative
                                      samplerSets);
         }
 
-        public static Model LoadModel(ModelSettings modelSettings)
+        public static Model LoadModel(ModelSettings modelSettings, ContextSettings? contextSettings = null)
         {
-            return NativeApi.LoadModel(modelSettings);
+            return NativeApi.LoadModel(modelSettings, contextSettings);
         }
     }
 }

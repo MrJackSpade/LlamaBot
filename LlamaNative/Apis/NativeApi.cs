@@ -153,29 +153,58 @@ namespace LlamaNative.Apis
             return ctx;
         }
 
-        public static Model LoadModel(ModelSettings modelSettings)
+        /// <summary>
+        /// Loads a model. When <see cref="ModelSettings.GpuLayerCount"/> is <see cref="ModelSettings.AutoGpuLayerCount"/>
+        /// (-1) the number of GPU layers (and, for multi-GPU, the tensor split) is picked automatically to fit free
+        /// VRAM; pass <paramref name="contextSettings"/> so that decision accounts for the context size that will be used.
+        /// Any other value of <see cref="ModelSettings.GpuLayerCount"/> selects exactly that many layers, as before.
+        /// </summary>
+        public static Model LoadModel(ModelSettings modelSettings, ContextSettings? contextSettings = null)
         {
             ModelParams lparams = LlamaCppApi.ModelDefaultParams();
 
-            lparams.NGpuLayers = modelSettings.GpuLayerCount;
             lparams.UseMmap = modelSettings.UseMemoryMap;
             lparams.UseMlock = modelSettings.UseMemoryLock;
             lparams.VocabOnly = modelSettings.VocabOnly;
 
-            SetTensors(ref lparams, new float[16]);
+            bool autoFitGpuLayers = modelSettings.GpuLayerCount == ModelSettings.AutoGpuLayerCount;
 
-            // Handle TensorBufferTypeOverrides
+            // Unmanaged buffers that must outlive the LoadModelFromFile call (the model reads them during load).
             IntPtr tensorOverridesPtr = IntPtr.Zero;
-            if (!string.IsNullOrWhiteSpace(modelSettings.TensorBufferTypeOverrides))
-            {
-                // Create the tensor buffer type overrides using the C++ side function
-                tensorOverridesPtr = LlamaCppApi.CreateTensorBufferTypeOverrides(modelSettings.TensorBufferTypeOverrides);
-                lparams.TensorBufferTypeOverrides = tensorOverridesPtr;
-            }
+            IntPtr fitTensorSplitPtr = IntPtr.Zero;
+            IntPtr fitTensorBuftOverridesPtr = IntPtr.Zero;
+            IntPtr fitMarginsPtr = IntPtr.Zero;
 
             if (!File.Exists(modelSettings.ModelPath))
             {
                 throw new FileNotFoundException($"The model file does not exist: {modelSettings.ModelPath}");
+            }
+
+            if (autoFitGpuLayers)
+            {
+                if (!string.IsNullOrWhiteSpace(modelSettings.TensorBufferTypeOverrides))
+                {
+                    throw new ArgumentException($"{nameof(ModelSettings.GpuLayerCount)} = {ModelSettings.AutoGpuLayerCount} (auto-fit) cannot be combined with {nameof(ModelSettings.TensorBufferTypeOverrides)}.");
+                }
+
+                // Leave lparams.NGpuLayers / TensorSplit / TensorBufferTypeOverrides at their library defaults so the
+                // fitter is allowed to set them; it writes the chosen split / overrides into the buffers we pass in.
+                FitGpuLayersToFreeMemory(modelSettings.ModelPath, ref lparams, contextSettings,
+                    out fitTensorSplitPtr, out fitTensorBuftOverridesPtr, out fitMarginsPtr);
+            }
+            else
+            {
+                lparams.NGpuLayers = modelSettings.GpuLayerCount;
+
+                SetTensors(ref lparams, new float[16]);
+
+                // Handle TensorBufferTypeOverrides
+                if (!string.IsNullOrWhiteSpace(modelSettings.TensorBufferTypeOverrides))
+                {
+                    // Create the tensor buffer type overrides using the C++ side function
+                    tensorOverridesPtr = LlamaCppApi.CreateTensorBufferTypeOverrides(modelSettings.TensorBufferTypeOverrides);
+                    lparams.TensorBufferTypeOverrides = tensorOverridesPtr;
+                }
             }
 
             nint model_ptr = LlamaCppApi.LoadModelFromFile(modelSettings.ModelPath, lparams);
@@ -186,12 +215,38 @@ namespace LlamaNative.Apis
                 LlamaCppApi.FreeTensorBufferTypeOverrides(tensorOverridesPtr);
             }
 
+            if (fitTensorSplitPtr != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(fitTensorSplitPtr);
+            }
+
+            if (fitTensorBuftOverridesPtr != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(fitTensorBuftOverridesPtr);
+            }
+
+            if (fitMarginsPtr != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(fitMarginsPtr);
+            }
+
             if (model_ptr == nint.Zero)
             {
                 throw new LlamaCppRuntimeError($"Failed to load model {modelSettings.ModelPath}.");
             }
 
             SafeModelHandle handle = new(model_ptr, FreeModel);
+
+            // The fitter sizes the GPU layers for the model's trained context when no context size was declared; adopt that
+            // size for the context that will actually be created so the two stay consistent.
+            if (autoFitGpuLayers && contextSettings is not null && contextSettings.ContextSize is null)
+            {
+                int trainedContext = LlamaCppApi.ModelNCtxTrain(handle);
+                if (trainedContext > 0)
+                {
+                    contextSettings.ContextSize = (uint)trainedContext;
+                }
+            }
 
             nint vocab_ptr = LlamaCppApi.GetVocab(handle);
 
@@ -384,6 +439,171 @@ namespace LlamaNative.Apis
 
             // Now you can set the pointer in your structure.
             param.TensorSplit = tensorSplitPtr;
+        }
+
+        // ggml_log_level value used for the fitter's log output (INFO so the chosen layer count / fit breakdown is visible).
+        private const int GgmlLogLevelInfo = 2;
+
+        // Floor the fitter falls back to when no context size was declared and FitMinContextSize wasn't set — matches
+        // llama.cpp's --fit-ctx default. (The fitter starts from the model's trained context and only shrinks toward this if needed.)
+        private const uint LlamaDefaultFitMinContextSize = 4096;
+
+        // Default per-device memory margin left free by the fitter, matching llama.cpp's CLI default of 1 GiB.
+        private const ulong FitDefaultDeviceMarginBytes = 1024UL * 1024 * 1024;
+
+        // The native llama_model_tensor_buft_override struct is two pointers: { const char* pattern; ggml_backend_buffer_type_t buft; }.
+        private static int TensorBuftOverrideSize => 2 * IntPtr.Size;
+
+        /// <summary>
+        /// Asks llama.cpp to pick <see cref="ModelParams.NGpuLayers"/> (and, for multi-GPU, the tensor split and any
+        /// overflow buffer-type overrides) so the model fits in free device memory, mutating <paramref name="lparams"/>
+        /// in place.
+        /// <para>
+        /// Context-size handling: the GPU layer count is sized for <see cref="ContextSettings.ContextSize"/> (or, when that
+        /// is unset, the model's trained context length) and that context size is <b>not</b> reduced — unless
+        /// <see cref="ContextSettings.FitMinContextSize"/> is set, in which case, only if the model would not otherwise fit,
+        /// the context is allowed to shrink down to that floor (and never above the declared <see cref="ContextSettings.ContextSize"/>).
+        /// If the fitter ends up choosing the context size itself, <paramref name="contextSettings"/> is updated so the
+        /// subsequently-created context matches what was fitted for.
+        /// </para>
+        /// The returned pointers own unmanaged buffers that <see cref="ModelParams"/> now references and that the caller
+        /// must free once the model has been loaded.
+        /// </summary>
+        private static void FitGpuLayersToFreeMemory(
+            string modelPath,
+            ref ModelParams lparams,
+            ContextSettings? contextSettings,
+            out IntPtr tensorSplitPtr,
+            out IntPtr tensorBuftOverridesPtr,
+            out IntPtr marginsPtr)
+        {
+            int maxDevices = (int)LlamaCppApi.MaxDevices();
+            int maxTensorBuftOverrides = (int)LlamaCppApi.MaxTensorBuftOverrides();
+
+            int tensorSplitBytes = maxDevices * sizeof(float);
+            int tensorBuftOverridesBytes = maxTensorBuftOverrides * TensorBuftOverrideSize;
+            int marginsBytes = maxDevices * IntPtr.Size;
+
+            IntPtr tsBuf = Marshal.AllocHGlobal(tensorSplitBytes);
+            IntPtr tboBuf = Marshal.AllocHGlobal(tensorBuftOverridesBytes);
+            IntPtr marginBuf = Marshal.AllocHGlobal(marginsBytes);
+
+            // Values mparams must be reset to before each fit attempt: the fitter rejects model params it considers
+            // "already set by the user", so on a retry we have to undo whatever a previous attempt assigned.
+            ModelParams mparams = lparams;
+            int defaultNGpuLayers = mparams.NGpuLayers;
+            IntPtr defaultTensorSplit = mparams.TensorSplit;
+            IntPtr defaultTensorBuftOverrides = mparams.TensorBufferTypeOverrides;
+
+            try
+            {
+                new Span<nuint>((void*)marginBuf, maxDevices).Fill((nuint)FitDefaultDeviceMarginBytes);
+
+                uint? declaredContextSize = contextSettings?.ContextSize is uint c && c != 0 ? c : null;
+                uint? minContextSize = contextSettings?.FitMinContextSize is uint m && m != 0 ? m : null;
+
+                ContextParams cparams = LlamaCppApi.ContextDefaultParams();
+
+                // Mirror the memory-relevant context settings so the fit reflects the context that will actually be created.
+                if (contextSettings is not null)
+                {
+                    cparams.NBatch = contextSettings.BatchSize;
+                    cparams.TypeK = contextSettings.TypeK;
+                    cparams.TypeV = contextSettings.TypeV;
+                    cparams.FlashAttentionType = contextSettings.FlashAttentionType;
+                    cparams.OffloadKQV = contextSettings.OffloadKQV;
+                }
+
+                LlamaCppApi.ParamsFitStatus RunFit(uint nCtx, uint nCtxMin)
+                {
+                    // reset everything the fitter is allowed to set, plus the scratch buffers it writes into
+                    mparams.NGpuLayers = defaultNGpuLayers;
+                    mparams.TensorSplit = defaultTensorSplit;
+                    mparams.TensorBufferTypeOverrides = defaultTensorBuftOverrides;
+                    new Span<byte>((void*)tsBuf, tensorSplitBytes).Clear();
+                    new Span<byte>((void*)tboBuf, tensorBuftOverridesBytes).Clear();
+                    cparams.NCtx = nCtx;
+
+                    int code = LlamaCppApi.ParamsFit(
+                        modelPath, ref mparams, ref cparams,
+                        tsBuf, tboBuf, marginBuf,
+                        nCtxMin, GgmlLogLevelInfo);
+
+                    if ((LlamaCppApi.ParamsFitStatus)code == LlamaCppApi.ParamsFitStatus.Error)
+                    {
+                        throw new LlamaCppRuntimeError($"Failed to auto-fit GPU layers for {modelPath} (fit error).");
+                    }
+
+                    return (LlamaCppApi.ParamsFitStatus)code;
+                }
+
+                bool allowShrink = minContextSize is uint floor && (declaredContextSize is not uint declaredCap || floor < declaredCap);
+
+                LlamaCppApi.ParamsFitStatus status;
+                uint chosenContextSize;
+                bool fitterChoseContext;
+
+                if (declaredContextSize is uint declared)
+                {
+                    // Pin the declared context size (a non-zero n_ctx tells the fitter never to shrink it); only fall back
+                    // to a smaller context if FitMinContextSize explicitly allowed it and the model would not otherwise fit.
+                    status = RunFit(declared, declared);
+                    if (status == LlamaCppApi.ParamsFitStatus.Failure && allowShrink)
+                    {
+                        status = RunFit(0, minContextSize!.Value);
+                        // the fitter only writes n_ctx when it had to reduce it; cap it to the declared size either way
+                        chosenContextSize = cparams.NCtx != 0 ? Math.Min(cparams.NCtx, declared) : declared;
+                        fitterChoseContext = true;
+                    }
+                    else
+                    {
+                        chosenContextSize = declared;
+                        fitterChoseContext = false;
+                    }
+                }
+                else
+                {
+                    // No context size was declared: let the fitter use the model's trained context, shrinking only down to
+                    // FitMinContextSize (or the llama default floor when that wasn't set).
+                    status = RunFit(0, minContextSize ?? LlamaDefaultFitMinContextSize);
+                    // n_ctx == 0 here means "fits at the model's trained context"; the caller resolves that once the model is loaded.
+                    chosenContextSize = cparams.NCtx;
+                    fitterChoseContext = true;
+                }
+
+                // Only adopt a concrete context size; n_ctx == 0 stays null and is resolved from the model's trained context post-load.
+                if (fitterChoseContext && chosenContextSize != 0 && contextSettings is not null)
+                {
+                    contextSettings.ContextSize = chosenContextSize;
+                }
+
+                string contextSizeText = chosenContextSize != 0 ? chosenContextSize.ToString() : "the model's trained context";
+                // A negative n_gpu_layers means the fitter left it at its default — i.e. the whole model fits and every layer is offloaded.
+                string layersText = mparams.NGpuLayers < 0 ? "all layers (fits entirely in device memory)" : $"{mparams.NGpuLayers} layers";
+                if (status == LlamaCppApi.ParamsFitStatus.Failure)
+                {
+                    Console.WriteLine($"Warning: could not fully fit '{modelPath}' to free device memory; proceeding with {layersText} on GPU, context size {contextSizeText}.");
+                }
+                else
+                {
+                    Console.WriteLine($"Auto-fit selected {layersText} on GPU for context size {contextSizeText}.");
+                }
+
+                lparams = mparams;
+                tensorSplitPtr = tsBuf;
+                tensorBuftOverridesPtr = tboBuf;
+                marginsPtr = marginBuf;
+            }
+            catch
+            {
+                Marshal.FreeHGlobal(tsBuf);
+                Marshal.FreeHGlobal(tboBuf);
+                Marshal.FreeHGlobal(marginBuf);
+                tensorSplitPtr = IntPtr.Zero;
+                tensorBuftOverridesPtr = IntPtr.Zero;
+                marginsPtr = IntPtr.Zero;
+                throw;
+            }
         }
     }
 }

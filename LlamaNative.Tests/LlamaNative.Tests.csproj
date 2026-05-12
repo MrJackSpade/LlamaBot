@@ -32,6 +32,7 @@
   <!-- Make sure the native llama.cpp libraries land next to the test assembly. -->
   <ItemGroup>
     <Content Include="..\LlamaNative\Binaries\CUDA\llama.dll"><Link>llama.dll</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
+    <Content Include="..\LlamaNative\Binaries\CUDA\llama-common.dll"><Link>llama-common.dll</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
     <Content Include="..\LlamaNative\Binaries\CUDA\ggml.dll"><Link>ggml.dll</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
     <Content Include="..\LlamaNative\Binaries\CUDA\ggml-base.dll"><Link>ggml-base.dll</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>
     <Content Include="..\LlamaNative\Binaries\CUDA\ggml-cpu.dll"><Link>ggml-cpu.dll</Link><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>

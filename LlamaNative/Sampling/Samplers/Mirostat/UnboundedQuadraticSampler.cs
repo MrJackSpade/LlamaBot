@@ -325,6 +325,7 @@ namespace LlamaNative.Sampling.Samplers.Mirostat
             Directory.CreateDirectory(logDir);
             string logPath = Path.Combine(logDir, "sampler.log");
             File.AppendAllText(logPath, sb.ToString());
+            Debug.WriteLine(sb);
         }
     }
 }
