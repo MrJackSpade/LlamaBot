@@ -2,7 +2,7 @@
   "profiles": {
     "LlamaBot": {
       "commandName": "Project",
-      "commandLineArgs": "QWEN30BA3",
+      "commandLineArgs": "MiniMax-M2.7",
       "nativeDebugging": true
     }
   }

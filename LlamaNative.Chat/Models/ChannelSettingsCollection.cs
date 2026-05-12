@@ -5,7 +5,11 @@ namespace LlamaNative.Chat.Models
 {
     public class ChannelSettingsCollection
     {
-        private const string CHANNEL_SETTINGS_DIR = "ChannelSettings";
+        // Anchor to the exe directory, not the current working directory — otherwise a launch with a
+        // different CWD (service host, Task Scheduler, etc.) tries to create "ChannelSettings" under
+        // e.g. C:\Windows\System32 and throws UnauthorizedAccessException. Mirrors the resolution
+        // RecursiveConfigurationReader uses for character cards.
+        private static readonly string CHANNEL_SETTINGS_DIR = Path.Combine(AppContext.BaseDirectory, "ChannelSettings");
 
         private readonly Dictionary<ulong, ChannelSettings?> _channels = [];
 

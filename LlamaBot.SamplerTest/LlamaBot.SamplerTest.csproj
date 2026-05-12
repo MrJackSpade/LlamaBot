@@ -9,30 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Characters\GLM\GLM4.6V\Configuration.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.6V\System.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.6V\Think.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.7Plus\Configuration.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.7Plus\System.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\GLM\GLM4.7Plus\Think.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\Qwen\QWEN30BA3\Configuration.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Characters\Qwen\QWEN30BA3\System.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="LlamaBot.SamplerTest.Configuration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
