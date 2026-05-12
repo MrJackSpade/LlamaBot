@@ -168,16 +168,6 @@ namespace LlamaNative.Interop
         public static partial bool RemoveCacheTokens(SafeMemoryHandle handle, int sequenceId, int startPos, int endPos);
 
         /// <summary>
-        /// Set the state reading from the specified address
-        /// Returns the number of bytes read
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="src"></param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_set_state_data")]
-        public static partial ulong SetStateData(SafeContextHandle ctx, [In] byte[] src);
-
-        /// <summary>
         /// Adds relative position "delta" to all tokens that belong to the specified sequence and have positions in [startPos, endPos)
         /// If the KV cache is RoPEd, the KV data is updated accordingly.
         /// startPos < 0 : [0,  endPos]
