@@ -7,15 +7,13 @@ using LlamaNative.Tokens.Models;
 
 namespace LlamaNative.Decode.Utils
 {
-    internal partial class KvCacheShifter(uint threadCount, uint batchSize, SafeContextHandle handle, SafeModelHandle modelHandle) : IArrayShifter<Token>
+    internal partial class KvCacheShifter(uint batchSize, SafeContextHandle handle, SafeModelHandle modelHandle) : IArrayShifter<Token>
     {
         private readonly uint _batchSize = batchSize;
 
         private readonly SafeContextHandle _handle = handle;
 
         private readonly SafeModelHandle _model = modelHandle;
-
-        private readonly uint _threadCount = threadCount;
 
         public void CopyCacheTokens(uint sourceSequenceId, uint destinationSequenceId, uint startPos, uint endPos)
         {
@@ -36,14 +34,22 @@ namespace LlamaNative.Decode.Utils
 
         public void Evaluate(Token[] tokens, uint pos)
         {
-            if (_threadCount == 0)
+            if (tokens.Length == 0)
             {
-                throw new LlamaCppRuntimeError("Evaluation thread count can not be zero");
+                return;
             }
 
-            if (NativeApi.Eval(_handle, tokens.Select(l => l.Id).ToArray(), tokens.Length, pos, (int)_threadCount) != 0)
+            // llama_eval was removed upstream; re-evaluate via llama_decode (logits only needed for the last token).
+            BatchDecode<int> batch = new();
+
+            for (int i = 0; i < tokens.Length; i++)
             {
-                throw new LlamaCppRuntimeError("Failed to eval.");
+                batch.AddItem(tokens[i].Id, pos + (uint)i, [0], i == tokens.Length - 1);
+            }
+
+            if (NativeApi.Decode(_handle, batch, _batchSize) != 0)
+            {
+                throw new LlamaCppRuntimeError("Failed to decode (KV cache shift re-evaluation).");
             }
         }
 

@@ -86,13 +86,6 @@ namespace LlamaNative.Apis
             return 0;
         }
 
-        public static int Eval(SafeContextHandle handle, int[] tokens, int length, uint evalPointer, int evalThreadCount)
-        {
-            Log(nameof(Eval), tokens, length, evalPointer, evalThreadCount);
-
-            return LlamaCppApi.Eval(handle, tokens, length, (int)evalPointer, evalThreadCount);
-        }
-
         public static unsafe Span<float> GetLogits(SafeContextHandle ctx, int length)
         {
             float* logits = LlamaCppApi.GetLogitsIth(ctx, -1);

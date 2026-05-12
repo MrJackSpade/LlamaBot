@@ -63,18 +63,6 @@ namespace LlamaNative.Interop
         public static partial int Decode(SafeContextHandle ctx, LlamaBatchNative batch);
 
         /// <summary>
-        /// Run the llama inference to obtain the logits and probabilities for the next token.
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="tokens">The new tokens to process</param>
-        /// <param name="n_tokens">The number of new tokens to process</param>
-        /// <param name="n_past">The number of tokens to use from previous eval calls</param>
-        /// <param name="n_threads"></param>
-        /// <returns>Returns 0 on success</returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_eval")]
-        public static partial int Eval(SafeContextHandle ctx, [In] int[] tokens, int n_tokens, int n_past, int n_threads);
-
-        /// <summary>
         /// Frees all allocated memory
         /// </summary>
         /// <param name="ctx"></param>
