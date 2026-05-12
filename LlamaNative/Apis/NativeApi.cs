@@ -160,6 +160,7 @@ namespace LlamaNative.Apis
             lparams.NGpuLayers = modelSettings.GpuLayerCount;
             lparams.UseMmap = modelSettings.UseMemoryMap;
             lparams.UseMlock = modelSettings.UseMemoryLock;
+            lparams.VocabOnly = modelSettings.VocabOnly;
 
             SetTensors(ref lparams, new float[16]);
 

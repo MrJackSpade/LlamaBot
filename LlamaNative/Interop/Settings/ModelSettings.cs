@@ -11,5 +11,10 @@
         public bool UseMemoryLock { get; set; } = true;
 
         public bool UseMemoryMap { get; set; } = false;
+
+        /// <summary>
+        /// Load only the vocabulary, no weights (useful for tokenize/detokenize-only scenarios). Default false.
+        /// </summary>
+        public bool VocabOnly { get; set; } = false;
     }
 }
