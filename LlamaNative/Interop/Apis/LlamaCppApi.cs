@@ -153,19 +153,6 @@ namespace LlamaNative.Interop
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_model_load_from_file", CharSet = CharSet.Ansi)]
         public static extern IntPtr LoadModelFromFile(string path_model, ModelParams params_);
 
-        /// <summary>
-        /// Load session file
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <param name="path_session"></param>
-        /// <param name="tokens_out"></param>
-        /// <param name="n_token_capacity"></param>
-        /// <param name="n_token_count_out"></param>
-        /// <returns></returns>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_load_session_file", StringMarshalling = StringMarshalling.Utf8)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static partial bool LoadSessionFile(SafeContextHandle ctx, string path_session, [Out] int[] tokens_out, ulong n_token_capacity, ulong* n_token_count_out);
-
         [DllImport(LIBRARY_NAME, EntryPoint = "llama_model_default_params")]
         public static extern ModelParams ModelDefaultParams();
 
