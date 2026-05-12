@@ -224,9 +224,6 @@ namespace LlamaNative.Interop
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool RemoveCacheTokens(SafeMemoryHandle handle, int sequenceId, int startPos, int endPos);
 
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_reset_timings")]
-        public static partial void ResetTimings(SafeContextHandle ctx);
-
         /// <summary>
         /// Save session file
         /// </summary>
