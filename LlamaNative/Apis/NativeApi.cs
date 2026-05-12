@@ -204,7 +204,8 @@ namespace LlamaNative.Apis
         public static int NVocab(SafeModelHandle handle)
         {
             nint vocab_ptr = LlamaCppApi.GetVocab(handle);
-            SafeVocabHandle vocab = new(vocab_ptr, LlamaCppApi.FreeModel);
+            // The vocab is owned by the model — it must not be freed separately.
+            SafeVocabHandle vocab = new(vocab_ptr, (n) => { });
             return LlamaCppApi.NVocab(vocab);
         }
 

@@ -76,7 +76,7 @@ namespace LlamaNative.Interop
         /// Frees all allocated memory
         /// </summary>
         /// <param name="ctx"></param>
-        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_free_model")]
+        [LibraryImport(LIBRARY_NAME, EntryPoint = "llama_model_free")]
         public static partial void FreeModel(IntPtr ctx);
 
         /// <summary>
